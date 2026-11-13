@@ -166,9 +166,9 @@ const D = {
   'p.copied': ['Copied', 'Kopioitu', 'Kopierat', 'Скопировано', 'Waa la koobiyay'],
   'p.clear': ['Clear date', 'Tyhjennä', 'Rensa', 'Очистить', 'Tirtir'],
   'p.draft': [
-    'Hello, my {prev} was on {date}. I have not yet heard about the next step: {step}. The target time is {target} days and it has now been {waited} days. Could you tell me when it will be? Thank you.',
-    'Hei, {prev}: {date}. En ole vielä kuullut seuraavasta vaiheesta: {step}. Tavoiteaika on {target} päivää, ja nyt on kulunut {waited} päivää. Voisitteko kertoa, milloin se on? Kiitos.',
-    'Hej, {prev}: {date}. Jag har ännu inte hört något om nästa steg: {step}. Målet är {target} dagar och nu har det gått {waited} dagar. Kan ni berätta när det blir? Tack.',
+    'Hello. {prev} on {date}. I have not yet heard about the next step: {step}. The target time is {target} days and it has now been {waited} days. Could you tell me when it will be? Thank you.',
+    'Hei. {prev} {date}. En ole vielä kuullut seuraavasta vaiheesta: {step}. Tavoiteaika on {target} päivää, ja nyt on kulunut {waited} päivää. Voisitteko kertoa, milloin se on? Kiitos.',
+    'Hej. {prev} den {date}. Jag har ännu inte hört något om nästa steg: {step}. Målet är {target} dagar och nu har det gått {waited} dagar. Kan ni berätta när det blir? Tack.',
     'Здравствуйте. {prev}: {date}. О следующем этапе ({step}) я пока ничего не знаю. Целевой срок {target} дн., прошло уже {waited} дн. Подскажите, пожалуйста, когда это будет? Спасибо.',
     'Salaan. {prev}: {date}. Weli waxba kama maqal tallaabada xigta: {step}. Waqtiga hadafku waa {target} maalmood, hadda waxaa dhaafay {waited} maalmood. Fadlan ii sheega goorta? Mahadsanid.',
   ],

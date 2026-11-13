@@ -3,7 +3,7 @@ import { Btn, Card, Chip, Display, EdgeText, Label, RoundBtn, SourceBadge, Stamp
 import { PATHWAY, daysBetween, today } from '../../data/pathway'
 import { useStore } from '../../lib/store'
 import { send, simulateCheckin, useChat, type Msg } from './chat'
-import { assess, firstSeen, packYears, parseKg, PLCO_THRESHOLD } from './logic'
+import { assess, firstSeen, nextCheckin, packYears, parseKg, PLCO_THRESHOLD } from './logic'
 import { split2, useT, type Key } from './i18n'
 import { ArrowIcon, ShareSwitch, Tag } from './bits'
 
@@ -130,8 +130,7 @@ export function CheckinCard({ onSimulate }: { onSimulate?: () => void }) {
   const risk = useStore((s) => s.risk)
   const set = useStore((s) => s.set)
   const rec = recommendedEvery(!!risk && risk.prob6y >= PLCO_THRESHOLD, assess(diary).flag)
-  const base = checkins.lastAt ?? new Date().toISOString()
-  const nextIso = new Date(new Date(base).getTime() + checkins.everyDays * 86_400_000).toISOString()
+  const nextIso = nextCheckin(checkins)
   const nextIn = daysBetween(today(), nextIso.slice(0, 10))
   const upd = (p: Partial<typeof checkins>) => set((s) => ({ checkins: { ...s.checkins, ...p } }))
   return (
@@ -242,7 +241,12 @@ const PRINT_CSS = `
   @page { margin: 14mm; }
   body * { visibility: hidden !important; }
   #patient-summary, #patient-summary * { visibility: visible !important; }
-  #patient-summary { position: absolute !important; left: 0; top: 0; width: 100% !important; transform: none !important; box-shadow: none !important; border: none !important; }
+  html, body { background: #fff !important; height: 100% !important; overflow: hidden !important; }
+  body *::before, body *::after { visibility: hidden !important; box-shadow: none !important; }
+  body * { box-shadow: none !important; background-image: none !important; }
+  .rise { animation: none !important; transform: none !important; }
+  #patient-summary { position: fixed !important; left: 0; top: 0; width: 100% !important; background: #fff; padding: 0 !important; }
+  #patient-summary * { color: #1F1F1F !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   #patient-summary .no-print { display: none !important; }
 }`
 
@@ -269,8 +273,8 @@ function Summary() {
         <Btn onClick={() => window.print()}>{t('d.print')}</Btn>
       </div>
       <Card tone="paper" className="p-6 sm:p-10 pl-10 sm:pl-14" >
+        <EdgeText className="no-print">Ajoissa · {t('d.summary')}</EdgeText>
         <div id="patient-summary" lang={lang}>
-          <EdgeText className="no-print">Ajoissa · {t('d.summary')}</EdgeText>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <Label>{t('d.prepared')} · {d(now, { day: 'numeric', month: 'long', year: 'numeric' })}{profile.age ? ` · ${t('r.age')} ${profile.age}` : ''}</Label>

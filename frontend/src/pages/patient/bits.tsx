@@ -17,7 +17,7 @@ export function Field({ label, children, className, htmlFor }: { label: ReactNod
 }
 
 /** Semicircle gauge, square-root scale 0–10 %, with the 1.51 % threshold tick. */
-export function Gauge({ p, size = 260, dark }: { p: number | null; size?: number; dark?: boolean }) {
+export function Gauge({ p, size = 340, dark }: { p: number | null; size?: number; dark?: boolean }) {
   const MAX = 0.1
   const f = (v: number) => Math.min(1, Math.sqrt(Math.max(0, v) / MAX))
   const pt = (fr: number, r: number) => {
@@ -31,25 +31,28 @@ export function Gauge({ p, size = 260, dark }: { p: number | null; size?: number
   const th = f(PLCO_THRESHOLD)
   const v = p === null ? 0 : f(p)
   const [nx, ny] = pt(v, 64)
+  // dark = drawn on a terracotta card
   const ink = dark ? '#F4F1EA' : '#1F1F1F'
+  const zone = dark ? '#1F1F1F' : '#C65D3B'
+  const val = dark ? '#1F1F1F' : p !== null && p >= PLCO_THRESHOLD ? '#C65D3B' : '#1F1F1F'
   return (
-    <svg viewBox="0 0 200 116" width="100%" style={{ maxWidth: size }} role="img" aria-label={p === null ? 'no value' : `${(p * 100).toFixed(2)} %`}>
+    <svg viewBox="-6 -8 212 124" width="100%" style={{ maxWidth: size }} role="img" aria-label={p === null ? 'no value' : `${(p * 100).toFixed(2)} %`}>
       <path d={arc(0, 1, 80)} stroke={ink} strokeOpacity={0.12} strokeWidth={18} fill="none" />
-      <path d={arc(th, 1, 80)} stroke="#C65D3B" strokeOpacity={0.35} strokeWidth={18} fill="none" />
-      {p !== null && <path d={arc(0, Math.max(v, 0.005), 80)} stroke={p >= PLCO_THRESHOLD ? '#C65D3B' : ink} strokeWidth={18} fill="none" />}
+      <path d={arc(th, 1, 80)} stroke={zone} strokeOpacity={dark ? 0.18 : 0.3} strokeWidth={18} fill="none" />
+      {p !== null && <path d={arc(0, Math.max(v, 0.005), 80)} stroke={val} strokeWidth={18} fill="none" />}
       {[0, 0.005, 0.0151, 0.03, 0.06, 0.1].map((x) => {
         const [a1, b1] = pt(f(x), 92); const [a2, b2] = pt(f(x), 98)
-        const [lx, ly] = pt(f(x), 106)
+        const [lx, ly] = pt(f(x), 108)
         return (
           <g key={x}>
             <line x1={a1} y1={b1} x2={a2} y2={b2} stroke={ink} strokeWidth={x === 0.0151 ? 1.6 : 0.6} />
-            <text x={lx} y={ly + 2} fontSize={x === 0.0151 ? 7 : 6} textAnchor="middle" fill={x === 0.0151 ? '#C65D3B' : ink} fontFamily="Courier Prime, monospace">{(x * 100).toFixed(x === 0.0151 ? 2 : 1).replace(/\.0$/, '')}</text>
+            <text x={lx} y={ly + 2} fontSize={x === 0.0151 ? 9 : 7.5} fontWeight={x === 0.0151 ? 700 : 400} textAnchor="middle" fill={x === 0.0151 && !dark ? '#C65D3B' : ink} fontFamily="Courier Prime, monospace">{(x * 100).toFixed(x === 0.0151 ? 2 : 1).replace(/\.0$/, '')}</text>
           </g>
         )
       })}
       {p !== null && <>
-        <line x1={100} y1={100} x2={nx} y2={ny} stroke={ink} strokeWidth={2} strokeLinecap="round" />
-        <circle cx={100} cy={100} r={5} fill={ink} />
+        <line x1={100} y1={100} x2={nx} y2={ny} stroke={ink} strokeWidth={2.5} strokeLinecap="round" />
+        <circle cx={100} cy={100} r={6} fill={ink} />
       </>}
     </svg>
   )
@@ -74,8 +77,8 @@ export function Clock({ dates, size = 220, children, dark }: { dates: Partial<Re
           const start = cum; cum += len
           const prev = dates[PATHWAY[i - 1].id]
           let color = 'transparent'; let frac = 0
-          if (dates[s.id] && prev) { frac = 1; color = daysBetween(prev, dates[s.id]!) > len ? '#C65D3B' : ink }
-          else if (i === lastDone + 1 && prev) { const w = daysBetween(prev, now); frac = Math.min(1, w / len); color = w > len ? '#C65D3B' : '#FFC233' }
+          if (dates[s.id] && prev) { frac = 1; color = daysBetween(prev, dates[s.id]!) > len && !dark ? '#C65D3B' : ink }
+          else if (i === lastDone + 1 && prev) { const w = daysBetween(prev, now); frac = Math.min(1, w / len); color = w > len ? (dark ? '#1F1F1F' : '#C65D3B') : '#FFC233' }
           const L = Math.max(0, len * frac - 0.6)
           return (
             <g key={s.id}>

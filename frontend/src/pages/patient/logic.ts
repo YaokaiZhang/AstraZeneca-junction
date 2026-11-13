@@ -32,8 +32,8 @@ export function extractTags(text: string): string[] {
   const tags = new Set<string>()
   for (const [k, rx] of RX) if (hit(text, rx)) tags.add(k)
   if (hit(text, BLOOD)) {
-    if (tags.has('cough') || /cough(ing)? up|ysk|host|каш[её]?л/i.test(text)) tags.add('blood-cough')
-    else if (STOOL.test(text)) tags.add('blood-stool')
+    if (STOOL.test(text)) tags.add('blood-stool')
+    else if (tags.has('cough') || /cough(ing)? up|ysk|host|каш[её]?л/i.test(text)) tags.add('blood-cough')
     else tags.add('blood')
   }
   // "blood in stool" should not also count as a bowel change by itself
@@ -184,3 +184,10 @@ export const PROGRAMMES = [
 
 export const addDays = (isoDate: string, n: number) => iso(new Date(new Date(isoDate.slice(0, 10) + 'T12:00:00').getTime() + n * DAY))
 export { minusDays }
+
+/** Next caring check-in: last + every N days, never in the past. */
+export function nextCheckin(c: { lastAt?: string; everyDays: number }, nowIso = new Date().toISOString()) {
+  const base = c.lastAt ?? nowIso
+  const next = new Date(new Date(base).getTime() + c.everyDays * DAY).toISOString()
+  return next < nowIso ? nowIso : next
+}

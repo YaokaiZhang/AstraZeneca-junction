@@ -1,6 +1,7 @@
 // Shared visual primitives drawn from the reference design:
 // paper cards in mustard / terracotta / stone / ink, serif display type, typewriter labels.
 import { useEffect, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react'
+import { createPortal } from 'react-dom'
 import { SOURCES, type SourceKind } from '../data/sources'
 
 const cx = (...a: (string | false | null | undefined)[]) => a.filter(Boolean).join(' ')
@@ -114,7 +115,7 @@ export function TextRing({ text, className, size = 180 }: { text: string; classN
 
 const KIND: Record<SourceKind, { label: string; cls: string }> = {
   direct: { label: 'Direct data', cls: 'bg-ink text-paper' },
-  estimate: { label: 'Estimate', cls: 'bg-mustard text-ink' },
+  estimate: { label: 'Estimate', cls: 'bg-mustard text-ink ring-1 ring-ink/50' },
   gap: { label: 'Data gap', cls: 'bg-terra text-paper' },
   mentor: { label: 'Mentor interview', cls: 'bg-moss text-paper' },
 }
@@ -125,31 +126,42 @@ const KIND: Record<SourceKind, { label: string; cls: string }> = {
  */
 export function SourceBadge({ id, kind, how, demo = true, className }: { id: keyof typeof SOURCES | string; kind: SourceKind; how?: ReactNode; demo?: boolean; className?: string }) {
   const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ x: 0, y: 0 })
   const ref = useRef<HTMLSpanElement>(null)
+  const pop = useRef<HTMLSpanElement>(null)
   const src = SOURCES[id]
   const k = KIND[kind]
   useEffect(() => {
     if (!open) return
-    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node) && !pop.current?.contains(e.target as Node)) setOpen(false) }
+    const hide = () => setOpen(false)
     document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
+    window.addEventListener('scroll', hide, true)
+    window.addEventListener('resize', hide)
+    return () => { document.removeEventListener('mousedown', close); window.removeEventListener('scroll', hide, true); window.removeEventListener('resize', hide) }
   }, [open])
   return (
     <span ref={ref} className={cx('relative inline-flex align-middle', className)}>
-      <button onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
+      <button onClick={(e) => {
+          e.stopPropagation()
+          const r = e.currentTarget.getBoundingClientRect()
+          const x = Math.min(Math.max(r.left + r.width / 2 - 128, 8), window.innerWidth - 264)
+          const y = r.bottom + 256 > window.innerHeight ? Math.max(8, r.top - 8 - 240) : r.bottom + 8
+          setPos({ x, y }); setOpen((o) => !o)
+        }}
         title={k.label}
         className={cx('w-4 h-4 rounded-full text-[9px] font-type leading-none flex items-center justify-center hover:scale-125 transition-transform', k.cls)}>
         {kind === 'direct' ? 'D' : kind === 'estimate' ? 'E' : kind === 'gap' ? '!' : 'M'}
       </button>
-      {open && (
-        <span onClick={(e) => e.stopPropagation()} className="rise absolute z-50 left-1/2 -translate-x-1/2 top-6 w-64 bg-paper text-ink border border-black/15 rounded-lg shadow-2xl p-4 text-left font-sans text-xs normal-case tracking-normal">
+      {open && createPortal(
+        <span ref={pop} onClick={(e) => e.stopPropagation()} style={{ left: pos.x, top: pos.y }} className="rise fixed z-[70] w-64 max-h-[240px] overflow-y-auto bg-paper text-ink border border-black/15 rounded-lg shadow-2xl p-4 text-left font-sans text-xs normal-case tracking-normal">
           <span className={cx('inline-block font-type uppercase tracking-widest text-[9px] px-2 py-0.5 rounded-full mb-2', k.cls)}>{k.label}</span>
           <span className="block font-serif text-base leading-tight mb-1">{src?.name ?? id}</span>
           {src?.note && <span className="block opacity-70 mb-1">{src.note}</span>}
           {how && <span className="block font-type text-[11px] bg-black/5 rounded p-2 my-2">{how}</span>}
           {demo && kind !== 'gap' && <span className="block font-type text-[10px] text-terra uppercase tracking-wider">Demo value</span>}
           {src?.url && <a href={src.url} target="_blank" rel="noreferrer" className="block mt-2 underline underline-offset-2 hover:text-terra">Open source ↗</a>}
-        </span>
+        </span>, document.body,
       )}
     </span>
   )

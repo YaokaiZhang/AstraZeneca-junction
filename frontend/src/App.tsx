@@ -8,8 +8,8 @@ import CountyPage from './pages/county'
 export default function App() {
   return (
     <Routes>
+      <Route index element={<Home />} />
       <Route element={<Layout />}>
-        <Route index element={<Home />} />
         <Route path="patient/*" element={<PatientPage />} />
         <Route path="hospital/*" element={<HospitalPage />} />
         <Route path="county/*" element={<CountyPage />} />

@@ -36,3 +36,14 @@
 @keyframes rise { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
 .rise { animation: rise .45s cubic-bezier(.2,.7,.2,1) both; }
 @media (prefers-reduced-motion: reduce) { .spin-slow, .rise { animation: none; } }
+
+/* home hero */
+@keyframes hero-in { from { opacity: 0; transform: translateY(24px); filter: blur(6px) } to { opacity: 1; transform: none; filter: none } }
+.hero-in { animation: hero-in .9s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes hero-word { 0% { opacity: 0; transform: translateY(70%) rotate(4deg) } 12%, 88% { opacity: 1; transform: none } 100% { opacity: 0; transform: translateY(-70%) rotate(-3deg) } }
+.hero-word { animation: hero-word 2.6s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes ecg-scroll { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+.ecg-scroll { animation: ecg-scroll 9s linear infinite; }
+@keyframes bob { 0%, 100% { transform: translate(-50%, 0) } 50% { transform: translate(-50%, 6px) } }
+.bob { animation: bob 2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .hero-in, .hero-word, .ecg-scroll, .bob { animation: none; } }

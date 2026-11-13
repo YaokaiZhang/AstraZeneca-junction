@@ -103,7 +103,7 @@ The symptom diary, pathway clock and hospital page work for any cancer.
   3. **What does that mean in tests and cancers?** Invitations × turnout gives tests needed. Published positivity and detection rates give follow-up exams (for example colonoscopies after a positive bowel test) and cancers found early.
 - **The headline number:** "cancers found late because people didn't take part." That is non-attenders × the expected number of cancers screening would have found in them. It turns a turnout percentage into people.
 - **Where effort pays most:** towns ranked by how many extra people one percentage point more turnout would reach, and how many cancers that would find early.
-- **What the data shows already:** turnout differs a lot between towns. In 2024, bowel screening ranged from 59.5% to 89.1% across 584 areas, breast from 68.1% to 92.5%, and cervical from 45.7% to 92.3% (THL Sotkanet 6103, 3621, 3620).
+- **What the data shows already:** turnout differs a lot between towns. In 2024, bowel screening ranged from 59.5% to 82.4% across 292 towns, breast from 68.1% to 92.5%, and cervical from 45.7% to 92.3% (THL Sotkanet 6103, 3621, 3620).
 - **Lung as a scenario:** Finland has no lung screening programme yet. The same engine estimates how many people aged 50–74 would qualify (smoking rate × population, refined with PLCOm2012) and how many CT scans a county would need each year if a programme started.
 - **Output:** for each county, a ten-year table of invitations, tests, follow-up exams and early cancers per programme, figures a county can put in a budget. Every number carries a source badge, and forecasts show an uncertainty range.
 

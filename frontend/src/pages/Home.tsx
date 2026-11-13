@@ -11,7 +11,7 @@ const CARDS = [
   { to: '/county', tone: 'stone' as const, a: 'For the', b: 'county', k: '03', tilt: 3 },
 ]
 
-const WORDS = ['on time.', 'ajoissa.', 'i tid.', 'вовремя.', 'waqtiga.']
+const WORDS = ['on time.', 'ajoissa.', 'i tid.']
 
 function useCountUp(target: number, ms = 1800, delay = 600) {
   const [v, setV] = useState(0)
@@ -128,7 +128,7 @@ export default function Home() {
             }}
             onPointerLeave={() => setTilt({ x: 0, y: 0 })}>
             <div className="absolute -right-24 top-1/2 -translate-y-1/2 opacity-[0.08] pointer-events-none hidden lg:block">
-              <TextRing size={720} text="ajoissa • on time • i tid • вовремя • waqtiga • " />
+              <TextRing size={720} text="ajoissa • on time • i tid • " />
             </div>
             <div className="absolute inset-0 transition-transform duration-300 ease-out"
               style={{ transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(${1 - scroll * 0.08})`, transformStyle: 'preserve-3d' }}>
@@ -168,7 +168,7 @@ export default function Home() {
         <a href="#doors" className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
       </section>
 
-      <Marquee words={['on time', 'ajoissa', 'i tid', 'вовремя', 'waqtiga']} />
+      <Marquee words={['on time', 'ajoissa', 'i tid']} />
       <Clock />
       <TooLate />
       <Marquee words={['notice', 'track', 'ask', 'escalate', 'find']} reverse />

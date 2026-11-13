@@ -49,7 +49,7 @@ The symptom diary, pathway clock and hospital page work for any cancer.
 - **Why it matters:** a delay caused by the hospital needs a different fix from a delay caused by the patient's situation. For the second kind, the app points to social support.
 
 ### 1.5 Languages (Max)
-- Everything on the patient page works in Finnish, Swedish and English, plus one or two languages common among immigrants. People who struggle with Finnish are among those who miss care today.
+- Everything on the patient page works in Finnish, Swedish and English. People who struggle with Finnish are among those who miss care today.
 
 ### 1.6 Caring check-ins (Hazel)
 - **What it does:** the app doesn't wait for the person to come back. It reaches out and asks how they are, in a warm tone, and adds the answers to the symptom diary.

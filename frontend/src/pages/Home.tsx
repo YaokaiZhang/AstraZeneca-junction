@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
 import { Clock, Marquee, Privacy, ThreeDates, TooLate, Views } from './home/Pitch'
-import { WordsUp } from './home/reveal'
+import { WordsUp, useScrollProgress } from './home/reveal'
 import FinlandCanvas, { HOSPITALS, type Hover, type Tally } from './home/FinlandCanvas'
 
 const CARDS = [
@@ -10,8 +10,6 @@ const CARDS = [
   { to: '/hospital', tone: 'terra' as const, a: 'For the', b: 'hospital', k: '02', tilt: 1.5 },
   { to: '/county', tone: 'stone' as const, a: 'For the', b: 'county', k: '03', tilt: 3 },
 ]
-
-const WORDS = ['on time.', 'ajoissa.', 'i tid.']
 
 function useCountUp(target: number, ms = 1800, delay = 600) {
   const [v, setV] = useState(0)
@@ -29,13 +27,44 @@ function useCountUp(target: number, ms = 1800, delay = 600) {
   return v
 }
 
+const WORDS = ['on time.', 'ajoissa.', 'i tid.']
+
 function RotatingWord() {
   const [i, setI] = useState(0)
   useEffect(() => { const id = setInterval(() => setI((x) => (x + 1) % WORDS.length), 2600); return () => clearInterval(id) }, [])
   return (
-    <span className="relative inline-block align-baseline h-[1.05em] overflow-hidden">
+    <span className="relative inline-block align-top py-[0.18em] -my-[0.18em] overflow-hidden whitespace-nowrap">
       <span key={i} className="block italic text-terra hero-word">{WORDS[i]}</span>
     </span>
+  )
+}
+
+const BRIDGE = 'Between the first symptom and the first treatment, time goes missing.'.split(' ')
+
+/** Scroll-scrubbed hand-off from the hero to the pitch: a line draws down, then the sentence fills in word by word. */
+function Bridge() {
+  const [ref, p] = useScrollProgress<HTMLElement>()
+  const line = Math.min(1, p / 0.25)
+  const words = Math.max(0, (p - 0.2) / 0.6) * BRIDGE.length
+  return (
+    <section ref={ref} className="relative h-[200svh]">
+      <div className="sticky top-0 h-[100svh] flex flex-col items-center justify-center px-5 overflow-hidden">
+        <div className="w-px h-[18svh] bg-terra origin-top" style={{ transform: `scaleY(${line})` }} />
+        <div className="mt-3 w-2 h-2 rounded-full bg-terra transition-opacity duration-300" style={{ opacity: line >= 1 ? 1 : 0 }} />
+        <p className="mt-10 max-w-5xl text-center font-serif font-light text-[11vw] sm:text-6xl lg:text-8xl leading-[1.02] tracking-tight">
+          {BRIDGE.map((w, i) => {
+            const t = Math.min(1, Math.max(0, words - i))
+            const hot = i >= BRIDGE.length - 3
+            return (
+              <span key={i} className={hot ? 'italic text-terra' : undefined}
+                style={{ opacity: 0.1 + 0.9 * t, display: 'inline-block', transform: `translateY(${(1 - t) * 0.25}em)` }}>
+                {w}&nbsp;
+              </span>
+            )
+          })}
+        </p>
+      </div>
+    </section>
   )
 }
 
@@ -73,7 +102,8 @@ export default function Home() {
 
   return (
     <div className="relative">
-      <section className="relative min-h-[100svh] overflow-hidden">
+      <section className="relative h-[100svh] overflow-hidden origin-top"
+        style={{ transform: `scale(${1 - scroll * 0.05})`, borderRadius: `0 0 ${scroll * 48}px ${scroll * 48}px` }}>
         <header className="absolute top-0 inset-x-0 z-20 flex items-center justify-between px-5 lg:px-12 py-5 lg:py-8">
           <Link to="/" className="flex items-center gap-3">
             <div className="w-10 h-10 border border-current rounded-full flex items-center justify-center">
@@ -88,29 +118,29 @@ export default function Home() {
           </nav>
         </header>
 
-        <div className="relative grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] min-h-[100svh]">
+        <div className="relative grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] h-full">
           {/* copy */}
-          <div className="relative z-10 flex flex-col justify-center px-5 lg:pl-16 xl:pl-24 pt-28 lg:pt-28 pb-6 lg:pb-24"
+          <div className="relative z-10 flex flex-col justify-center px-5 lg:pl-16 xl:pl-24 pt-20 lg:pt-24 pb-20 lg:pb-20"
             style={{ transform: `translateY(${scroll * -60}px)`, opacity: 1 - scroll * 1.2 }}>
             <Label className="hero-in" >Finland · cancer strategy 2026–2035</Label>
-            <h1 className="mt-6 font-serif font-light leading-[0.88] text-[17vw] sm:text-7xl xl:text-[7.5rem] tracking-tight">
+            <h1 className="mt-5 font-serif font-light leading-[0.9] text-[min(14vw,11svh)] lg:text-[min(6vw,12svh)] tracking-tight">
               <span className="block hero-in" style={{ animationDelay: '.1s' }}>Every</span>
               <span className="block hero-in pl-[0.6em]" style={{ animationDelay: '.2s' }}>cancer,</span>
               <span className="block hero-in" style={{ animationDelay: '.3s' }}>found <RotatingWord /></span>
             </h1>
 
-            <div className="mt-10 lg:mt-14 flex flex-wrap gap-x-12 gap-y-6 hero-in" style={{ animationDelay: '.5s' }}>
+            <div className="mt-8 lg:mt-[5svh] flex flex-wrap gap-x-8 lg:gap-x-12 gap-y-6 hero-in" style={{ animationDelay: '.5s' }}>
               <div>
-                <div className="font-serif text-5xl lg:text-6xl lining-nums tabular-nums leading-none">{cases.toLocaleString('fi-FI')}</div>
+                <div className="font-serif text-4xl lg:text-6xl lining-nums tabular-nums leading-none">{cases.toLocaleString('fi-FI')}</div>
                 <div className="mt-2 flex items-center gap-2"><Label>new cancers a year</Label><SourceBadge id="cancerRegistry" kind="estimate" /></div>
               </div>
               <div>
-                <div className="font-serif text-5xl lg:text-6xl lining-nums tabular-nums leading-none">{(share / 100).toFixed(2).replace('.', ',')}<span className="text-3xl">%</span></div>
+                <div className="font-serif text-4xl lg:text-6xl lining-nums tabular-nums leading-none">{(share / 100).toFixed(2).replace('.', ',')}<span className="text-3xl">%</span></div>
                 <div className="mt-2 flex items-center gap-2"><Label>lung risk to screen</Label><SourceBadge id="plco" kind="direct" demo={false} /></div>
               </div>
             </div>
 
-            <div className="mt-10 flex flex-wrap gap-3 hero-in" style={{ animationDelay: '.65s' }}>
+            <div className="mt-8 lg:mt-[4svh] flex flex-wrap gap-3 hero-in" style={{ animationDelay: '.65s' }}>
               <Link to="/patient" className="group inline-flex items-center gap-3 bg-ink text-paper rounded-full pl-6 pr-2 py-2 font-type uppercase text-xs tracking-widest hover:bg-terra transition-colors">
                 Start
                 <span className="w-9 h-9 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-x-1 transition-transform">→</span>
@@ -120,7 +150,8 @@ export default function Home() {
           </div>
 
           {/* map */}
-          <div ref={stage} className="relative h-[78svh] lg:h-auto"
+          {/* on phones the map sits behind the copy as a faint backdrop */}
+          <div ref={stage} className="absolute inset-0 opacity-25 pointer-events-none lg:opacity-100 lg:pointer-events-auto lg:relative lg:inset-auto"
             style={{ perspective: '1400px' }}
             onPointerMove={(e) => {
               const r = stage.current!.getBoundingClientRect()
@@ -136,7 +167,7 @@ export default function Home() {
             </div>
 
             {/* live tally */}
-            <div className="absolute left-4 lg:left-0 bottom-20 lg:bottom-28 z-10 pointer-events-none hero-in" style={{ animationDelay: '1.4s' }}>
+            <div className="hidden lg:block absolute left-0 bottom-28 z-10 pointer-events-none hero-in" style={{ animationDelay: '1.4s' }}>
               <Card tone="paper" tilt={-3} className="p-4 pr-6 w-52 border border-ink/10 bg-paper/90 backdrop-blur-sm">
                 <Label>Live · {HOSPITALS.length} hospitals</Label>
                 <div className="mt-3 flex items-end justify-between font-serif">
@@ -150,7 +181,7 @@ export default function Home() {
             </div>
 
             {/* lens readout */}
-            <div className={`absolute right-4 lg:right-10 top-24 lg:top-28 z-10 pointer-events-none transition-all duration-300 ${hover ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+            <div className={`hidden lg:block absolute right-10 top-24 lg:top-28 z-10 pointer-events-none transition-all duration-300 ${hover ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
               <Card tone="mustard" tilt={2} className="p-4 pl-9 w-56">
                 <EdgeText>Lens</EdgeText>
                 <div className="font-type text-[11px] tracking-wider">{hover ? `${hover.lat.toFixed(2)}°N  ${hover.lon.toFixed(2)}°E` : '—'}</div>
@@ -168,7 +199,7 @@ export default function Home() {
         <a href="#doors" className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
       </section>
 
-      <Marquee words={['on time', 'ajoissa', 'i tid']} />
+      <Bridge />
       <Clock />
       <TooLate />
       <Marquee words={['notice', 'track', 'ask', 'escalate', 'find']} reverse />

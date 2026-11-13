@@ -140,6 +140,11 @@ export default function FinlandCanvas({ onHover, onTally, className }: {
 
     let raf = 0
     const frame = (now: number) => {
+      // schedule first so a bad frame can never stop the animation and leave the map blank
+      raf = requestAnimationFrame(frame)
+      try { draw(now) } catch (e) { console.error(e) }
+    }
+    const draw = (now: number) => {
       const t = now - start
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, W, H)
@@ -165,6 +170,7 @@ export default function FinlandCanvas({ onHover, onTally, className }: {
         let boost = 0, tint = 0
         for (const p of pulses) {
           const age = now - p.t0
+          if (age < 0 || age >= p.life) continue // expired (e.g. after the tab was in the background)
           const rr = age * p.speed
           const dd = Math.hypot(d.x - p.x, d.y - p.y)
           const band = 1 - Math.abs(dd - rr) / 14
@@ -177,7 +183,7 @@ export default function FinlandCanvas({ onHover, onTally, className }: {
         d.heat = Math.max(d.heat * 0.94, 0)
         boost += d.heat
         const wob = reduce ? 0 : Math.sin(t / 900 + d.seed * 6.28) * 0.12
-        const r = base * (0.55 + wob + boost * 0.55) * (0.4 + 0.6 * a)
+        const r = Math.max(0, base * (0.55 + wob + boost * 0.55) * (0.4 + 0.6 * a))
         const col = tint < 0 ? mix(INK, MUSTARD, Math.min(1, -tint * 1.2)) : mix(INK, TERRA, Math.min(1, tint * 1.2))
         ctx.fillStyle = rgba(col, (0.5 + Math.min(0.5, boost * 0.5)) * a)
         const sx = ox + d.x * sc, sy = oy + d.y * sc
@@ -255,8 +261,6 @@ export default function FinlandCanvas({ onHover, onTally, className }: {
           cb.current.onHover?.(key === 'out' ? null : { lat, lon, hospital: HOSPITALS[n.i].name, km: Math.round(n.d * KM_PER_UNIT) })
         }
       }
-
-      raf = requestAnimationFrame(frame)
     }
     raf = requestAnimationFrame(frame)
     return () => {

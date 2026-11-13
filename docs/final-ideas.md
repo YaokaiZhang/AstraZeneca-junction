@@ -13,7 +13,7 @@ Goal 3 of the National Cancer Strategy 2026–2035 names three cancers for bette
 | **Lung** | Every page, as the deep example | Goal 3 cancer (survival target +14 percentage points), usually found late, and the only one with a free published risk model |
 | **Bowel** | Second full story: patient reminder, county page, screening analysis | The only cancer where a new screening programme (started 2022) can be followed town by town |
 | **Pancreas, liver** | County page only | Goal 3 cancers, but no screening test or usable risk model. They are rare, so we pool several years and show uncertainty ranges |
-| **Breast, cervical** | Only in "who misses screening" (3.2) | Long screening history by town |
+| **Breast, cervical** | Only in screening analysis (3.2, 3.3) | Long screening history by town |
 
 The symptom diary, pathway clock and hospital page work for any cancer.
 
@@ -96,9 +96,21 @@ The symptom diary, pathway clock and hospital page work for any cancer.
 - **What it does:** for each town, we predict screening turnout from its income, age and language mix, then compare with the real turnout.
 - **Output:** towns doing much worse than predicted need help. Towns doing much better are doing something worth copying.
 
-### 3.3 Lung screening capacity planner (Yaokai)
-- **What it does:** smoking rate × population aged 50–74 gives the number of people in a county who would qualify for lung screening, and so the number of CT scans needed per year.
-- **Output:** a figure a county can put in a budget.
+### 3.3 Detection radar (Yaokai)
+Two levels of the same engine: one for people, one for counties.
+
+**For people: find high risk and suggest screening**
+- **What it does:** estimates a person's risk for each cancer from data, and tells them when it is high enough to go for a screening or see a doctor.
+- **Inputs:** what the person enters (age, sex, smoking, alcohol, weight, family history, symptoms from the diary in 1.1), set against their town's background rates (THL Sotkanet risk-factor and screening figures).
+- **Models:** published risk models where they exist (PLCOm2012 for lung), and age, sex and risk-factor rates from the Finnish Cancer Registry for the others.
+- **Output:** a clear next step for each cancer. For example: "You are in the age group for bowel screening and your risk is above average. If you haven't sent back your test kit, do it now." Or: "Your lung risk is high. Ask your doctor about a CT scan."
+- **Legal today:** the person enters their own data. After the planned law change (2027–2030), the same engine could run on register data and find high-risk people automatically.
+
+**For counties: a radar of where people fall through**
+- **What it does:** for each of the 21 wellbeing services counties, and each town, it estimates how many high-risk people live there and follows them along the path: at risk → invited → screened → follow-up exam → diagnosis → treatment.
+- **Where people fall through:** the radar marks the step where each county loses the most people. For example, many skip screening, positive tests don't get a follow-up colonoscopy in time, or cancers are found at a late stage.
+- **What the data already shows:** turnout differs a lot between towns. In 2024, bowel screening ranged from 59.5% to 82.4% across 292 towns, breast from 68.1% to 92.5%, and cervical from 45.7% to 92.3% (THL Sotkanet 6103, 3621, 3620).
+- **Output:** a map with the high-risk count and the weakest step for each county, feeding the action brief (3.6).
 
 ### 3.4 Overload warning (Yaokai)
 - **What it does:** Finland is ageing, and cancer rises fastest in people over 75. We combine population forecasts with cancer rates to predict each county's cases up to 2035, and flag counties whose waiting lists are already growing.
@@ -141,7 +153,8 @@ Insights from AstraZeneca mentors get their own source type, "mentor interview."
 | Screening turnout: cervical, breast, bowel | THL Sotkanet (open API, indicators 3620, 3621, 6103) |
 | Smoking, alcohol, obesity, inactivity by county | THL Sotkanet (4404, 4411, 4459, 5527) |
 | Waiting lists for specialist care | THL Sotkanet (3336) and THL Sampo |
-| Population, age, income, education, forecasts | Statistics Finland (open API) |
+| Population, age, income, education, forecasts | Statistics Finland (open API; projection by age and area 2024–2045, table 14wx) |
+| Screening positivity and detection rates | Finnish Cancer Registry screening statistics |
 | Nordic survival comparison | NORDCAN |
 | Lung risk model | PLCOm2012, published in NEJM 2013 |
 | Target times for cancer care | THL guidance 21/2016 |

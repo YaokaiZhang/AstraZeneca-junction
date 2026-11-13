@@ -96,16 +96,21 @@ The symptom diary, pathway clock and hospital page work for any cancer.
 - **What it does:** for each town, we predict screening turnout from its income, age and language mix, then compare with the real turnout.
 - **Output:** towns doing much worse than predicted need help. Towns doing much better are doing something worth copying.
 
-### 3.3 Screening forecaster (Yaokai)
-- **What it does:** for each county and town, it uses open data to forecast the next ten years of bowel, breast and cervical screening, with lung as a "what if" scenario. It answers three questions:
-  1. **How many people will be invited?** Population forecasts by age and area, put through each programme's invitation ages. Bowel screening is still being widened to more age groups, and the forecast follows that.
-  2. **How many will take part?** Each town's own turnout trend, adjusted by the 3.2 model (income, age and language mix).
-  3. **What does that mean in tests and cancers?** Invitations × turnout gives tests needed. Published positivity and detection rates give follow-up exams (for example colonoscopies after a positive bowel test) and cancers found early.
-- **The headline number:** "cancers found late because people didn't take part." That is non-attenders × the expected number of cancers screening would have found in them. It turns a turnout percentage into people.
-- **Where effort pays most:** towns ranked by how many extra people one percentage point more turnout would reach, and how many cancers that would find early.
-- **What the data shows already:** turnout differs a lot between towns. In 2024, bowel screening ranged from 59.5% to 82.4% across 292 towns, breast from 68.1% to 92.5%, and cervical from 45.7% to 92.3% (THL Sotkanet 6103, 3621, 3620).
-- **Lung as a scenario:** Finland has no lung screening programme yet. The same engine estimates how many people aged 50–74 would qualify (smoking rate × population, refined with PLCOm2012) and how many CT scans a county would need each year if a programme started.
-- **Output:** for each county, a ten-year table of invitations, tests, follow-up exams and early cancers per programme, figures a county can put in a budget. Every number carries a source badge, and forecasts show an uncertainty range.
+### 3.3 Detection radar (Yaokai)
+Two levels of the same engine: one for people, one for counties.
+
+**For people: find high risk and suggest screening**
+- **What it does:** estimates a person's risk for each cancer from data, and tells them when it is high enough to go for a screening or see a doctor.
+- **Inputs:** what the person enters (age, sex, smoking, alcohol, weight, family history, symptoms from the diary in 1.1), set against their town's background rates (THL Sotkanet risk-factor and screening figures).
+- **Models:** published risk models where they exist (PLCOm2012 for lung), and age, sex and risk-factor rates from the Finnish Cancer Registry for the others.
+- **Output:** a clear next step for each cancer. For example: "You are in the age group for bowel screening and your risk is above average. If you haven't sent back your test kit, do it now." Or: "Your lung risk is high. Ask your doctor about a CT scan."
+- **Legal today:** the person enters their own data. After the planned law change (2027–2030), the same engine could run on register data and find high-risk people automatically.
+
+**For counties: a radar of where people fall through**
+- **What it does:** for each of the 21 wellbeing services counties, and each town, it estimates how many high-risk people live there and follows them along the path: at risk → invited → screened → follow-up exam → diagnosis → treatment.
+- **Where people fall through:** the radar marks the step where each county loses the most people. For example, many skip screening, positive tests don't get a follow-up colonoscopy in time, or cancers are found at a late stage.
+- **What the data already shows:** turnout differs a lot between towns. In 2024, bowel screening ranged from 59.5% to 82.4% across 292 towns, breast from 68.1% to 92.5%, and cervical from 45.7% to 92.3% (THL Sotkanet 6103, 3621, 3620).
+- **Output:** a map with the high-risk count and the weakest step for each county, feeding the action brief (3.6).
 
 ### 3.4 Overload warning (Yaokai)
 - **What it does:** Finland is ageing, and cancer rises fastest in people over 75. We combine population forecasts with cancer rates to predict each county's cases up to 2035, and flag counties whose waiting lists are already growing.

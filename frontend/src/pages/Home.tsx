@@ -1,5 +1,7 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, EdgeText, Label } from '../components/ui'
+import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
+import FinlandCanvas, { HOSPITALS, type Hover, type Tally } from './home/FinlandCanvas'
 
 const CARDS = [
   { to: '/patient', tone: 'mustard' as const, a: 'For the', b: 'patient', k: '01', tilt: -2 },
@@ -7,27 +9,183 @@ const CARDS = [
   { to: '/county', tone: 'stone' as const, a: 'For the', b: 'county', k: '03', tilt: 3 },
 ]
 
-export default function Home() {
+const WORDS = ['on time.', 'ajoissa.', 'i tid.', 'вовремя.', 'waqtiga.']
+
+function useCountUp(target: number, ms = 1800, delay = 600) {
+  const [v, setV] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    const t0 = performance.now() + delay
+    const step = (now: number) => {
+      const u = Math.min(1, Math.max(0, (now - t0) / ms))
+      setV(Math.round(target * (1 - Math.pow(1 - u, 3))))
+      if (u < 1) raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [target, ms, delay])
+  return v
+}
+
+function RotatingWord() {
+  const [i, setI] = useState(0)
+  useEffect(() => { const id = setInterval(() => setI((x) => (x + 1) % WORDS.length), 2600); return () => clearInterval(id) }, [])
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 lg:p-12">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 w-full max-w-5xl">
-        {CARDS.map((c) => (
-          <Link key={c.to} to={c.to} className="block">
-            <Card tone={c.tone} tilt={c.tilt} className="h-[360px] lg:h-[460px] p-8 pl-12 flex flex-col hover:!rotate-0 hover:-translate-y-2">
-              <EdgeText>Ajoissa · {c.k}</EdgeText>
-              <Label>{c.k}</Label>
-              <div className="mt-auto">
-                <span className="font-serif text-5xl leading-none block">{c.a}</span>
-                <span className="font-serif text-5xl leading-none italic block pl-4">{c.b}</span>
-              </div>
-              <div className="tear mt-8 pt-3 flex justify-between items-center">
-                <span className="font-type text-[10px] uppercase tracking-widest">Open</span>
-                <span>→</span>
-              </div>
-            </Card>
+    <span className="relative inline-block align-baseline h-[1.05em] overflow-hidden">
+      <span key={i} className="block italic text-terra hero-word">{WORDS[i]}</span>
+    </span>
+  )
+}
+
+function Ecg() {
+  // one heartbeat, repeated; the path scrolls left forever
+  const beat = 'l40 0 l6 -6 l6 6 l10 0 l5 8 l7 -46 l7 58 l6 -20 l14 0 l10 -9 l12 9 l77 0'
+  const d = 'M0 40 ' + Array.from({ length: 12 }, () => beat).join(' ')
+  return (
+    <div className="absolute inset-x-0 bottom-0 h-16 overflow-hidden pointer-events-none opacity-70" aria-hidden>
+      <svg className="ecg-scroll h-full" viewBox="0 0 4800 60" preserveAspectRatio="none" style={{ width: '200%' }}>
+        <path d={d} fill="none" stroke="#C65D3B" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <div className="absolute inset-0 bg-gradient-to-r from-paper via-transparent to-paper" />
+    </div>
+  )
+}
+
+export default function Home() {
+  const [hover, setHover] = useState<Hover>(null)
+  const [tally, setTally] = useState<Tally>({ onTime: 0, late: 0 })
+  const [tilt, setTilt] = useState({ x: 0, y: 0 })
+  const [scroll, setScroll] = useState(0)
+  const stage = useRef<HTMLDivElement>(null)
+  const cases = useCountUp(37000)
+  const share = useCountUp(151, 1800, 900)
+
+  useEffect(() => {
+    const on = () => setScroll(Math.min(1, scrollY / innerHeight))
+    addEventListener('scroll', on, { passive: true })
+    return () => removeEventListener('scroll', on)
+  }, [])
+
+  const total = tally.onTime + tally.late
+  const latePct = total ? Math.round((tally.late / total) * 100) : 0
+
+  return (
+    <div className="relative">
+      <section className="relative min-h-[100svh] overflow-hidden">
+        <header className="absolute top-0 inset-x-0 z-20 flex items-center justify-between px-5 lg:px-12 py-5 lg:py-8">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 border border-current rounded-full flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2" /></svg>
+            </div>
+            <span className="font-serif text-2xl italic">Ajoissa</span>
           </Link>
-        ))}
-      </div>
+          <nav className="flex gap-5 lg:gap-10">
+            {CARDS.map((c) => (
+              <Link key={c.to} to={c.to} className="font-type uppercase text-[10px] lg:text-xs tracking-widest opacity-60 hover:opacity-100 hover:text-terra transition">{c.b}</Link>
+            ))}
+          </nav>
+        </header>
+
+        <div className="relative grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] min-h-[100svh]">
+          {/* copy */}
+          <div className="relative z-10 flex flex-col justify-center px-5 lg:pl-16 xl:pl-24 pt-28 lg:pt-28 pb-6 lg:pb-24"
+            style={{ transform: `translateY(${scroll * -60}px)`, opacity: 1 - scroll * 1.2 }}>
+            <Label className="hero-in" >Finland · cancer strategy 2026–2035</Label>
+            <h1 className="mt-6 font-serif font-light leading-[0.88] text-[17vw] sm:text-7xl xl:text-[7.5rem] tracking-tight">
+              <span className="block hero-in" style={{ animationDelay: '.1s' }}>Every</span>
+              <span className="block hero-in pl-[0.6em]" style={{ animationDelay: '.2s' }}>cancer,</span>
+              <span className="block hero-in" style={{ animationDelay: '.3s' }}>found <RotatingWord /></span>
+            </h1>
+
+            <div className="mt-10 lg:mt-14 flex flex-wrap gap-x-12 gap-y-6 hero-in" style={{ animationDelay: '.5s' }}>
+              <div>
+                <div className="font-serif text-5xl lg:text-6xl lining-nums tabular-nums leading-none">{cases.toLocaleString('fi-FI')}</div>
+                <div className="mt-2 flex items-center gap-2"><Label>new cancers a year</Label><SourceBadge id="cancerRegistry" kind="estimate" /></div>
+              </div>
+              <div>
+                <div className="font-serif text-5xl lg:text-6xl lining-nums tabular-nums leading-none">{(share / 100).toFixed(2).replace('.', ',')}<span className="text-3xl">%</span></div>
+                <div className="mt-2 flex items-center gap-2"><Label>lung risk to screen</Label><SourceBadge id="plco" kind="direct" demo={false} /></div>
+              </div>
+            </div>
+
+            <div className="mt-10 flex flex-wrap gap-3 hero-in" style={{ animationDelay: '.65s' }}>
+              <Link to="/patient" className="group inline-flex items-center gap-3 bg-ink text-paper rounded-full pl-6 pr-2 py-2 font-type uppercase text-xs tracking-widest hover:bg-terra transition-colors">
+                Start
+                <span className="w-9 h-9 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-x-1 transition-transform">→</span>
+              </Link>
+              <a href="#doors" className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-2 font-type uppercase text-xs tracking-widest hover:border-ink transition">Explore</a>
+            </div>
+          </div>
+
+          {/* map */}
+          <div ref={stage} className="relative h-[78svh] lg:h-auto"
+            style={{ perspective: '1400px' }}
+            onPointerMove={(e) => {
+              const r = stage.current!.getBoundingClientRect()
+              setTilt({ x: ((e.clientY - r.top) / r.height - 0.5) * -8, y: ((e.clientX - r.left) / r.width - 0.5) * 10 })
+            }}
+            onPointerLeave={() => setTilt({ x: 0, y: 0 })}>
+            <div className="absolute -right-24 top-1/2 -translate-y-1/2 opacity-[0.08] pointer-events-none hidden lg:block">
+              <TextRing size={720} text="ajoissa • on time • i tid • вовремя • waqtiga • " />
+            </div>
+            <div className="absolute inset-0 transition-transform duration-300 ease-out"
+              style={{ transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(${1 - scroll * 0.08})`, transformStyle: 'preserve-3d' }}>
+              <FinlandCanvas className="absolute inset-0 w-full h-full cursor-none" onHover={setHover} onTally={setTally} />
+            </div>
+
+            {/* live tally */}
+            <div className="absolute left-4 lg:left-0 bottom-20 lg:bottom-28 z-10 pointer-events-none hero-in" style={{ animationDelay: '1.4s' }}>
+              <Card tone="paper" tilt={-3} className="p-4 pr-6 w-52 border border-ink/10 bg-paper/90 backdrop-blur-sm">
+                <Label>Live · {HOSPITALS.length} hospitals</Label>
+                <div className="mt-3 flex items-end justify-between font-serif">
+                  <div><div className="text-3xl leading-none lining-nums tabular-nums">{tally.onTime}</div><div className="label mt-1 !opacity-80 flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-mustard inline-block" />on time</div></div>
+                  <div className="text-right"><div className="text-3xl leading-none lining-nums tabular-nums text-terra">{tally.late}</div><div className="label mt-1 !opacity-80 flex items-center gap-1 justify-end"><i className="w-2 h-2 rounded-full bg-terra inline-block" />late</div></div>
+                </div>
+                <div className="mt-3 h-1.5 rounded-full bg-mustard overflow-hidden flex justify-end">
+                  <div className="h-full bg-terra transition-all duration-500" style={{ width: `${latePct}%` }} />
+                </div>
+              </Card>
+            </div>
+
+            {/* lens readout */}
+            <div className={`absolute right-4 lg:right-10 top-24 lg:top-28 z-10 pointer-events-none transition-all duration-300 ${hover ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+              <Card tone="mustard" tilt={2} className="p-4 pl-9 w-56">
+                <EdgeText>Lens</EdgeText>
+                <div className="font-type text-[11px] tracking-wider">{hover ? `${hover.lat.toFixed(2)}°N  ${hover.lon.toFixed(2)}°E` : '—'}</div>
+                <div className="mt-2 font-serif text-3xl leading-none italic">{hover?.hospital ?? '—'}</div>
+                <div className="mt-3 tear pt-2 flex justify-between items-baseline">
+                  <span className="label !opacity-80">nearest hospital</span>
+                  <span className="font-serif text-2xl tabular-nums">{hover?.km ?? 0}<span className="text-sm"> km</span></span>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        <Ecg />
+        <a href="#doors" className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
+      </section>
+
+      <section id="doors" className="relative px-5 lg:px-12 py-24 lg:py-32 flex justify-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 w-full max-w-5xl">
+          {CARDS.map((c) => (
+            <Link key={c.to} to={c.to} className="block">
+              <Card tone={c.tone} tilt={c.tilt} className="h-[360px] lg:h-[460px] p-8 pl-12 flex flex-col hover:!rotate-0 hover:-translate-y-2">
+                <EdgeText>Ajoissa · {c.k}</EdgeText>
+                <Label>{c.k}</Label>
+                <div className="mt-auto">
+                  <span className="font-serif text-5xl leading-none block">{c.a}</span>
+                  <span className="font-serif text-5xl leading-none italic block pl-4">{c.b}</span>
+                </div>
+                <div className="tear mt-8 pt-3 flex justify-between items-center">
+                  <span className="font-type text-[10px] uppercase tracking-widest">Open</span>
+                  <span>→</span>
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

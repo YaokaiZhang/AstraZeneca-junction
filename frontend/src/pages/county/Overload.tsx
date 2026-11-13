@@ -1,4 +1,4 @@
-// 3.4 Overload warning: projected cases 2025 → 2035 from the ageing forecast; flags rising queues.
+// 3.3 Overload warning: projected cases 2025 → 2035 from the ageing forecast; flags rising queues.
 import { useMemo, useState } from 'react'
 import { Card, Display, Label, SourceBadge, Stamp, cx } from '../../components/ui'
 import { CANCERS, COUNTIES, countyById } from '../../data/counties'

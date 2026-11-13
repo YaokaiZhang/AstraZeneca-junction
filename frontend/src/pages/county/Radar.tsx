@@ -1,4 +1,4 @@
-// 3.1 Late-detection radar: tile map + ranked list for one cancer and one metric.
+// 3.1 Detection radar (county side): tile map + ranked list for one cancer and one metric.
 import { useMemo } from 'react'
 import { Card, Display, Label, SourceBadge, Stamp, cx } from '../../components/ui'
 import { CANCERS, COUNTIES, type CancerId } from '../../data/counties'

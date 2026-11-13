@@ -1,4 +1,4 @@
-// 3.5 Missing-data map and starter plan.
+// 3.4 Missing-data map and starter plan.
 import { useEffect, useState } from 'react'
 import { Card, Display, EdgeText, Label, SourceBadge, Stamp, TextRing, cx, toast } from '../../components/ui'
 import { CANCERS, countyById } from '../../data/counties'

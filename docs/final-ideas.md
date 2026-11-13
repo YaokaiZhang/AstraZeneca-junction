@@ -13,7 +13,7 @@ Goal 3 of the National Cancer Strategy 2026–2035 names three cancers for bette
 | **Lung** | Every page, as the deep example | Goal 3 cancer (survival target +14 percentage points), usually found late, and the only one with a free published risk model |
 | **Bowel** | Second full story: patient reminder, county page, screening analysis | The only cancer where a new screening programme (started 2022) can be followed town by town |
 | **Pancreas, liver** | County page only | Goal 3 cancers, but no screening test or usable risk model. They are rare, so we pool several years and show uncertainty ranges |
-| **Breast, cervical** | Only in screening analysis (3.2, 3.3) | Long screening history by town |
+| **Breast, cervical** | Only in the detection radar (3.1) and "who misses screening" (3.2) | Long screening history by town |
 
 The symptom diary, pathway clock and hospital page work for any cancer.
 
@@ -29,11 +29,10 @@ The symptom diary, pathway clock and hospital page work for any cancer.
 - **Limits:** it never gives a diagnosis. The strongest thing it says is "these symptoms should be checked by a doctor within two weeks."
 - **Why it's not Omaolo:** Omaolo (the national symptom checker) asks about one symptom in one sitting and ends at "book an appointment." Ours keeps a record over time and continues after the appointment.
 
-### 1.2 Lung cancer risk check (Yaokai)
-- **What it does:** the person answers a few questions (age, years smoked, cigarettes per day, family history, and so on). A published model called PLCOm2012 estimates their chance of lung cancer in the next six years.
-- **Output:** "Your risk is high enough that lung screening would be worth discussing with a doctor."
-- **Why it's legal today:** Finnish law stops authorities using registers to pick people for screening. It doesn't stop a person entering their own details.
-- **The longer story:** a law change is planned for 2027–2030. After that, the same engine could run on register data and send invitations automatically.
+### 1.2 Screening nudge (Yaokai)
+- **What it does:** the patient side of the detection radar (3.1). The person answers a few questions and the app tells them whether to go for a screening or see a doctor.
+- **The person never sees a score.** They only see the next step, for example: "Lung screening would be worth discussing with a doctor."
+- Details are in 3.1.
 
 ### 1.3 Pathway clock (Yaokai, Max)
 - **What it does:** the person enters dates as things happen: first doctor visit, referral, scan, diagnosis, treatment start. The app shows a timeline.
@@ -53,7 +52,7 @@ The symptom diary, pathway clock and hospital page work for any cancer.
 
 ### 1.6 Caring check-ins (Hazel)
 - **What it does:** the app doesn't wait for the person to come back. It reaches out and asks how they are, in a warm tone, and adds the answers to the symptom diary.
-- **Who gets more check-ins:** people whose risk check (1.2) came out high, or who logged a worrying symptom. They are asked more often than others.
+- **Who gets more check-ins:** people the detection radar (3.1) flags as high risk, or who logged a worrying symptom. They are asked more often than others.
 - **Example:** "Hi, two weeks ago you mentioned a cough. Is it still there? Has anything changed?"
 - **Limits:** the person must switch check-ins on and can switch them off. The app only uses what the person has told it, never registers.
 
@@ -87,40 +86,41 @@ The symptom diary, pathway clock and hospital page work for any cancer.
 
 ## Page 3: County
 
-### 3.1 Late-detection radar (Yaokai)
-- **What it does:** a map of the 21 wellbeing services counties showing where cancers are found late.
-- **How:** for each county we estimate how many cancers it should expect, given its smoking, alcohol, obesity and age figures, and compare that with what was actually found and at what stage.
-- **Survival stand-in:** official survival figures only exist for 5 large regions. For counties we use deaths divided by new cases. If a county has 100 new lung cancers and 90 lung cancer deaths a year, few people survive there.
+### 3.1 Detection radar (Yaokai)
+One engine at two levels: it finds people at high risk and suggests screening, and it shows each county where people fall through.
+
+**For people: find high risk, suggest screening**
+- **What it does:** estimates a person's risk for each cancer from what they enter, and suggests a screening or a doctor visit when the risk is high.
+- **Inputs:** age, sex, smoking (years and cigarettes per day), alcohol, weight, family history, and symptoms from the diary (1.1).
+- **Models:**
+  - **Lung:** PLCOm2012, a published model that gives the chance of lung cancer in the next six years.
+  - **Bowel, breast, cervical:** no free published model exists. We combine Finnish Cancer Registry rates by age and sex with risk ratios from published studies. This is labelled **Estimate**, not a clinical score. Invitation ages for the national screening programmes are public rules, so the app also checks whether the person is due and whether they took part.
+- **What the person sees:** only the suggested next step, never the score. For example: "You are in the age group for bowel screening. If you haven't sent back your test kit, please do." Or: "Lung screening would be worth discussing with a doctor."
+- **Who sees the score:** the clinician, only if the person chooses to share it (2.3), with the Estimate label where it applies.
+- **Why it's legal today:** Finnish law stops authorities using registers to pick people for screening. It doesn't stop a person entering their own details.
+- **The longer story:** a law change is planned for 2027–2030. After that, the same engine could run on register data and send invitations automatically.
+
+**For counties: where people fall through**
+- **What it does:** a map of the 21 wellbeing services counties, with a drill-down to towns. For each, it follows people along the path and marks the step where the most are lost:
+  1. **At risk:** how many high-risk people live there, from population by age (Statistics Finland) × smoking, alcohol and obesity rates (THL Sotkanet).
+  2. **Screened:** how many invited people took part. Turnout differs a lot: in 2024, bowel screening ranged from 59.5% to 82.4% across 292 towns, breast from 68.1% to 92.5%, and cervical from 45.7% to 92.3% (THL Sotkanet 6103, 3621, 3620).
+  3. **Found late:** how many cancers the county should expect given its risk factors and age, compared with how many were found and at what stage.
+  4. **Survival:** official survival figures only exist for 5 large regions. For counties we use deaths divided by new cases. If a county has 100 new lung cancers and 90 lung cancer deaths a year, few people survive there.
+- **Output:** for each county, its high-risk count and its weakest step, which feed the action brief (3.5).
 
 ### 3.2 Who misses screening (Yaokai)
 - **What it does:** for each town, we predict screening turnout from its income, age and language mix, then compare with the real turnout.
 - **Output:** towns doing much worse than predicted need help. Towns doing much better are doing something worth copying.
 
-### 3.3 Detection radar (Yaokai)
-Two levels of the same engine: one for people, one for counties.
-
-**For people: find high risk and suggest screening**
-- **What it does:** estimates a person's risk for each cancer from data, and tells them when it is high enough to go for a screening or see a doctor.
-- **Inputs:** what the person enters (age, sex, smoking, alcohol, weight, family history, symptoms from the diary in 1.1), set against their town's background rates (THL Sotkanet risk-factor and screening figures).
-- **Models:** published risk models where they exist (PLCOm2012 for lung), and age, sex and risk-factor rates from the Finnish Cancer Registry for the others.
-- **Output:** a clear next step for each cancer. For example: "You are in the age group for bowel screening and your risk is above average. If you haven't sent back your test kit, do it now." Or: "Your lung risk is high. Ask your doctor about a CT scan."
-- **Legal today:** the person enters their own data. After the planned law change (2027–2030), the same engine could run on register data and find high-risk people automatically.
-
-**For counties: a radar of where people fall through**
-- **What it does:** for each of the 21 wellbeing services counties, and each town, it estimates how many high-risk people live there and follows them along the path: at risk → invited → screened → follow-up exam → diagnosis → treatment.
-- **Where people fall through:** the radar marks the step where each county loses the most people. For example, many skip screening, positive tests don't get a follow-up colonoscopy in time, or cancers are found at a late stage.
-- **What the data already shows:** turnout differs a lot between towns. In 2024, bowel screening ranged from 59.5% to 82.4% across 292 towns, breast from 68.1% to 92.5%, and cervical from 45.7% to 92.3% (THL Sotkanet 6103, 3621, 3620).
-- **Output:** a map with the high-risk count and the weakest step for each county, feeding the action brief (3.6).
-
-### 3.4 Overload warning (Yaokai)
+### 3.3 Overload warning (Yaokai)
 - **What it does:** Finland is ageing, and cancer rises fastest in people over 75. We combine population forecasts with cancer rates to predict each county's cases up to 2035, and flag counties whose waiting lists are already growing.
 
-### 3.5 Missing-data map and starter plan (Max)
+### 3.4 Missing-data map and starter plan (Max)
 - **What it does:** shows clearly what Finland doesn't measure. The biggest gap: no public figures on cancer waiting times, although Goal 3 has a target for them.
 - **Output:** a short plan telling a county which three dates to start recording first: referral received, diagnosis, treatment start.
 - **The link to page 1:** these are the same dates patients enter in the pathway clock. Patients who opt in fill the gap from the bottom up.
 
-### 3.6 County action brief
+### 3.5 County action brief
 - **What it does:** click a county and get one page: its biggest gap, the step in the care pathway where it happens, and three ranked actions.
 - **Why:** a decision-maker should get the message in two minutes.
 
@@ -166,7 +166,7 @@ Details and links are in `astrazeneca-data-sources.md`.
 ## Set aside for now
 
 - **What-if simulator** (Max): good idea, but we lack sourced figures for most sliders.
-- **Workforce strain monitor** (Max): we haven't found county workforce data. The ageing part lives on in 3.4.
+- **Workforce strain monitor** (Max): we haven't found county workforce data. The ageing part lives on in 3.3.
 - **Automatic hospital transfer applications** (Hazel): needs access to hospital systems.
 - **Training our own risk models** (Hazel): no individual-level data is available in 48 hours, so we use a published model.
 
@@ -182,6 +182,6 @@ Details and links are in `astrazeneca-data-sources.md`.
 
 Build in this order:
 1. Pathway clock and off-track list (the core story).
-2. Risk check and symptom diary.
-3. County radar and action brief on one screen.
+2. Detection radar (person side) and symptom diary.
+3. Detection radar (county side) and action brief on one screen.
 4. Everything else on the county page.

@@ -1,4 +1,4 @@
-// 3.6 County action brief: biggest gap, where it happens, three ranked actions. Printable.
+// 3.5 County action brief: biggest gap, where it happens, three ranked actions. Printable.
 import type { ReactNode } from 'react'
 import { Btn, Display, Label, SourceBadge, Stamp, cx } from '../../components/ui'
 import { COUNTIES, type County } from '../../data/counties'

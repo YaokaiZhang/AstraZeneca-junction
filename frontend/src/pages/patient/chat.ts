@@ -87,12 +87,13 @@ function nextQuestion(asked: string[], smoke: SmokeInfo): { msgs: Msg[]; pending
   return { msgs: [bot('bot.anything')], pending: null, asked }
 }
 
-function saveSmoking(text: string, info: SmokeInfo, out: Msg[]) {
+function saveSmoking(info: SmokeInfo, out: Msg[]) {
   const st = useChat.getState()
   const smoke = { ...st.smoke, ...info }
   st.set({ smoke })
-  addEntry(text, ['smoking'], today(), 'chat')
-  out.push(bot('bot.smokeSaved', { cpd: smoke.cpd ?? '?', yrs: smoke.years ?? '?', py: packYears(smoke.cpd, smoke.years) }))
+  const vars = { cpd: smoke.cpd ?? '?', yrs: smoke.years ?? '?', py: packYears(smoke.cpd, smoke.years) }
+  addEntry(tr(useStore.getState().lang, 'bot.smokeSaved', vars), ['smoking'], today(), 'chat')
+  out.push(bot('bot.smokeSaved', vars))
 }
 
 /** Handle one user turn. `value` is set when a chip was tapped; `label` is what to echo. */
@@ -107,7 +108,8 @@ export function send(label: string, value?: string) {
   let p = st.pending
   // typed text that names a new symptom wins over a pending follow-up question
   if (!value && p && p.kind !== 'date' && p.kind !== 'checkin' && p.kind !== 'smokeHow') {
-    const fresh = extractTags(text).filter((t) => t !== 'smoking' && !(p!.kind === 'yesno' && t === p.tag) && !(p!.kind === 'blood' && t.startsWith('blood')))
+    const cur = p
+    const fresh = extractTags(text).filter((t) => t !== 'smoking' && !(cur.kind === 'yesno' && t === cur.tag) && !(cur.kind === 'blood' && t.startsWith('blood')))
     if (fresh.length) p = null
   }
   // strip chips from earlier bot messages so old answers can't be re-tapped
@@ -146,7 +148,7 @@ export function send(label: string, value?: string) {
   } else if (p?.kind === 'smoke') {
     const info = value ? { status: value as SmokeInfo['status'] } : parseSmoking(text)
     if (info.status === 'never') { st.set({ smoke: { status: 'never' } }); finish() }
-    else if (info.cpd && info.years) { saveSmoking(text, info, out); finish() }
+    else if (info.cpd && info.years) { saveSmoking(info, out); finish() }
     else {
       st.set({ smoke: { ...st.smoke, ...info } })
       out.push(bot('bot.q.smokeHow')); pending = { kind: 'smokeHow', status: info.status ?? 'current' }
@@ -154,7 +156,7 @@ export function send(label: string, value?: string) {
   } else if (p?.kind === 'smokeHow') {
     const info = parseSmoking(text)
     if (!info.cpd) { const n = /(\d+)/.exec(text); if (n) info.cpd = +n[1] }
-    saveSmoking(text, { status: p.status, ...info, ...(info.status === 'current' && p.status === 'former' ? { status: 'former' } : {}) }, out)
+    saveSmoking({ status: p.status, ...info, ...(info.status === 'current' && p.status === 'former' ? { status: 'former' } : {}) }, out)
     finish()
   } else if (p?.kind === 'checkin') {
     const answer = value ?? ''
@@ -179,7 +181,7 @@ export function send(label: string, value?: string) {
     }
     if (smokeInfo) {
       if (smokeInfo.status === 'never') st.set({ smoke: { status: 'never' } })
-      else if (smokeInfo.cpd && smokeInfo.years) saveSmoking(text, smokeInfo, out)
+      else if (smokeInfo.cpd && smokeInfo.years) saveSmoking(smokeInfo, out)
       else if (!pending) { st.set({ smoke: { ...st.smoke, ...smokeInfo } }); out.push(bot('bot.q.smokeHow')); pending = { kind: 'smokeHow', status: smokeInfo.status === 'former' ? 'former' : 'current' } }
     }
     if (!symptomTags.length && !smokeInfo) out.push(bot('bot.unclear'))

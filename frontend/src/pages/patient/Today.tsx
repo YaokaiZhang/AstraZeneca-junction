@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Card, EdgeText, Label, RoundBtn, Stamp, cx } from '../../components/ui'
 import { pathwayStatus, daysBetween, today } from '../../data/pathway'
 import { useStore } from '../../lib/store'
-import { assess, firstSeen, PLCO_THRESHOLD } from './logic'
+import { assess, firstSeen, nextCheckin, PLCO_THRESHOLD } from './logic'
 import { send } from './chat'
 import { useT } from './i18n'
 import { ArrowIcon, Clock, Gauge, Tag } from './bits'
@@ -36,7 +36,7 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
   const symCount = Object.keys(firstSeen(s.diary)).filter((k) => k !== 'smoking').length
   const last = [...s.diary].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
   const high = !!s.risk && s.risk.prob6y >= PLCO_THRESHOLD
-  const nextCheck = s.checkins.enabled ? new Date(new Date(s.checkins.lastAt ?? new Date().toISOString()).getTime() + s.checkins.everyDays * 86_400_000).toISOString() : null
+  const nextCheck = s.checkins.enabled ? nextCheckin(s.checkins) : null
   const invited = invitedTo(s.profile.age, s.profile.sex)
 
   return (
@@ -78,7 +78,7 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
               <Label>{t('d.symptoms')}</Label>
               <p className="font-serif text-6xl leading-none mt-1">{symCount}</p>
             </div>
-            <Stamp tone={flag ? 'terra' : 'ink'} rotate={8} className="!w-20 !h-20">{flag ? t('d.flag') : t('d.noflag')}</Stamp>
+            <Stamp tone={flag ? 'terra' : 'ink'} rotate={8}>{flag ? t('d.flag') : t('d.noflag')}</Stamp>
           </div>
           <div className="flex flex-wrap gap-1.5 mt-4">
             {reasons.slice(0, 4).map((r) => <Tag key={r.tag} tone={r.red ? 'terra' : 'line'}>{t(`sym.${r.tag}`)}{!r.red && ` · ${r.days} d`}</Tag>)}

@@ -13,7 +13,7 @@ Goal 3 of the National Cancer Strategy 2026–2035 names three cancers for bette
 | **Lung** | Every page, as the deep example | Goal 3 cancer (survival target +14 percentage points), usually found late, and the only one with a free published risk model |
 | **Bowel** | Second full story: patient reminder, county page, screening analysis | The only cancer where a new screening programme (started 2022) can be followed town by town |
 | **Pancreas, liver** | County page only | Goal 3 cancers, but no screening test or usable risk model. They are rare, so we pool several years and show uncertainty ranges |
-| **Breast, cervical** | Only in "who misses screening" (3.2) | Long screening history by town |
+| **Breast, cervical** | Only in screening analysis (3.2, 3.3) | Long screening history by town |
 
 The symptom diary, pathway clock and hospital page work for any cancer.
 
@@ -96,9 +96,16 @@ The symptom diary, pathway clock and hospital page work for any cancer.
 - **What it does:** for each town, we predict screening turnout from its income, age and language mix, then compare with the real turnout.
 - **Output:** towns doing much worse than predicted need help. Towns doing much better are doing something worth copying.
 
-### 3.3 Lung screening capacity planner (Yaokai)
-- **What it does:** smoking rate × population aged 50–74 gives the number of people in a county who would qualify for lung screening, and so the number of CT scans needed per year.
-- **Output:** a figure a county can put in a budget.
+### 3.3 Screening forecaster (Yaokai)
+- **What it does:** for each county and town, it uses open data to forecast the next ten years of bowel, breast and cervical screening, with lung as a "what if" scenario. It answers three questions:
+  1. **How many people will be invited?** Population forecasts by age and area, put through each programme's invitation ages. Bowel screening is still being widened to more age groups, and the forecast follows that.
+  2. **How many will take part?** Each town's own turnout trend, adjusted by the 3.2 model (income, age and language mix).
+  3. **What does that mean in tests and cancers?** Invitations × turnout gives tests needed. Published positivity and detection rates give follow-up exams (for example colonoscopies after a positive bowel test) and cancers found early.
+- **The headline number:** "cancers found late because people didn't take part." That is non-attenders × the expected number of cancers screening would have found in them. It turns a turnout percentage into people.
+- **Where effort pays most:** towns ranked by how many extra people one percentage point more turnout would reach, and how many cancers that would find early.
+- **What the data shows already:** turnout differs a lot between towns. In 2024, bowel screening ranged from 59.5% to 89.1% across 584 areas, breast from 68.1% to 92.5%, and cervical from 45.7% to 92.3% (THL Sotkanet 6103, 3621, 3620).
+- **Lung as a scenario:** Finland has no lung screening programme yet. The same engine estimates how many people aged 50–74 would qualify (smoking rate × population, refined with PLCOm2012) and how many CT scans a county would need each year if a programme started.
+- **Output:** for each county, a ten-year table of invitations, tests, follow-up exams and early cancers per programme, figures a county can put in a budget. Every number carries a source badge, and forecasts show an uncertainty range.
 
 ### 3.4 Overload warning (Yaokai)
 - **What it does:** Finland is ageing, and cancer rises fastest in people over 75. We combine population forecasts with cancer rates to predict each county's cases up to 2035, and flag counties whose waiting lists are already growing.
@@ -141,7 +148,8 @@ Insights from AstraZeneca mentors get their own source type, "mentor interview."
 | Screening turnout: cervical, breast, bowel | THL Sotkanet (open API, indicators 3620, 3621, 6103) |
 | Smoking, alcohol, obesity, inactivity by county | THL Sotkanet (4404, 4411, 4459, 5527) |
 | Waiting lists for specialist care | THL Sotkanet (3336) and THL Sampo |
-| Population, age, income, education, forecasts | Statistics Finland (open API) |
+| Population, age, income, education, forecasts | Statistics Finland (open API; projection by age and area 2024–2045, table 14wx) |
+| Screening positivity and detection rates | Finnish Cancer Registry screening statistics |
 | Nordic survival comparison | NORDCAN |
 | Lung risk model | PLCOm2012, published in NEJM 2013 |
 | Target times for cancer care | THL guidance 21/2016 |

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
+import { Clock, Marquee, Privacy, ThreeDates, TooLate, Views } from './home/Pitch'
+import { WordsUp } from './home/reveal'
 import FinlandCanvas, { HOSPITALS, type Hover, type Tally } from './home/FinlandCanvas'
 
 const CARDS = [
@@ -166,7 +168,18 @@ export default function Home() {
         <a href="#doors" className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
       </section>
 
-      <section id="doors" className="relative px-5 lg:px-12 py-24 lg:py-32 flex justify-center">
+      <Marquee words={['on time', 'ajoissa', 'i tid', 'вовремя', 'waqtiga']} />
+      <Clock />
+      <TooLate />
+      <Marquee words={['notice', 'track', 'ask', 'escalate', 'find']} reverse />
+      <Views />
+      <Privacy />
+      <ThreeDates />
+
+      <section id="doors" className="relative px-5 lg:px-12 py-24 lg:py-32 flex flex-col items-center">
+        <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95] text-center mb-16 lg:mb-24">
+          <WordsUp text="Choose" /><br /><WordsUp text="your door." className="italic" delay={150} />
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 w-full max-w-5xl">
           {CARDS.map((c) => (
             <Link key={c.to} to={c.to} className="block">

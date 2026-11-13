@@ -1,7 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Card, EdgeText, Label, SourceBadge, Stamp, cx } from '../../components/ui'
 import { CANCERS, COUNTIES } from '../../data/counties'
 import { Reveal, WordsUp, useCount, useInView, useScrollProgress } from './reveal'
+
+/* short plain-language explainer under each headline */
+function Lede({ children, className, delay = 250 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  return (
+    <Reveal fx="up" delay={delay} className={cx('max-w-xl font-sans text-base lg:text-lg leading-relaxed opacity-75', className)}>
+      <p>{children}</p>
+    </Reveal>
+  )
+}
 
 /* ───────────── marquee band, pushed by scroll ───────────── */
 export function Marquee({ words, reverse }: { words: string[]; reverse?: boolean }) {
@@ -77,8 +86,16 @@ export function Clock() {
             The real number?<br /><span className="italic text-terra pl-[0.6em]">Nobody counts it.</span>
           </h2>
         </div>
+        <div className="relative mt-6 max-w-xl h-[5.5em] lg:h-[4.5em] font-sans text-base lg:text-lg leading-relaxed">
+          <p className={cx('absolute inset-0 transition-opacity duration-700', real ? 'opacity-0' : 'opacity-75')}>
+            Finnish guidance sets a target time for each step, from the first GP visit to the start of treatment. Keep scrolling to add them up.
+          </p>
+          <p className={cx('absolute inset-0 transition-opacity duration-700', real ? 'opacity-75' : 'opacity-0')}>
+            But nobody publishes how long patients actually wait between those steps. Ajoissa records the dates, so the real number can finally be counted.
+          </p>
+        </div>
 
-        <div className="mt-14 lg:mt-20 relative max-w-6xl lg:w-[calc(100%-46vh-4vw)]">
+        <div className="mt-10 lg:mt-14 relative max-w-6xl lg:w-[calc(100%-46vh-4vw)]">
           {/* target track */}
           <div className="flex items-center gap-3 mb-3"><span className="label">Target</span><SourceBadge id="thlTargets" kind="estimate" /></div>
           <div className="relative h-24">
@@ -147,6 +164,9 @@ export function TooLate() {
         </h2>
         <Reveal fx="blur" delay={300} className="flex items-center gap-2"><Label>Share at advanced stage</Label><SourceBadge id="cancerRegistry" kind="estimate" /></Reveal>
       </div>
+      <Lede className="mt-8">
+        The share of cancers found only after they have already spread, when they are far harder to treat. Finding them earlier is what changes these numbers.
+      </Lede>
       <div className="mt-16 lg:mt-24 grid grid-cols-2 lg:grid-cols-4 gap-y-14">
         {CANCERS.map((c, i) => <Ring key={c.id} label={c.label} value={c.lateShare} delay={i * 150} />)}
       </div>
@@ -268,9 +288,9 @@ function CountyMock() {
 }
 
 const VIEWS = [
-  { k: '01', who: 'Patient', a: 'Notice it.', b: 'Say it. Chase it.', chips: ['Symptom diary', 'Lung risk', 'Pathway clock', '5 languages'], mock: <PhoneMock />, to: '/patient' },
-  { k: '02', who: 'Hospital', a: 'See who is', b: 'falling behind.', chips: ['Off-track list', 'Auto-escalation', 'Shared records', 'Delay map'], mock: <HospitalMock />, to: '/hospital' },
-  { k: '03', who: 'County', a: 'Find where', b: 'people are lost.', chips: ['Late-detection radar', 'Screening gaps', 'Capacity', 'Action brief'], mock: <CountyMock />, to: '/county' },
+  { k: '01', who: 'Patient', a: 'Notice it.', b: 'Say it. Chase it.', p: 'Write down symptoms in your own words, check your lung cancer risk and see how long each step of your care has taken. If a step runs late, Ajoissa drafts a message to the clinic for you.', chips: ['Symptom diary', 'Lung risk', 'Pathway clock', '5 languages'], mock: <PhoneMock />, to: '/patient' },
+  { k: '02', who: 'Hospital', a: 'See who is', b: 'falling behind.', p: 'A live list of patients whose next step is overdue, most delayed first. The worst cases are flagged for escalation, and the bars show which step causes the most delay.', chips: ['Off-track list', 'Auto-escalation', 'Shared records', 'Delay map'], mock: <HospitalMock />, to: '/hospital' },
+  { k: '03', who: 'County', a: 'Find where', b: 'people are lost.', p: 'Compares regions on how often cancers are found late, so screening and capacity go where people slip through. Darker tiles mean more late diagnoses.', chips: ['Late-detection radar', 'Screening gaps', 'Capacity', 'Action brief'], mock: <CountyMock />, to: '/county' },
 ]
 
 export function Views() {
@@ -279,6 +299,9 @@ export function Views() {
       <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95] text-center">
         <WordsUp text="One record." /><br /><WordsUp text="Three views." className="italic" delay={200} />
       </h2>
+      <Lede className="mx-auto !mt-8 text-center">
+        Each patient has one timeline. The patient, their hospital and their county each see it from their own side.
+      </Lede>
       {VIEWS.map((v, i) => (
         <div key={v.k} className={cx('grid lg:grid-cols-2 gap-14 lg:gap-24 items-center', i % 2 === 1 && "lg:[&>*:first-child]:order-2")}>
           <div className="relative">
@@ -288,6 +311,7 @@ export function Views() {
             <h3 className="mt-6 font-serif font-light text-5xl lg:text-7xl leading-[0.95]">
               <WordsUp text={v.a} /><br /><WordsUp text={v.b} className="italic text-terra" delay={150} />
             </h3>
+            <Lede className="mt-6" delay={200}>{v.p}</Lede>
             <div className="mt-8 flex flex-wrap gap-2">
               {v.chips.map((c, j) => (
                 <Reveal key={c} fx="scale" delay={300 + j * 80} as="span"
@@ -323,6 +347,9 @@ export function Privacy() {
           <h2 className="mt-6 font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
             <WordsUp text="Nothing moves" /><br /><WordsUp text="until you say so." className="italic text-mustard" delay={200} />
           </h2>
+          <Lede className="mt-8">
+            Your health data stays with you. A hospital sees your timeline only after you choose to share it, and the county only ever sees anonymous totals. Tap the switch to try it.
+          </Lede>
           <div className="mt-12 grid sm:grid-cols-3 gap-6 max-w-2xl">
             {[['Hospital', 'only if you share'], ['County', 'counts, never names'], ['You', 'withdraw any time']].map(([a, b], i) => (
               <Reveal key={a} delay={400 + i * 120} className="border-t border-paper/20 pt-4">
@@ -366,6 +393,9 @@ export function ThreeDates() {
         </h2>
         <Reveal fx="blur" delay={300} className="flex items-center gap-2"><Label>Starter dataset</Label><SourceBadge id="ourModel" kind="estimate" /></Reveal>
       </div>
+      <Lede className="mt-8">
+        No new IT system is needed to start. Three dates per patient — referral, diagnosis and start of treatment — already show where time is lost.
+      </Lede>
       <div ref={ref} className="relative mt-20 grid sm:grid-cols-[1fr_1fr_1fr_auto] gap-10 items-center">
         <svg className="absolute left-0 right-24 top-1/2 h-4 -translate-y-1/2 hidden sm:block w-full" preserveAspectRatio="none" viewBox="0 0 100 4" aria-hidden>
           <path d="M2 2 H98" stroke="#1F1F1F" strokeOpacity=".35" strokeWidth=".4" strokeDasharray="1.5 1.5" fill="none"

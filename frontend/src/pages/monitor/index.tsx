@@ -7,7 +7,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Btn, Display, Drawer, KindLegend, Label, Picker, SourceBadge, cx } from '../../components/ui'
 import { GROUPS, SCREENING, SCREENING_FI, screeningById, MISSED_CANCERS_2022 } from './data'
 import { EMPTY_PLAN, GROUP_FACTS, evaluate, n1, type Plan } from './model'
-import { Chain } from './Chain'
+import { HowItChanged } from './Chain'
 import { Recommend, SimpleChain, Verdict, WhatItTakes } from './Simple'
 import { Missed } from './Missed'
 import { MixGap } from './MixGap'
@@ -32,6 +32,10 @@ function Section({ n, a, b, children, id, aside }: { n: string; a: ReactNode; b?
       {children}
     </section>
   )
+}
+
+function SourceLine({ children }: { children: ReactNode }) {
+  return <p className="mt-3 font-sans text-[13px] opacity-55">{children}</p>
 }
 
 function Block({ a, b, children }: { a: ReactNode; b?: ReactNode; children: ReactNode }) {
@@ -68,7 +72,7 @@ export default function MonitorPage() {
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
           <div className="flex items-center gap-4 min-w-0">
             <Picker label="County" value={countyId} onChange={select} options={OPTIONS}
-              className="font-serif text-2xl sm:text-3xl italic py-0.5 max-w-[70vw] sm:max-w-none" />
+              className="font-serif text-xl sm:text-2xl italic py-0.5 max-w-[60vw] sm:max-w-none" />
           </div>
           <div className="flex items-center gap-3">
             {touched && <button onClick={() => setPlan(EMPTY_PLAN)} className="font-type text-sm uppercase tracking-widest opacity-70 hover:opacity-100 hover:text-terra">Reset fixes</button>}
@@ -80,26 +84,31 @@ export default function MonitorPage() {
         </div>
       </div>
 
-      {/* 1 · the verdict */}
-      <section className="mt-10 sm:mt-14">
-        <Label className="mb-4">Bowel cancer screening · {r.name} · 2024</Label>
-        <p key={countyId} className="rise font-serif text-3xl sm:text-[2.8rem] leading-[1.12] max-w-5xl"><Verdict r={r} /></p>
-      </section>
-
-      {/* 2 · the chain, simplified */}
-      <section className="mt-10 sm:mt-12">
-        <SimpleChain r={r} />
+      {/* 1 · pick a county on the map; the verdict and the three steps beside it */}
+      <section className="mt-8 sm:mt-10 grid lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
+        <div className="max-w-[220px] sm:max-w-[260px] mx-auto lg:max-w-none lg:mx-0 w-full">
+          <p className="font-sans text-[14px] opacity-65 mb-2 text-center lg:text-left">Tap a county on the map</p>
+          <LeakMap selected={countyId} onSelect={select} />
+        </div>
+        <div className="min-w-0">
+          <Label className="mb-4">Bowel cancer screening · {r.name} · 2024</Label>
+          <p key={countyId} className="rise font-serif text-3xl sm:text-[2.6rem] leading-[1.12] max-w-4xl"><Verdict r={r} /></p>
+          <div className="mt-8"><SimpleChain r={r} /></div>
+          <SourceLine>Source: Finnish Cancer Registry, bowel cancer screening statistics, 2024 round.</SourceLine>
+        </div>
       </section>
 
       {/* 3 · what to do */}
       <Block a="What" b="to do">
         <Recommend r={r} plan={plan} setPlan={setPlan} res={res}
           otherOptions={<button onClick={() => openEvidence('evidence-fixes')} className="font-sans text-[15px] underline underline-offset-4 opacity-75 hover:opacity-100 hover:text-terra">See other proven options</button>} />
+        <SourceLine>Based on studies of real screening programmes (JAMA Internal Medicine 2026 and 2018), applied to {r.name}&apos;s 2024 numbers.</SourceLine>
       </Block>
 
       {/* 4 · what it will take */}
       <Block a="What it" b="will take">
         <WhatItTakes r={r} plan={plan} setPlan={setPlan} res={res} />
+        <SourceLine>Our estimate from the Cancer Registry figures and Statistics Finland population 2025. <button onClick={() => openEvidence('bottleneck')} className="underline underline-offset-2 hover:text-terra">How we worked it out</button></SourceLine>
       </Block>
 
       {/* 5 · the plan */}
@@ -121,8 +130,8 @@ export default function MonitorPage() {
           </span>
         </summary>
         {evidence && <div className="pb-6">
-          <Section n="A" a="The chain," b="in detail">
-            <Chain r={r} />
+          <Section n="A" a="How it" b="changed">
+            <HowItChanged r={r} />
           </Section>
           <Section n="B" a="Who is" b="being missed">
             <Missed />

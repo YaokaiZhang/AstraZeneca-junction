@@ -1,7 +1,7 @@
 // Section 1: the chain and where it leaks. Three steps against the national figure; people lost at each.
 import type { ReactNode } from 'react'
 import { Card, Label, SourceBadge, cx } from '../../components/ui'
-import { SCREENING_FI, rankIn, trend, type ScreeningRow } from './data'
+import { SCREENING, SCREENING_FI, rankIn, trend, type ScreeningRow } from './data'
 import { STEP_META, THRESHOLDS, flags, losses, n0, n1, type Step } from './model'
 
 const SRC = <SourceBadge id="bowelScreening2024" kind="direct" demo={false} />
@@ -141,6 +141,50 @@ export function Chain({ r }: { r: ScreeningRow }) {
         Red when kit return &lt; {THRESHOLDS.detection}%, colonoscopy after a positive test &lt; {THRESHOLDS.referral}%, or median wait &gt; {THRESHOLDS.capacity} months. Dashed tick = that line.
       </p>
       <TrendNote r={r} />
+    </div>
+  )
+}
+
+/** Evidence: how the two steps with a history changed over three rounds, and where the county ranks. No repeat of the tiles. */
+export function HowItChanged({ r }: { r: ScreeningRow }) {
+  const t = trend(r.id)
+  const fi = trend('finland')
+  const rank = (k: 'participationPct' | 'colonoscopyOfPositivesPct') => rankIn(2024, r.id, k)
+  const waitSorted = [...SCREENING].sort((a, b) => a.medianMonths - b.medianMonths)
+  const waitRank = waitSorted.findIndex((x) => x.id === r.id) + 1
+  const rows: { label: string; vals: (string | null)[]; fi: string; rank: string }[] = [
+    { label: 'Sent the kit back', vals: t.map((p) => `${n1(p.participationPct)}%`), fi: `${n1(SCREENING_FI.participationPct)}%`, rank: `${ord(rank('participationPct').rank)} of ${rank('participationPct').of}` },
+    { label: 'Had the follow-up colonoscopy', vals: t.map((p) => `${n1(p.colonoscopyOfPositivesPct)}%`), fi: `${n1(SCREENING_FI.colonoscopyOfPositivesPct)}%`, rank: `${ord(rank('colonoscopyOfPositivesPct').rank)} of ${rank('colonoscopyOfPositivesPct').of}` },
+    { label: 'Wait for the colonoscopy', vals: [null, null, `${n1(r.medianMonths)} months`], fi: `${n1(SCREENING_FI.medianMonths)} months`, rank: `${ord(waitRank)} of ${waitSorted.length}` },
+  ]
+  return (
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[520px] font-sans text-[15px] border-collapse">
+          <thead>
+            <tr className="text-left text-[13px] opacity-60">
+              <th className="font-normal py-2 pr-4">{r.name}</th><th className="font-normal">2022</th><th className="font-normal">2023</th><th className="font-normal">2024</th>
+              <th className="font-normal">Finland 2024</th><th className="font-normal">Rank 2024</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((x) => (
+              <tr key={x.label} className="border-t border-black/10">
+                <td className="py-3 pr-4">{x.label}</td>
+                {x.vals.map((v, i) => <td key={i} className={cx('font-serif text-xl', i === 2 && 'text-terra')}>{v ?? <span className="opacity-30">·</span>}</td>)}
+                <td className="opacity-70">{x.fi}</td>
+                <td className="opacity-70">{x.rank}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-4 font-sans text-[15px] leading-relaxed opacity-80 max-w-4xl">
+        Rank 1 is the best county. In 2024, of {n0(r.invited)} people invited in {r.name}, {n0(r.testPositive)} tested positive, {n0(r.colonoscopyDone)} had the colonoscopy and {n0(r.cancers)} cancers were found.
+        {' '}Nationally, follow-up after a positive test fell from {n1(fi[1]?.colonoscopyOfPositivesPct ?? 0)}% in 2023 to {n1(SCREENING_FI.colonoscopyOfPositivesPct)}% in 2024, so the 2024 figures are probably partly reports that had not come in yet.
+        {' '}Waits were only published for 2024.
+      </p>
+      <p className="mt-2 font-sans text-[13px] opacity-55 flex items-center gap-2">Source: Finnish Cancer Registry, bowel cancer screening statistics 2022, 2023 and 2024. {SRC_ROUNDS}</p>
     </div>
   )
 }

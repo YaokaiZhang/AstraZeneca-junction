@@ -7,6 +7,7 @@ import { SCREENING, screeningById } from './data'
 import { STEPS, flags, losses, n0, n1, weakCount, type Step, STEP_META } from './model'
 
 const LEAK_FILL = ['#D1D1C9', '#FFC233', '#E0875F', '#C65D3B']
+const PLAIN: Record<Step, string> = { detection: 'kits', referral: 'follow-up', capacity: 'wait' }
 
 export function LeakMap({ selected, onSelect, className }: { selected: string; onSelect: (id: string) => void; className?: string }) {
   return (
@@ -18,11 +19,11 @@ export function LeakMap({ selected, onSelect, className }: { selected: string; o
           if (!r) return null
           const f = flags(r)
           const red = STEPS.filter((s) => f[s])
-          return red.length ? `Leaks: ${red.map((s) => STEP_META[s].short).join(' · ')}` : 'No step leaks'
+          return red.length ? `Behind: ${red.map((s) => PLAIN[s]).join(', ')}` : 'On track'
         }} />
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-type text-[13px] uppercase tracking-wider">
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-sans text-[13px] opacity-80">
         {LEAK_FILL.map((c, i) => (
-          <span key={c} className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm" style={{ background: c }} />{i === 0 ? 'none leak' : `${i} leak${i > 1 ? 's' : ''}`}</span>
+          <span key={c} className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm" style={{ background: c }} />{i === 0 ? 'On track' : `${i} step${i > 1 ? 's' : ''} behind`}</span>
         ))}
       </div>
     </div>

@@ -69,6 +69,9 @@ export interface RetrievalMeta {
   method: 'keyword'
   queryVersion: string
   corpusVersion: string
+  /** passages and distinct approved sources retrieved for this briefing (shown as the plan is written) */
+  passages?: number
+  sources?: number
 }
 
 export type RetrievalResult =

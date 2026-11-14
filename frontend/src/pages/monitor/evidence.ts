@@ -28,7 +28,7 @@ export interface BriefingResponse {
   text?: string
   limitations?: string[]
   evidence: EvidenceRef[]
-  retrieval: { method: 'keyword'; queryVersion: string; corpusVersion: string }
+  retrieval: { method: 'keyword'; queryVersion: string; corpusVersion: string; passages?: number; sources?: number }
   generatedAt: string
 }
 

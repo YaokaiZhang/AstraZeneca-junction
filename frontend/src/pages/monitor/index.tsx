@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
-import { Btn, Display, Drawer, KindLegend, Label, Picker, SourceBadge, cx } from '../../components/ui'
+import { Display, Drawer, KindLegend, Label, Picker, SourceBadge, cx } from '../../components/ui'
 import { GROUPS, SCREENING, SCREENING_FI, screeningById, MISSED_CANCERS_2022 } from './data'
 import { EMPTY_PLAN, GOAL_PARTICIPATION, GROUP_FACTS, THRESHOLDS, evaluate, n1, type Plan } from './model'
 import { HowItChanged } from './Chain'
@@ -17,41 +17,13 @@ import { ActionSheet, type Briefing } from './ActionSheet'
 import { FollowUpList } from './FollowUpList'
 import { ProgrammeMonitor } from './ProgrammeMonitor'
 import { ProgrammeTabs } from './ProgrammeTabs'
-import { isProgramme, programmeView, templateFor, type ProgrammeId, type ProgrammeView } from './programmes'
-import { briefingLines, buildFacts, numbersMatch, stripCites, templateBriefing, type Facts } from './briefing'
-import type { BriefingResponse, EvidenceRef } from './evidence'
+import { isProgramme, programmeView, type ProgrammeId } from './programmes'
+import { buildFacts, templateBriefing } from './briefing'
+import { usePlanWriter } from './planWriter'
+import { PlanPanel } from './PlanWriting'
 import { LeakMap, Ranking } from './Compare'
 import { SHOW_FULL_STORY } from '../../config'
 
-function briefingErrorNote(status: number, error: unknown): string {
-  const e = String(error ?? '')
-  if (e === 'ai_off') return 'AI is off on this server.'
-  if (e === 'key_format') return 'The server’s LLM_KEY is not an Anthropic API key (it should start with sk-ant-).'
-  if (e.includes('401')) return 'The server’s LLM_KEY was not accepted by Anthropic.'
-  if (e === 'insufficient_evidence') return 'No strong enough evidence found; showing our calculated plan.'
-  if (e === 'invalid_output') return 'AI text not used: it did not pass our checks.'
-  return `The AI could not be reached (${e || status}).`
-}
-
-/** The AI briefing if the /api/briefing response passes every check, else null: the server says it is grounded,
- *  it has the four labelled lines, every number matches the facts and every [n] points at a returned source. */
-function groundedBriefing(body: Partial<BriefingResponse>, facts: Facts): Briefing | null {
-  if (body.status !== 'grounded' || typeof body.text !== 'string' || !Array.isArray(body.evidence) || !body.evidence.length) return null
-  const evidence: EvidenceRef[] = body.evidence
-  const lines = briefingLines(body.text)
-  if (!lines || !numbersMatch(stripCites(body.text), facts)) return null
-  if (!lines.every((l) => l.cites.every((n) => evidence.some((e) => e.n === n)))) return null
-  return {
-    text: body.text,
-    source: 'ai',
-    lines,
-    evidence,
-    evidenceLevel: body.evidenceLevel === 'evidence_backed' ? 'evidence_backed' : 'limited_evidence',
-    limitations: (body.limitations ?? []).filter((x) => typeof x === 'string' && x.trim()).slice(0, 3),
-  }
-}
-
-/** The county the monitor opens on: a wellbeing services county with a clear follow-up gap and a long wait. */
 const DEFAULT_COUNTY = 'pohjois-savo'
 
 const OPTIONS = SCREENING.map((r) => ({ id: r.id, name: r.name })).sort((a, b) => a.name.localeCompare(b.name, 'fi'))
@@ -99,37 +71,12 @@ function OtherProgramme({ p, setProgramme }: { p: Exclude<ProgrammeId, 'bowel'>;
   const [q, setQ] = useSearchParams()
   const countyId = programmeView(p, q.get('c') ?? '') ? q.get('c')! : DEFAULT_COUNTY
   const select = (id: string) => setQ((cur) => { const n = new URLSearchParams(cur); n.set('c', id); return n }, { replace: true })
-  const [ai, setAi] = useState<{ key: string; briefing: Briefing } | null>(null)
-  const [aiNote, setAiNote] = useState<{ key: string; note: string } | null>(null)
-  const [aiBusy, setAiBusy] = useState(false)
-  const [aiOn, setAiOn] = useState<boolean | null>(null)
-  useEffect(() => { fetch('/api/health').then((x) => x.json()).then((h) => setAiOn(!!h.ai)).catch(() => setAiOn(false)) }, [])
-  const keyOf = (v: ProgrammeView) => JSON.stringify(v.facts)
-  const briefingFor = (v: ProgrammeView): Briefing => {
-    const key = keyOf(v)
-    if (ai?.key === key) return ai.briefing
-    return { ...templateFor(v), note: aiNote?.key === key ? aiNote.note : undefined }
-  }
-  const writeBriefing = async (v: ProgrammeView) => {
-    const key = keyOf(v)
-    setAiBusy(true)
-    try {
-      const resp = await fetch('/api/briefing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ facts: v.facts }) })
-      const body = await resp.json().catch(() => ({}))
-      const b = resp.ok ? groundedBriefing(body, v.facts) : null
-      if (b) { setAi({ key, briefing: b }); setAiNote(null) }
-      else setAiNote({ key, note: !resp.ok ? briefingErrorNote(resp.status, body.error) : body.status === 'template_fallback' && body.reason ? briefingErrorNote(resp.status, body.reason) : 'AI text not used: it did not pass our checks.' })
-    } catch {
-      setAiNote({ key, note: 'The AI could not be reached.' })
-    } finally {
-      setAiBusy(false)
-    }
-  }
+  const writer = usePlanWriter()
   return (
     <div className="monitor-root county-root px-4 sm:px-6 lg:px-10 pb-20 max-w-[2000px] mx-auto overflow-x-clip">
       <MonitorStyles />
       <ProgrammeMonitor p={p} countyId={countyId} select={select} setProgramme={setProgramme}
-        briefingFor={briefingFor} aiOn={aiOn} writeBriefing={writeBriefing} aiBusy={aiBusy} />
+        writer={writer} />
     </div>
   )
 }
@@ -155,36 +102,8 @@ function BowelMonitor({ tabs }: { tabs: ReactNode }) {
   // the briefing on the one-page plan: template by default; AI text only if the server grounded it in cited
   // evidence and every number and citation in it checks out
   const facts = useMemo(() => buildFacts(r, plan, res), [r, plan, res])
-  const factsKey = JSON.stringify(facts)
-  const [ai, setAi] = useState<{ key: string; briefing: Briefing } | null>(null)
-  const [aiNote, setAiNote] = useState<{ key: string; note: string } | null>(null)
-  const [aiBusy, setAiBusy] = useState(false)
-  const [aiOn, setAiOn] = useState<boolean | null>(null)
-  useEffect(() => {
-    fetch('/api/health').then((x) => x.json()).then((h) => setAiOn(!!h.ai)).catch(() => setAiOn(false))
-  }, [])
-  const briefing: Briefing = ai?.key === factsKey
-    ? ai.briefing
-    : { text: templateBriefing(facts), source: 'template', note: aiNote?.key === factsKey ? aiNote.note : undefined }
-  const writeBriefing = async () => {
-    const key = factsKey
-    setAiBusy(true)
-    try {
-      const resp = await fetch('/api/briefing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ facts }) })
-      const body = await resp.json().catch(() => ({}))
-      const b = resp.ok ? groundedBriefing(body, facts) : null
-      if (b) { setAi({ key, briefing: b }); setAiNote(null) }
-      else {
-        setAiNote({ key, note: !resp.ok ? briefingErrorNote(resp.status, body.error)
-          : body.status === 'template_fallback' && body.reason ? briefingErrorNote(resp.status, body.reason)
-          : 'AI text not used: it did not pass our checks.' })
-      }
-    } catch {
-      setAiNote({ key, note: 'The AI could not be reached.' })
-    } finally {
-      setAiBusy(false)
-    }
-  }
+  const writer = usePlanWriter()
+  const briefing: Briefing = writer.briefingFor(facts, { text: templateBriefing(facts), source: 'template' })
 
   return (
     <div className="monitor-root county-root px-4 sm:px-6 lg:px-10 pb-20 max-w-[2000px] mx-auto overflow-x-clip">
@@ -238,10 +157,10 @@ function BowelMonitor({ tabs }: { tabs: ReactNode }) {
       <div className="mt-14 flex flex-wrap items-center gap-4">
         <button onClick={() => setSheet(true)}
           className="group inline-flex items-center gap-3 bg-ink text-paper rounded-full pl-7 pr-2 py-2 font-type uppercase text-sm tracking-widest hover:bg-terra transition-colors">
-          Get the one-page plan
+          Write the one-page plan
           <span className="w-10 h-10 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-y-0.5 transition-transform">↓</span>
         </button>
-        <span className="font-sans text-[15px] opacity-60">Everything above, with the numbers and sources, ready to print.</span>
+        <span className="font-sans text-[15px] opacity-60">The AI writes the briefing from these numbers and approved sources; you get one printable page.</span>
       </div>
 
       {/* 6 · the evidence */}
@@ -284,25 +203,8 @@ function BowelMonitor({ tabs }: { tabs: ReactNode }) {
       </Drawer>
 
       <Drawer open={sheet} onClose={() => setSheet(false)} label="County action sheet">
-        <div className="p-6 pt-16">
-          <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
-            <Label>Preview · one printable page</Label>
-            <div className="flex items-center gap-2">
-              <Btn type="button" variant="ghost" disabled={aiBusy || aiOn === false} aria-busy={aiBusy}
-                onClick={(e) => { e.stopPropagation(); void writeBriefing() }}
-                title={aiOn === false ? 'Start the server with LLM_KEY to use AI' : undefined}
-                className="whitespace-nowrap min-w-[13.5rem] justify-center">
-                {aiBusy ? <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-full border-2 border-current border-r-transparent animate-spin" />Writing briefing…</span>
-                  : briefing.source === 'ai' ? 'Rewrite with AI' : 'Write briefing with AI'}
-              </Btn>
-              <Btn onClick={() => window.print()}>Print</Btn>
-            </div>
-          </div>
-          {aiOn === false && <p className="font-sans text-[13px] opacity-60 mb-3">AI is off on this server, so the briefing comes from a template. The numbers are the same either way.</p>}
-          <div className="border border-black/15 rounded-lg p-4 bg-paper shadow-inner sheet-preview">
-            <ActionSheet r={r} plan={plan} res={res} briefing={briefing} onShowList={() => { setSheet(false); setList(true) }} />
-          </div>
-        </div>
+        <PlanPanel county={r.name} label="Bowel cancer screening" trace={writer.traceFor(facts)} aiOn={writer.aiOn} onWrite={() => void writer.write(facts)}
+          sheet={<ActionSheet r={r} plan={plan} res={res} briefing={briefing} onShowList={() => { setSheet(false); setList(true) }} />} />
       </Drawer>
 
       {createPortal(<div id="monitor-print"><ActionSheet r={r} plan={plan} res={res} briefing={briefing} /></div>, document.body)}

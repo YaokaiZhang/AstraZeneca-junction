@@ -3,14 +3,16 @@
 // → what it takes → one-page plan; the evidence (all proven options, the numbers, caveats) is collapsed below.
 import { createPortal } from 'react-dom'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Btn, Card, Display, Drawer, Label, Picker, Toggle, cx } from '../../components/ui'
+import { Card, Display, Drawer, Label, Picker, Toggle, cx } from '../../components/ui'
 import type { Briefing } from './ActionSheet'
 import { BREAST, BREAST_FI, BREAST_PUBLISHED, type BreastRow } from './breastData'
 import { CERVICAL, CERVICAL_FI, CERVICAL_PUBLISHED, type CervicalRow } from './cervicalData'
 import { LeakMap } from './Compare'
 import { FollowUpList } from './FollowUpList'
-import { GOAL_ATTENDANCE, programmeView, stepsBehind, type ProgrammeId, type ProgrammeView, type StepTile } from './programmes'
+import { GOAL_ATTENDANCE, programmeView, templateFor, stepsBehind, type ProgrammeId, type ProgrammeView, type StepTile } from './programmes'
 import { ProgrammeTabs } from './ProgrammeTabs'
+import { PlanPanel } from './PlanWriting'
+import type { usePlanWriter } from './planWriter'
 
 const n0 = (x: number) => Math.round(x).toLocaleString('en-GB')
 const n1 = (x: number) => x.toFixed(1)
@@ -24,7 +26,7 @@ function Tile({ t }: { t: StepTile }) {
       <div className="flex items-center justify-between gap-3">
         <p className="font-serif text-2xl leading-tight">{t.title}</p>
         <span className={cx('font-type text-[13px] uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0',
-          t.behind ? 'bg-terra text-paper' : t.missing ? 'border border-terra text-terra' : 'bg-black/[.06] opacity-80')}>{flag}</span>
+          t.behind ? 'bg-terra text-paper' : t.missing ? 'border border-terra text-terra' : 'bg-[#E2EDE6] text-[#2F5A44]')}>{flag}</span>
       </div>
       <p className={cx('mt-5 font-serif text-5xl sm:text-6xl leading-none', t.behind && 'text-terra')}>{t.big}{t.unit && t.big !== '–' ? <span className="text-3xl"> {t.unit}</span> : null}</p>
       <p className="mt-2 font-sans text-[15px] opacity-65">vs {t.finland} in Finland</p>
@@ -147,9 +149,9 @@ export function ProgrammeSheet({ v, county, briefing, applied, onShowList }: { v
   )
 }
 
-export function ProgrammeMonitor({ p, countyId, select, setProgramme, briefingFor, aiOn, writeBriefing, aiBusy }: {
+export function ProgrammeMonitor({ p, countyId, select, setProgramme, writer }: {
   p: Exclude<ProgrammeId, 'bowel'>; countyId: string; select: (id: string) => void; setProgramme: (p: ProgrammeId) => void
-  briefingFor: (v: ProgrammeView) => Briefing; aiOn: boolean | null; writeBriefing: (v: ProgrammeView) => void; aiBusy: boolean
+  writer: ReturnType<typeof usePlanWriter>
 }) {
   const v = programmeView(p, countyId)!
   const options = useMemo(() => (p === 'breast' ? BREAST : CERVICAL).map((r) => ({ id: r.id, name: r.name })).sort((a, b) => a.name.localeCompare(b.name, 'fi')), [p])
@@ -159,7 +161,7 @@ export function ProgrammeMonitor({ p, countyId, select, setProgramme, briefingFo
   const [evidence, setEvidence] = useState(false)
   useEffect(() => { setApplied(false) }, [countyId, p])
   const openEvidence = (id: string) => { setEvidence(true); setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60) }
-  const briefing = briefingFor(v)
+  const briefing = writer.briefingFor(v.facts, templateFor(v))
   const published = new Date(`${p === 'breast' ? BREAST_PUBLISHED : CERVICAL_PUBLISHED}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
   const name = v.facts.county as string
 
@@ -227,10 +229,10 @@ export function ProgrammeMonitor({ p, countyId, select, setProgramme, briefingFo
       <div className="mt-14 flex flex-wrap items-center gap-4">
         <button onClick={() => setSheet(true)}
           className="group inline-flex items-center gap-3 bg-ink text-paper rounded-full pl-7 pr-2 py-2 font-type uppercase text-sm tracking-widest hover:bg-terra transition-colors">
-          Get the one-page plan
+          Write the one-page plan
           <span className="w-10 h-10 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-y-0.5 transition-transform">↓</span>
         </button>
-        <span className="font-sans text-[15px] opacity-60">Everything above, with the numbers and sources, ready to print.</span>
+        <span className="font-sans text-[15px] opacity-60">The AI writes the briefing from these numbers and approved sources; you get one printable page.</span>
       </div>
 
       <details open={evidence} onToggle={(e) => setEvidence((e.target as HTMLDetailsElement).open)} className="mt-16 border-t border-black/15">
@@ -271,25 +273,8 @@ export function ProgrammeMonitor({ p, countyId, select, setProgramme, briefingFo
         </Drawer>
       )}
       <Drawer open={sheet} onClose={() => setSheet(false)} label="County action sheet">
-        <div className="p-6 pt-16">
-          <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
-            <Label>Preview · one printable page</Label>
-            <div className="flex items-center gap-2">
-              <Btn type="button" variant="ghost" disabled={aiBusy || aiOn === false} aria-busy={aiBusy}
-                onClick={(e) => { e.stopPropagation(); writeBriefing(v) }}
-                title={aiOn === false ? 'Start the server with LLM_KEY to use AI' : undefined}
-                className="whitespace-nowrap min-w-[13.5rem] justify-center">
-                {aiBusy ? <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-full border-2 border-current border-r-transparent animate-spin" />Writing briefing…</span>
-                  : briefing.source === 'ai' ? 'Rewrite with AI' : 'Write briefing with AI'}
-              </Btn>
-              <Btn onClick={() => window.print()}>Print</Btn>
-            </div>
-          </div>
-          {aiOn === false && <p className="font-sans text-[13px] opacity-60 mb-3">AI is off on this server, so the briefing comes from a template. The numbers are the same either way.</p>}
-          <div className="border border-black/15 rounded-lg p-4 bg-paper shadow-inner sheet-preview">
-            <ProgrammeSheet v={v} county={name} briefing={briefing} applied={applied} onShowList={v.list ? () => { setSheet(false); setList(true) } : undefined} />
-          </div>
-        </div>
+        <PlanPanel county={name} label={v.label} trace={writer.traceFor(v.facts)} aiOn={writer.aiOn} onWrite={() => void writer.write(v.facts)}
+          sheet={<ProgrammeSheet v={v} county={name} briefing={briefing} applied={applied} onShowList={v.list ? () => { setSheet(false); setList(true) } : undefined} />} />
       </Drawer>
       {createPortal(<div id="monitor-print"><ProgrammeSheet v={v} county={name} briefing={briefing} applied={applied} /></div>, document.body)}
     </>

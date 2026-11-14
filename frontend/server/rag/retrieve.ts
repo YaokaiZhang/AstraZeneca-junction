@@ -197,5 +197,5 @@ export function retrieve(fullCorpus: Corpus, facts: Record<string, number | stri
   take(ranked.find((s) => s.source.sourceType === 'official_policy' && s.source.setting === 'finland'))
   for (const s of ranked) take(s)
   picked.sort((a, b) => b.score - a.score || a.chunk.chunkId.localeCompare(b.chunk.chunkId))
-  return { status: 'ok', chunks: picked, query, meta }
+  return { status: 'ok', chunks: picked, query, meta: { ...meta, passages: picked.length, sources: new Set(picked.map((s) => s.source.id)).size } }
 }

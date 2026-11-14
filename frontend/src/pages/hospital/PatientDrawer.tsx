@@ -1,7 +1,8 @@
 import { Btn, Label, SourceBadge, cx } from '../../components/ui'
 import { PATHWAY, daysBetween, today } from '../../data/pathway'
 import type { HospitalAction } from '../../lib/store'
-import { CANCER_LABEL, type Coordinator } from './demoPatients'
+import { CANCER_LABEL, EST_KEYS, type Coordinator, type EstKey } from './demoPatients'
+import { ESTIMATE_HOW, PLCO_HOW, PLCO_THRESHOLD } from '../patient/logic'
 import { IconLock, IconUndo } from './icons'
 import { StatusPill, ReasonChip } from './OffTrackList'
 import { ago, barrierMeta, fmtDate, type Row } from './model'
@@ -33,6 +34,13 @@ export function PatientDrawerBody({ row, coords, onAct, onReassign, onReopen }: 
         <ReasonChip row={row} quiet />
       </div>
       {p.barrier?.note && p.barrier.step === row.step && <p className="font-sans text-sm mt-2 opacity-80">“{p.barrier.note}”</p>}
+      {row.escalated && row.coordinator && (
+        <p className="font-type text-sm mt-3" data-testid="flagged">
+          {row.escalatedBy === 'auto' ? 'Flagged automatically to ' : 'Escalated to '}
+          <span className="text-terra">{row.coordinator.name}</span>, {row.coordinator.role.toLowerCase()}
+          {row.escalatedBy === 'auto' && ' · no call from the patient needed'}
+        </p>
+      )}
       {row.action && <p className="font-type text-sm opacity-70 mt-2">{row.action.status} · {ago(row.action.at)}</p>}
 
       {/* actions */}
@@ -130,16 +138,20 @@ function Timeline({ row }: { row: Row }) {
 }
 
 function SharedRecords({ row }: { row: Row }) {
-  const { diary, risk } = row.p
+  const { diary, risk, est, estHigh } = row.p
   const prob = risk ? (risk.prob6y > 1 ? risk.prob6y / 100 : risk.prob6y) : null
   const pct = prob != null ? prob * 100 : null
-  const high = prob != null && prob >= 0.0151
+  const high = prob != null && prob >= PLCO_THRESHOLD
+  const ests = EST_KEYS.filter((k) => est?.[k] != null)
   return (
     <div className="space-y-6">
+      <p className="font-type text-sm opacity-70">
+        Shared by the patient{row.p.sharedAt ? ` · ${fmtDate(row.p.sharedAt)}` : ''}. The patient sees only their next step, never these numbers.
+      </p>
       <div className={cx('rounded-lg p-4', risk ? (high ? 'bg-terra text-paper' : 'bg-stone') : 'bg-black/[0.04]')}>
         <div className="flex items-center justify-between">
-          <span className="font-type text-sm uppercase tracking-widest opacity-80">6-y lung risk</span>
-          <SourceBadge id="plco" kind="estimate" how="PLCOm2012, patient-entered inputs. ≥1.51 % = screening-level risk." />
+          <span className="font-type text-sm uppercase tracking-widest opacity-80">6-y lung risk · PLCOm2012</span>
+          <SourceBadge id="plco" kind="estimate" demo={!row.p.isYou} how={PLCO_HOW} />
         </div>
         {pct != null ? (
           <>
@@ -148,9 +160,32 @@ function SharedRecords({ row }: { row: Row }) {
               <div className={cx('absolute inset-y-0 left-0 rounded-full', high ? 'bg-paper' : 'bg-ink')} style={{ width: `${Math.min(100, (pct / 15) * 100)}%` }} />
               <div className="absolute -top-1 -bottom-1 border-l-2 border-dashed border-current" style={{ left: `${(1.51 / 15) * 100}%` }} />
             </div>
-            <div className="flex justify-between font-type text-[13px] uppercase tracking-widest mt-1 opacity-70"><span>1.51 %</span><span>15 %</span></div>
+            <div className="flex justify-between font-type text-sm uppercase tracking-widest mt-1 opacity-70"><span>1.51 %</span><span>15 %</span></div>
           </>
-        ) : <p className="font-serif italic text-2xl opacity-50 mt-1">—</p>}
+        ) : <p className="font-serif italic text-xl opacity-50 mt-1">Not calculated <span className="font-type not-italic text-sm">(never-smoker or not checked)</span></p>}
+      </div>
+
+      <div data-testid="estimates">
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-type text-sm uppercase tracking-widest opacity-60">10-y risk · bowel, breast, cervical</span>
+          <SourceBadge id="ourModel" kind="estimate" demo={!row.p.isYou} how={ESTIMATE_HOW} />
+        </div>
+        {ests.length ? (
+          <ul className="divide-y divide-black/10">
+            {ests.map((k) => (
+              <li key={k} className="flex items-baseline gap-3 py-2">
+                <span className="font-serif text-xl leading-none flex-1">{EST_LABEL[k]}</span>
+                <span className="font-type text-sm uppercase tracking-widest px-2 py-0.5 rounded-full border border-ink/30">Estimate</span>
+                <span className={cx('font-serif text-2xl leading-none tabular-nums w-20 text-right', estHigh?.[k] && 'text-terra')}>
+                  {fmtPct(est![k]!)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : <p className="font-serif italic text-xl opacity-50">Not checked</p>}
+        {ests.some((k) => estHigh?.[k]) && (
+          <p className="font-type text-sm text-terra mt-2">Red = at least the risk of people Finland already screens.</p>
+        )}
       </div>
 
       <div>
@@ -169,7 +204,7 @@ function SharedRecords({ row }: { row: Row }) {
                 </div>
                 {d.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1 pl-14">
-                    {d.tags.map((t) => <span key={t} className="font-type text-[13px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/[0.06]">{t}</span>)}
+                    {d.tags.map((t) => <span key={t} className="font-type text-sm uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/[0.06]">{t}</span>)}
                   </div>
                 )}
               </li>
@@ -180,3 +215,6 @@ function SharedRecords({ row }: { row: Row }) {
     </div>
   )
 }
+
+const EST_LABEL: Record<EstKey, string> = { bowel: 'Bowel', breast: 'Breast', cervical: 'Cervical' }
+const fmtPct = (x: number) => { const v = x * 100; return `${v < 0.1 ? '<0.1' : v.toFixed(v < 10 ? 1 : 0)} %` }

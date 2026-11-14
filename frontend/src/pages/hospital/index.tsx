@@ -4,8 +4,9 @@ import { useSearchParams } from 'react-router-dom'
 import { Card, Chip, Display, Drawer, Picker, SourceBadge, Stat, Tabs, Toggle, toast, cx } from '../../components/ui'
 import { COUNTIES } from '../../data/counties'
 import { BARRIERS, PATHWAY, type BarrierId, type StepId } from '../../data/pathway'
-import { useStore, type HospitalAction } from '../../lib/store'
-import { CANCER_LABEL, coordinatorsFor, generatePatients, type CancerKey, type DemoPatient } from './demoPatients'
+import { useStore, type CheckResult, type HospitalAction, type State } from '../../lib/store'
+import { bmiOf } from '../patient/logic'
+import { CANCER_LABEL, coordinatorsFor, estimatesFor, generatePatients, type CancerKey, type DemoPatient } from './demoPatients'
 import { OffTrackList } from './OffTrackList'
 import { DelayChart, EscalationQueue, ThresholdCard } from './Panels'
 import { PatientDrawerBody } from './PatientDrawer'
@@ -29,6 +30,7 @@ export default function HospitalPage() {
   const diary = useStore((s) => s.diary)
   const risk = useStore((s) => s.risk)
   const profile = useStore((s) => s.profile)
+  const check = useStore((s) => s.check)
 
   const [cancer, setCancer] = useState<CancerKey | 'all'>('all')
   const [step, setStep] = useState<StepId | 'all'>('all')
@@ -42,8 +44,10 @@ export default function HospitalPage() {
   const demo = useMemo(() => generatePatients(countyId), [countyId])
 
   const you = useMemo<DemoPatient | null>(() => {
+    // Only what the patient opted to share (1.5 / privacy by design). Without pathway dates they still
+    // appear, so the clinician can read the diary and risk before the first visit.
+    if (!sharing?.hospital) return null
     const dates = pathway?.dates ?? {}
-    if (!sharing?.hospital || !Object.values(dates).some(Boolean)) return null
     const last = [...PATHWAY].reverse().findIndex((s) => dates[s.id])
     const nextStep = last >= 0 ? PATHWAY[PATHWAY.length - last]?.id : undefined
     const sorted = [...(barriers ?? [])].sort((a, b) => (b.at ?? '').localeCompare(a.at ?? ''))
@@ -51,9 +55,10 @@ export default function HospitalPage() {
     return {
       id: 'you', label: 'You', isYou: true, age: profile?.age ?? 0, cancer: (pathway.cancer ?? 'other') as CancerKey,
       dates, barrier: b ? { step: b.step, barrier: b.barrier, note: b.note } : undefined,
-      shared: true, diary: diary ?? [], risk: risk ?? null,
+      shared: true, diary: diary ?? [], risk: risk ?? null, sex: profile?.sex, sharedAt: sharing.at,
+      ...youEstimates(check, profile),
     }
-  }, [sharing, pathway, barriers, diary, risk, profile])
+  }, [sharing, pathway, barriers, diary, risk, profile, check])
 
   const patients = useMemo(() => (you ? [you, ...demo] : demo), [you, demo])
   const rows = useMemo(() => buildRows(patients, actions, threshold, coords), [patients, actions, threshold, coords])
@@ -113,17 +118,20 @@ export default function HospitalPage() {
       {/* header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6">
         <Display a="Off" b="track" />
-        <div className="flex flex-col items-start md:items-end gap-1">
-          <Picker label="County" align="right" value={countyId} options={COUNTIES}
-            onChange={(v) => { setParams((p) => { p.set('county', v); return p }, { replace: true }); setOpenId(null) }}
-            className="font-serif text-2xl italic py-0.5" />
-          <span className="flex items-center gap-2 font-type text-sm opacity-70">
-            {open.length} synthetic patients
-            <SourceBadge id="demoPatients" kind="estimate" demo={false}
-              how={`${patients.length - (you ? 1 : 0)} made-up patients, volume scaled from ${county.name}'s yearly lung, bowel, pancreas and liver cases. ${open.length} open pathways.`} />
-          </span>
-        </div>
+        <Picker label="County" align="right" value={countyId} options={COUNTIES}
+          onChange={(v) => { setParams((p) => { p.set('county', v); return p }, { replace: true }); setOpenId(null) }}
+          className="font-serif text-2xl italic py-0.5" />
       </header>
+
+      {/* honest note: the caseload is synthetic */}
+      <p data-testid="demo-note" className="mt-4 max-w-3xl flex items-start gap-2 font-type text-sm leading-relaxed text-ink/70">
+        <span className="shrink-0 uppercase tracking-widest text-terra">Demo data</span>
+        <span className="min-w-0">
+          {demo.length} made-up patients, scaled from {county.name}'s yearly case numbers. Real use needs a link to hospital systems.
+          <SourceBadge id="demoPatients" kind="estimate" demo={false} className="ml-2"
+            how={`Caseload scaled from ${county.name}'s yearly lung, bowel, pancreas and liver cases (40 patients in the smallest county, 80 in the largest). ${open.length} open pathways.`} />
+        </span>
+      </p>
 
       {/* stats */}
       <div className="grid grid-cols-3 gap-x-6 sm:gap-x-10 mt-8 max-w-3xl">
@@ -182,6 +190,17 @@ export default function HospitalPage() {
       </Drawer>
     </div>
   )
+}
+
+/** The patient's own bowel/breast/cervical Estimate, recomputed from their check so the "screening-level" flag is exact. */
+function youEstimates(check: CheckResult | null, profile: State['profile']): Pick<DemoPatient, 'est' | 'estHigh'> {
+  if (!check) return { est: null }
+  const { inputs: c } = check
+  if (!profile?.age || !profile.sex) return { est: check.est }
+  return estimatesFor({
+    age: profile.age, sex: profile.sex, smoker: c.smoker, drinksPerWeek: c.drinksPerWeek,
+    bmi: bmiOf(c.heightCm, c.weightKg), familyBowel: c.familyBowel, familyBreast: c.familyBreast,
+  })
 }
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {

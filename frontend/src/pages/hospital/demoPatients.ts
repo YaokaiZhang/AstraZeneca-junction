@@ -3,7 +3,8 @@
 import { COUNTIES, type CancerId } from '../../data/counties'
 import { PATHWAY, DAY, today, type BarrierId, type StepId } from '../../data/pathway'
 import { mulberry32, pick } from '../../lib/random'
-import type { DiaryEntry, RiskResult } from '../../lib/store'
+import type { DiaryEntry, Estimates, RiskResult } from '../../lib/store'
+import { estimateHigh, estimates, plco, type EstimateInput } from '../patient/logic'
 
 export type CancerKey = CancerId | 'other'
 
@@ -17,7 +18,25 @@ export interface DemoPatient {
   shared: boolean
   diary: DiaryEntry[]
   risk: RiskResult | null
+  /** bowel / breast / cervical Estimate (not a clinical score); null = not shared or never checked */
+  est: Estimates | null
+  /** which Estimates reach the risk level of people Finland already screens */
+  estHigh?: Partial<Record<keyof Estimates, boolean>>
+  sex?: 'f' | 'm' | 'x'
+  /** when the real patient last turned hospital sharing on */
+  sharedAt?: string
   isYou?: boolean
+}
+
+export type EstKey = keyof Estimates
+export const EST_KEYS: EstKey[] = ['bowel', 'breast', 'cervical']
+
+/** Estimates plus their "screening-level" flags, from the same inputs the patient Screening check uses. */
+export function estimatesFor(i: EstimateInput): { est: Estimates; estHigh: Partial<Record<EstKey, boolean>> } {
+  const est = estimates(i)
+  const estHigh: Partial<Record<EstKey, boolean>> = {}
+  for (const k of EST_KEYS) if (est[k] !== null) estHigh[k] = estimateHigh(k, i)
+  return { est, estHigh }
 }
 
 export const CANCER_LABEL: Record<CancerKey, string> = {
@@ -100,8 +119,16 @@ export function generatePatients(countyId: string, now: string = today()): DemoP
   ]
   mix.push(['other', mix.reduce((a, [, w]) => a + w, 0) * 0.45])
 
+  // second stream for sex / Estimate inputs, so adding them did not reshuffle the caseload above
+  const r2 = mulberry32(9191 + ci * 613)
   const out: DemoPatient[] = []
   for (let i = 0; i < n; i++) {
+    const sex: 'f' | 'm' = r2() < 0.5 ? 'f' : 'm'
+    const estIn = {
+      smoker: (r2() < 0.25 ? 'current' : r2() < 0.5 ? 'former' : 'never') as EstimateInput['smoker'],
+      drinksPerWeek: Math.floor(Math.pow(r2(), 2) * 20), bmi: +(21 + r2() * 11).toFixed(1),
+      familyBowel: r2() < 0.1, familyBreast: r2() < 0.1,
+    }
     const cancer = weighted(r, mix)
     // which step is done last: 0 = first visit … 4 = planning meeting done (waiting for treatment)
     const lastDone = weighted(r, [[0, 0.14], [1, 0.3], [2, 0.22], [3, 0.2], [4, 0.14]])
@@ -131,6 +158,8 @@ export function generatePatients(countyId: string, now: string = today()): DemoP
     const shared = r() < 0.36
     const diary: DiaryEntry[] = []
     let risk: RiskResult | null = null
+    let est: Estimates | null = null
+    let estHigh: DemoPatient['estHigh']
     if (shared) {
       const pool = SYMPTOMS[cancer]
       const k = 2 + Math.floor(r() * 4)
@@ -144,19 +173,19 @@ export function generatePatients(countyId: string, now: string = today()): DemoP
       diary.sort((a, b) => a.date.localeCompare(b.date))
       if (cancer === 'lung') {
         const smoker = r() < 0.55 ? 'current' : 'former'
-        risk = {
-          inputs: {
-            age, education: (2 + Math.floor(r() * 3)) as 2 | 3 | 4, bmi: Math.round(22 + r() * 9), copd: r() < 0.3,
-            personalCancer: false, familyLung: r() < 0.2, smoker, cigsPerDay: 10 + Math.floor(r() * 20),
-            yearsSmoked: 20 + Math.floor(r() * 30), yearsQuit: smoker === 'former' ? Math.floor(r() * 15) : 0, ethnicity: 'white',
-          },
-          prob6y: +(0.006 + Math.pow(r(), 1.4) * 0.12).toFixed(4),
-          at: `${dates.gp}T10:00:00.000Z`,
+        const inputs: RiskResult['inputs'] = {
+          age, education: (2 + Math.floor(r() * 3)) as 2 | 3 | 4, bmi: Math.round(22 + r() * 9), copd: r() < 0.3,
+          personalCancer: false, familyLung: r() < 0.2, smoker, cigsPerDay: 10 + Math.floor(r() * 20),
+          yearsSmoked: 20 + Math.floor(r() * 30), yearsQuit: smoker === 'former' ? Math.floor(r() * 15) : 0, ethnicity: 'white',
         }
+        r() // kept so the rest of the caseload stays the same as before the score came from the model
+        risk = { inputs, prob6y: plco(inputs), at: `${dates.gp}T10:00:00.000Z` }
       }
+      const smoker = risk ? risk.inputs.smoker : estIn.smoker
+      ;({ est, estHigh } = estimatesFor({ age, sex, ...estIn, smoker, bmi: risk ? risk.inputs.bmi : estIn.bmi }))
     }
 
-    out.push({ id: `${countyId}:${i + 1}`, label: `Patient ${i + 1}`, age, cancer, dates, barrier, shared, diary, risk })
+    out.push({ id: `${countyId}:${i + 1}`, label: `Patient ${i + 1}`, age, cancer, dates, barrier, shared, diary, risk, est, estHigh, sex })
   }
   return out
 }

@@ -7,7 +7,7 @@ const stepShort = (id: string | null) => (id ? PATHWAY.find((s) => s.id === id)?
 
 export function StatusPill({ row, className }: { row: Row; className?: string }) {
   const m = STATUS_META[row.status]
-  return <span className={cx('inline-block font-type uppercase tracking-widest text-[13px] px-2 py-1 rounded-full whitespace-nowrap', m.cls, className)}>{m.label}</span>
+  return <span className={cx('inline-block font-type uppercase tracking-widest text-sm px-2 py-1 rounded-full whitespace-nowrap', m.cls, className)}>{m.label}</span>
 }
 
 /** Quiet status for table rows: only what differs from "overdue" gets ink. */
@@ -38,6 +38,7 @@ function Days({ row, threshold }: { row: Row; threshold: number }) {
     const hot = d >= threshold
     return <span className={cx('font-serif lining-nums tabular-nums leading-none', hot ? 'text-terra text-3xl' : 'text-2xl')}>{d}<span className="font-type text-sm ml-0.5 opacity-60">d</span></span>
   }
+  if (row.st.lastDone < 0) return <span className="font-type text-sm opacity-60 whitespace-nowrap">no dates</span>
   return <span className="font-type text-sm opacity-60 whitespace-nowrap">{!row.step ? '·' : d === 0 ? 'due today' : `${-d} d left`}</span>
 }
 

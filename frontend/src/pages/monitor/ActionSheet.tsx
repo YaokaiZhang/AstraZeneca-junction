@@ -1,18 +1,13 @@
-// County action sheet: one printable page. Template text; every number comes from model.ts.
+// County one-page plan. Leads with what a decision-maker needs (problem, briefing, the action and who does it,
+// what it achieves, what it takes, how you'll know); everything else is one small "Sources and caveats" block.
+// Every number comes from buildFacts() (the same rounded facts the briefing is written from), so the sheet and the
+// briefing never disagree. No calculation lives here.
+import type { ReactNode } from 'react'
 import { SCREENING_FI, type ScreeningRow } from './data'
-import type { BriefingLine } from './briefing'
+import { buildFacts, type BriefingLine } from './briefing'
 import { sourceBadge, type EvidenceLevel, type EvidenceRef } from './evidence'
-import { DETECTION_FIXES, GROUP_FACTS, flags, in2031, losses, n0, n1, signed, type Plan, type Result, type Step, STEP_META } from './model'
-
-const SOURCES = [
-  ['Finnish Cancer Registry, bowel cancer screening statistics, 2024 round (published 20 May 2026)', 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html'],
-  ['Interventions to raise colonoscopy after a positive test, meta-analysis. JAMA Intern Med 2026. PMID 42832233', 'https://pubmed.ncbi.nlm.nih.gov/42832233/'],
-  ['Dougherty et al. Interventions to raise colorectal screening uptake. JAMA Intern Med 2018. PMID 30326005', 'https://pubmed.ncbi.nlm.nih.gov/30326005/'],
-  ['Kansallinen syöpästrategia 2026–2035 (National Cancer Strategy)', 'https://files.hackjunction.app/resources/Kansallinen_syopastrategia_2026_2035_FINAL.pdf'],
-  ['Toimeenpanon tiekartta 2026–2031 (implementation roadmap)', 'https://files.hackjunction.app/resources/Kansallinen_syopastrategia_toimeenpanon_tiekartta_2026_2031.pdf'],
-  ['Finnish Cancer Registry, bowel cancer screening programme: everyone aged 56–74 invited from 2031', 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/'],
-  ['Statistics Finland, population by age and language (vaerak/11rz), 2025, rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/11rz.px/'],
-]
+import { flags, n0, n1, type Plan, type Result } from './model'
+import { Verdict } from './Simple'
 
 export interface Briefing {
   text: string
@@ -26,86 +21,71 @@ export interface Briefing {
   limitations?: string[]
 }
 
-function fmtDate(d?: string) {
-  if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return d
-  const t = new Date(`${d}T00:00:00Z`)
-  return isNaN(+t) ? d : t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+/** Short source labels with their links; the full references live on the monitor's "Where the numbers come from". */
+const SOURCES: [string, string][] = [
+  ['Finnish Cancer Registry, bowel screening statistics 2024', 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html'],
+  ['Cancer Registry, screening programme (ages 56–74 from 2031)', 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/'],
+  ['Statistics Finland, population 2025', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/11rz.px/'],
+  ['National Cancer Strategy 2026–2035', 'https://files.hackjunction.app/resources/Kansallinen_syopastrategia_2026_2035_FINAL.pdf'],
+  ['Follow-up review, JAMA Intern Med 2026', 'https://pubmed.ncbi.nlm.nih.gov/42832233/'],
+  ['Screening uptake review, JAMA Intern Med 2018', 'https://pubmed.ncbi.nlm.nih.gov/30326005/'],
+]
+
+const REFERRAL_IDS = ['navigation', 'patient-reminder', 'clinician-reminder', 'auto-referral']
+const DETECTION_IDS = ['reminder', 'multilingual', 'clinician']
+
+/** Who does it and how you'll know, for the actions in the plan. */
+function ownership(ids: string[]) {
+  const out: { who: string; measure: string }[] = []
+  if (ids.some((i) => REFERRAL_IDS.includes(i))) out.push({ who: 'The screening nurse or screening coordinator, every working day.', measure: 'Days from positive test to booking; share of positive tests with a recorded colonoscopy; people still without one.' })
+  if (ids.some((i) => DETECTION_IDS.includes(i))) out.push({ who: 'The screening programme team, after each invitation batch.', measure: 'Share of invited people who send the kit back, month by month.' })
+  if (ids.includes('catch-up')) out.push({ who: 'The colonoscopy unit, for the weeks of the catch-up.', measure: 'Median wait from positive test to colonoscopy; people waiting.' })
+  return out
 }
 
-function EvidenceList({ evidence, level, limitations }: { evidence: EvidenceRef[]; level?: EvidenceLevel; limitations?: string[] }) {
+const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, '') } catch { return u } }
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace(/\.?$/, '.')
+const fmtDate = (d?: string) => (d && /^\d{4}/.test(d) ? d.slice(0, 4) : d)
+
+function Block({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="mt-2 pt-2 border-t border-black/15">
-      <p className="font-type uppercase tracking-widest text-[11px] opacity-60">
-        Evidence · {level === 'evidence_backed' ? 'Evidence-backed' : 'Limited evidence'}
-      </p>
-      <ol className="mt-1 space-y-1.5">
-        {evidence.map((e) => {
-          const meta = [
-            e.publisher,
-            fmtDate(e.publicationDate),
-            e.dataPeriod && `data: ${e.dataPeriod}`,
-            e.page ? `p. ${e.page}` : e.section,
-          ].filter(Boolean)
-          return (
-            <li key={e.n} className="grid grid-cols-[1.25rem_minmax(0,1fr)] text-[12px] leading-snug break-inside-avoid">
-              <span className="font-type opacity-60">{e.n}</span>
-              <div className="min-w-0">
-                <p>
-                  <span className="font-medium">{e.title}</span>
-                  {meta.map((m) => <span key={m}> · {m}</span>)}
-                  {' '}<span className="font-type uppercase text-[10px] tracking-wider border border-black/20 rounded px-1 whitespace-nowrap align-[1px]">{sourceBadge(e)}</span>
-                </p>
-                {e.excerpt && <p className="opacity-70 line-clamp-2">“{e.excerpt}”</p>}
-                <a href={e.url} target="_blank" rel="noreferrer" className="opacity-70 underline decoration-black/30 break-all">{e.url}</a>
-              </div>
-            </li>
-          )
-        })}
-      </ol>
-      {!!limitations?.length && (
-        <div className="mt-1.5 text-[11px] leading-snug opacity-70 space-y-0.5">
-          {limitations.map((x) => <p key={x}>{x}</p>)}
-        </div>
-      )}
+    <div className="min-w-0 border-t border-black/20 pt-2">
+      <p className="font-type uppercase tracking-widest text-[11px] opacity-60">{label}</p>
+      <div className="mt-1 text-[14px] leading-snug">{children}</div>
     </div>
   )
 }
 
 export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan: Plan; res: Result; briefing?: Briefing }) {
+  const x = buildFacts(r, plan, res)
+  const ids = String(x.action_ids ?? '').split(',').filter(Boolean)
+  const own = ownership(ids)
   const f = flags(r)
-  const l = losses(r)
-  const leaks = (Object.keys(f) as Step[]).filter((s) => f[s])
-  const q = res.queue
-  const y = in2031(r, res)
-  const det = DETECTION_FIXES.find((d) => d.id === plan.detectionFix)
-  const fixes: string[] = []
-  if (res.referral.fix) fixes.push(`${res.referral.fix.name} (${res.referral.fix.effect}): colonoscopy after a positive test ${n1(res.base.c * 100)}% → ${n1(res.referral.cNew * 100)}%, ${signed(res.referral.colonoscopies)} colonoscopies a year.`)
-  if (res.detection.pts > 0) fixes.push(`${det ? det.name : 'Raise kit return'} (${det ? det.effect : 'chosen target'}): kit return ${n1(r.participationPct)}% → ${n1(r.participationPct + res.detection.pts)}%, ≈ ${n0(res.detection.kits)} more kits, ${signed(res.detection.colonoscopies)} colonoscopies a year.`)
-  if (plan.catchUp && q.catchUp >= 0.5) fixes.push(`Catch-up colonoscopy sessions: ${n0(q.catchUp)} one-off colonoscopies (≈ ${n1(q.catchUpPerWeek)} a week for ${plan.catchUpWeeks} weeks) to bring the median wait to ${n1(plan.targetMonths)} months.`)
   const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const grounded = briefing?.source === 'ai' && !!briefing.evidence?.length && !!briefing.lines
-
-  const row = (s: Step) => {
-    const v = s === 'detection' ? `${n1(r.participationPct)}%` : s === 'referral' ? `${n1(r.colonoscopyOfPositivesPct)}%` : `${n1(r.medianMonths)} mo`
-    const fi = s === 'detection' ? `${n1(SCREENING_FI.participationPct)}%` : s === 'referral' ? `${n1(SCREENING_FI.colonoscopyOfPositivesPct)}%` : `${n1(SCREENING_FI.medianMonths)} mo`
-    const lost = s === 'detection' ? `${n0(l.detection.lost)} kits not returned` : s === 'referral' ? `${n0(l.referral.lost)} positives with no recorded colonoscopy` : `≈ ${n0(l.capacity.lost)} people waiting`
-    return { v, fi, lost }
-  }
+  const colsYear = Number(x.action_about_extra_colonoscopies_per_year)
+  const cancers = Number(x.action_estimated_extra_cancers_detected)
+  const now = Number(x.about_extra_colonoscopies_per_week_now)
+  const by2031 = Number(x.about_extra_colonoscopies_per_week_by_2031)
+  const actionLabel = x.action_is === 'the plan chosen on the monitor' ? 'Do this (chosen plan)' : x.action_is === 'a step to do even better' ? 'Do this (to do even better)' : 'Do this (recommended first step)'
+  const wrap = { overflowWrap: 'anywhere' as const }
 
   return (
-    <article className="sheet font-sans text-ink bg-paper">
-      <header className="flex items-end justify-between border-b-2 border-ink pb-3">
-        <div>
-          <p className="font-type uppercase tracking-widest text-[12px] opacity-70">County action sheet · bowel cancer screening</p>
+    <article className="sheet font-sans text-ink bg-paper" style={wrap}>
+      <header className="flex items-end justify-between gap-4 border-b-2 border-ink pb-3">
+        <div className="min-w-0">
+          <p className="font-type uppercase tracking-widest text-[12px] opacity-70">One-page plan · bowel cancer screening</p>
           <h1 className="font-serif text-5xl leading-none mt-1">{r.name}</h1>
         </div>
-        <p className="font-type text-[12px] uppercase tracking-wider opacity-70 text-right">{date}<br />2024 screening round, ages 60–70</p>
+        <p className="font-type text-[12px] uppercase tracking-wider opacity-70 text-right shrink-0">{date}<br />2024 screening round</p>
       </header>
 
+      <p className="mt-3 font-serif text-[22px] leading-snug"><Verdict r={r} /></p>
+
       {briefing && (
-        <section className="mt-4 border-l-4 border-terra pl-3">
-          <h2 className="font-type uppercase tracking-widest text-[12px] opacity-70 mb-1">Briefing</h2>
-          <p className="text-[14px] leading-snug">
+        <section className="mt-3 border-l-4 border-terra pl-3">
+          <p className="font-type uppercase tracking-widest text-[11px] opacity-60">Briefing</p>
+          <p className="mt-1 text-[14px] leading-snug">
             {grounded
               ? briefing.lines!.map((l, i) => (
                 <span key={l.label}>
@@ -117,94 +97,75 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
           </p>
           <p className="text-[11px] opacity-60 mt-1 italic">
             {briefing.source === 'ai'
-              ? grounded
-                ? 'Written by AI from the numbers below and the sources listed under it. Numbers come from our calculations, not the AI.'
-                : 'Written by AI from the numbers below. Numbers come from our calculations, not the AI.'
-              : `Template briefing, built from the numbers below.${briefing.note ? ` ${briefing.note}` : ''}`}
+              ? `Written by AI from our calculated numbers${grounded ? ' and the numbered sources at the bottom' : ''}. Numbers come from our calculations, not the AI.`
+              : `Template briefing, built from the numbers on this page.${briefing.note ? ` ${briefing.note}` : ''}`}
           </p>
-          {grounded && <EvidenceList evidence={briefing.evidence!} level={briefing.evidenceLevel} limitations={briefing.limitations} />}
         </section>
       )}
 
-      <section className="mt-4">
-        <h2 className="font-type uppercase tracking-widest text-[12px] opacity-70 mb-1">1 · Where the chain leaks</h2>
-        <table className="w-full text-[13px] border-collapse">
-          <thead><tr className="text-left font-type uppercase text-[11px] tracking-wider opacity-70"><th className="py-1">Step</th><th>{r.name}</th><th>Finland</th><th>People</th><th /></tr></thead>
-          <tbody>
-            {(['detection', 'referral', 'capacity'] as Step[]).map((s) => {
-              const x = row(s)
-              return (
-                <tr key={s} className="border-t border-black/15">
-                  <td className="py-1.5">{STEP_META[s].short}: {STEP_META[s].title.toLowerCase()}</td>
-                  <td className="font-serif text-lg">{x.v}</td><td>{x.fi}</td><td>{x.lost}</td>
-                  <td className={f[s] ? 'text-terra font-type uppercase text-[11px] tracking-wider' : 'opacity-50 font-type uppercase text-[11px] tracking-wider'}>{f[s] ? 'Leaks' : 'Holds'}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        <p className="mt-2 text-[13px] leading-snug">
-          {leaks.length ? <>Weak link{leaks.length > 1 ? 's' : ''}: <b>{leaks.map((s) => STEP_META[s].short.toLowerCase()).join(', ')}</b>.</> : <>No step is below the flag line.</>}{' '}
-          Nationally, people who skipped the previous round returned the kit {n1(GROUP_FACTS.skipped.pct)}% of the time; other mother tongues {n1(GROUP_FACTS.otherTongue)}%, basic education {n1(GROUP_FACTS.basicEducation)}%, men {n1(GROUP_FACTS.men)}%.
-        </p>
+      <section className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3">
+        <Block label={actionLabel}>
+          <p>{x.action === 'no change' ? 'No action chosen yet.' : sentence(String(x.action))}</p>
+          {own.map((o) => <p key={o.who} className="mt-1 opacity-80"><b className="font-medium">Who:</b> {o.who}</p>)}
+        </Block>
+        <Block label="What it achieves (estimate)">
+          {colsYear > 0
+            ? <p>About <b>{n0(colsYear)}</b> more colonoscopies a year{cancers >= 1 ? <>, and an estimated <b>{n0(cancers)}</b> more {cancers === 1 ? 'cancer' : 'cancers'} detected</> : null}.</p>
+            : x.about_catch_up_colonoscopies_total
+              ? <p>The wait comes down to about <b>{n1(Number(x.target_wait_months))} months</b> (Finland {n1(SCREENING_FI.medianMonths)}).</p>
+              : <p>No change in this plan.</p>}
+          <p className="mt-1 text-[12px] opacity-70">Effects measured in other programmes, applied to {r.name}&apos;s 2024 numbers. A scenario, not a promise.</p>
+        </Block>
+        <Block label="What it takes">
+          {x.about_catch_up_colonoscopies_total
+            ? <p>About <b>{n0(Number(x.about_catch_up_colonoscopies_total))}</b> extra colonoscopies over {String(x.catch_up_weeks)} weeks.</p>
+            : null}
+          {now > 0
+            ? <p>About <b>{n0(now)}</b> more colonoscopies a week now{x.about_wait_in_a_year_if_not_added_months ? <>; without them the wait grows to about {n0(Number(x.about_wait_in_a_year_if_not_added_months))} months in a year</> : null}.</p>
+            : !x.about_catch_up_colonoscopies_total && <p>No extra colonoscopies needed now.</p>}
+          <p className="mt-1">By 2031, when everyone aged 56–74 is invited: about <b>{n0(by2031)}</b> more a week than today.</p>
+        </Block>
+        <Block label="How you'll know it works">
+          {own.length ? own.map((o) => <p key={o.measure}>{o.measure}</p>) : <p>Kit return, follow-up and wait, compared with this page, every month.</p>}
+        </Block>
       </section>
 
-      <section className="mt-4">
-        <h2 className="font-type uppercase tracking-widest text-[12px] opacity-70 mb-1">2 · Chosen fixes</h2>
-        {fixes.length ? <ul className="list-disc pl-5 text-[13px] leading-snug space-y-1">{fixes.map((x) => <li key={x}>{x}</li>)}</ul>
-          : <p className="text-[13px] italic opacity-70">No fix chosen yet. Pick one on the monitor to fill this in.</p>}
-        {plan.referral.length > 1 && <p className="text-[12px] opacity-70 mt-1">Several referral fixes chosen; only the strongest is counted.</p>}
-        {fixes.length > 0 && (
-          <ul className="mt-2 text-[12px] leading-snug space-y-0.5">
-            {res.referral.fix && <li><b>Follow-up:</b> owner the screening nurse or coordinator, every working day. Measure days from positive test to booking, the share with a recorded colonoscopy, and people still without one.</li>}
-            {res.detection.pts > 0 && <li><b>Kit return:</b> owner the screening programme team, after each invitation batch. Measure the share of invited who send the kit back, month by month.</li>}
-            {plan.catchUp && q.catchUp >= 0.5 && <li><b>Catch-up:</b> owner the colonoscopy unit, for {plan.catchUpWeeks} weeks. Measure the median wait from positive test to colonoscopy and the number waiting.</li>}
-          </ul>
+      <footer className="mt-5 pt-2 border-t border-black/30 text-[10.5px] leading-snug opacity-85">
+        <p className="font-type uppercase tracking-widest text-[10px] opacity-70">Sources and caveats</p>
+
+        <p className="mt-1">
+          <b className="font-medium">{r.name} in 2024:</b> kit returned {n1(r.participationPct)}% (Finland {n1(SCREENING_FI.participationPct)}%) · positive tests with a recorded colonoscopy {n1(r.colonoscopyOfPositivesPct)}% ({n1(SCREENING_FI.colonoscopyOfPositivesPct)}%), {n0(r.noColonoscopy)} without · median wait {n1(r.medianMonths)} months ({n1(SCREENING_FI.medianMonths)}).
+          {' '}Behind our warning line: {[f.detection && 'kit return', f.referral && 'follow-up', f.capacity && 'wait'].filter(Boolean).join(', ') || 'none'}. The official target is 80% kit return (National Cancer Strategy, Goal 2).
+        </p>
+
+        {grounded && (
+          <ol className="mt-1.5 space-y-0.5">
+            {briefing!.evidence!.map((e) => (
+              <li key={e.n} className="grid grid-cols-[1rem_minmax(0,1fr)]">
+                <span className="font-type opacity-70">{e.n}</span>
+                <span className="min-w-0">
+                  <span className="line-clamp-1">{e.title}</span>
+                  <span className="opacity-75"> {e.publisher}{e.publicationDate ? `, ${fmtDate(e.publicationDate)}` : ''}{e.page ? `, p. ${e.page}` : ''} · {sourceBadge(e).toLowerCase()} · <a href={e.url} target="_blank" rel="noreferrer" className="underline decoration-black/30">{host(e.url)}</a></span>
+                </span>
+              </li>
+            ))}
+          </ol>
         )}
-      </section>
 
-      <section className="mt-4 grid grid-cols-3 gap-3">
-        {[
-          [signed(res.total.colonoscopies), 'extra colonoscopies a year'],
-          [signed(res.total.cancers, n1), 'more cancers detected (estimate)'],
-          [signed(res.total.precursors), 'precursors removed'],
-        ].map(([v, t]) => (
-          <div key={t} className="border border-black/20 rounded p-2">
-            <p className="font-serif text-3xl leading-none">{v}</p>
-            <p className="font-type uppercase text-[11px] tracking-wider opacity-70 mt-1">{t}</p>
-          </div>
-        ))}
-      </section>
-
-      <section className="mt-4">
-        <h2 className="font-type uppercase tracking-widest text-[12px] opacity-70 mb-1">3 · Capacity needed</h2>
-        <p className="text-[13px] leading-snug">
-          Today ≈ {n1(q.arrivalsWeek)} colonoscopies a week, ≈ {n0(q.queueNow)} people waiting, median wait {n1(r.medianMonths)} months.{' '}
-          {q.extraPerWeek >= 0.05
-            ? <>The fixes raise demand to {n1(q.newArrivalsWeek)} a week: <b>add {n1(q.extraPerWeek)} colonoscopies a week</b>{plan.addCapacity ? ' (included in this plan).' : <>, or the median wait grows to about {n1(q.waitIn12m)} months within a year.</>}</>
-            : <>No extra weekly demand in this plan.</>}{' '}
-          {q.catchUp >= 0.5 && <>A one-off catch-up of {n0(q.catchUp)} colonoscopies brings the wait to {n1(plan.targetMonths)} months.</>}
+        <p className="mt-1.5">
+          {grounded ? 'Other sources: ' : 'Sources: '}
+          {SOURCES.map(([t, u], i) => (
+            <span key={u}>{i > 0 && ' · '}{t} (<a href={u} target="_blank" rel="noreferrer" className="underline decoration-black/30">{host(u)}</a>)</span>
+          ))}.
         </p>
-        <p className="text-[13px] leading-snug mt-1">
-          <b>2031 (estimate):</b> when everyone aged 56–74 is invited, invites grow {signed((y.growth - 1) * 100)}% ({n0(r.invited)} → {n0(y.invited2031)}).
-          At today&apos;s rates{y.hasFixes ? ', with the chosen fixes,' : ''} that needs <b>{signed(y.extraWithFixesWeek, n1)} colonoscopies a week</b> over today&apos;s {n1(y.todayWeek)}.
-          {' '}Ignores ageing to 2031 and lower positivity in younger people.
-        </p>
-      </section>
 
-      <section className="mt-4">
-        <h2 className="font-type uppercase tracking-widest text-[12px] opacity-70 mb-1">Policy fit</h2>
-        <p className="text-[13px] leading-snug">National Cancer Strategy 2026–2035: Goal 2, 80% screening participation in every wellbeing services county; Goal 3, treatment within target times (strategy p. 5); other mother tongues to reach the participation of Finnish and Swedish speakers (sub-objective 1.3, p. 20). Implementation roadmap 2026–2031: measure 1.3.1, multilingual screening outreach, estimated €400,000 (p. 33); 2.4.5, monthly reporting to the screening registers (pp. 50–51); 3.1.4, pathway quality indicators (p. 58); 3.5.3, digital tools and AI (pp. 73–74).</p>
-      </section>
-
-      <footer className="mt-4 pt-2 border-t border-black/20 text-[11px] leading-snug opacity-80">
-        <p className="font-type uppercase tracking-wider mb-1">Sources and caveats</p>
-        <ol className="list-decimal pl-4 space-y-0.5">
-          {SOURCES.map(([t, u]) => <li key={u}>{t}. {u}</li>)}
-        </ol>
-        {briefing?.source === 'ai' && <p className="mt-1">The briefing text is written by AI from our calculated numbers{grounded ? ' and the evidence passages cited under it' : ''}; it adds no numbers of its own, and it is checked against them.</p>}
-        <p className="mt-1">2024 is the latest complete screening chain. Preliminary 2025 figures (Finnish Cancer Registry, 29 Oct 2026) cover only kit return (Finland 73.3%); colonoscopy follow-up for 2025 is due in spring 2027, so the two years are not combined here.</p>
-        <p className="mt-1">Effects come from mostly US studies and are estimates. Waits were read from a chart (± 0.1 month). Group figures are national. The queue model (Little&apos;s law) uses the median wait as if it were the mean. &quot;No colonoscopy&quot; may include private colonoscopies not reported to the register. Every number on this sheet is calculated from the sources above; none is written by a language model.</p>
+        <ul className="mt-1.5 list-disc pl-4 space-y-0.5">
+          <li>&quot;No recorded colonoscopy&quot; may include private colonoscopies not reported to the register; 2024 figures may still be updated.</li>
+          <li>Effects come from studies abroad, mostly in the United States, and are estimates for {r.name}.</li>
+          <li>The wait comes from a simple queue model and a published chart (±0.1 month); 2031 assumes today&apos;s rates.</li>
+          {briefing?.source === 'ai' && <li>The briefing is written by AI; it adds no numbers of its own, and every number and citation is checked.</li>}
+          {grounded && !!briefing!.limitations?.length && briefing!.limitations!.slice(0, 1).map((l) => <li key={l}>{l}</li>)}
+        </ul>
       </footer>
     </article>
   )

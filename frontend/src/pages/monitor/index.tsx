@@ -132,7 +132,7 @@ export default function MonitorPage() {
   }
 
   return (
-    <div className="monitor-root county-root px-4 sm:px-6 lg:px-10 pb-20 max-w-[1400px] overflow-x-clip">
+    <div className="monitor-root county-root px-4 sm:px-6 lg:px-10 pb-20 max-w-[2000px] mx-auto overflow-x-clip">
       <MonitorStyles />
 
       <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-10 px-4 sm:px-6 lg:px-10 pt-4 pb-3 bg-paper/95 backdrop-blur-sm border-b border-stone/60">
@@ -152,7 +152,7 @@ export default function MonitorPage() {
       </div>
 
       {/* 1 · pick a county on the map; the verdict and the three steps beside it */}
-      <section className="mt-8 sm:mt-10 grid lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
+      <section className="mt-8 sm:mt-10 grid lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
         <div className="max-w-[150px] sm:max-w-[240px] mx-auto lg:max-w-none lg:mx-0 w-full">
           <p className="font-sans text-[14px] opacity-65 mb-2 text-center lg:text-left">Tap a county on the map</p>
           <LeakMap selected={countyId} onSelect={select} />

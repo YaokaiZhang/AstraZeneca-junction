@@ -20,7 +20,7 @@ export function stepBadge(s: StepId, k: RadarCancerId, row?: RadarRow) {
   const R = RISK[k]
   if (s === 'risk') return (
     <SourceBadge id="sotkanetRisk" kind="estimate" demo={false}
-      how={<>high-risk people = residents 2025 (Statistics Finland 14wx) × share who are {R.who} × prevalence of {R.factor} (THL Sotkanet 2024). The county prevalence is applied to the age band as is.{row ? <><br /><br />{fmt(row.bandPop)} × {pct(row.steps.risk.v!, 1)} = {fmt(row.highRisk)}</> : null}</>} />
+      how={<>high-risk people = residents 2025 (Statistics Finland 14wx) × share who are {R.who} × prevalence of {R.factor} (THL Sotkanet 2024). The county prevalence is applied to the age band as is. Age-band shares and multipliers in the recipe are our rough assumptions, not published figures.{row ? <><br /><br />{fmt(row.bandPop)} × {pct(row.steps.risk.v!, 1)} = {fmt(row.highRisk)}</> : null}</>} />
   )
   if (s === 'screen') {
     const p = PROGRAMMES.find((x) => x.id === row?.programme || x.id === k)

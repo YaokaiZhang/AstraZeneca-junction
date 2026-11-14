@@ -56,7 +56,7 @@ export default function Pathway() {
           <Clock dates={dates} size={260} dark={overdue || finished}>
             <span className="font-type text-sm uppercase tracking-widest opacity-70">{t('p.day')}</span>
             <span className="font-serif text-7xl leading-none">{dayN}</span>
-            <span className="font-type text-sm uppercase tracking-widest opacity-70 flex items-center gap-1">{t('p.of', { n: totalTarget })} <SourceBadge id="thlTargets" kind="estimate" how={t('how.targets')} /></span>
+            <span className="font-type text-sm uppercase tracking-widest opacity-70 flex items-center gap-1">{t('p.of', { n: totalTarget })} <SourceBadge id="thlTargets" kind="estimate" demo={false} how={t('how.targets')} /></span>
           </Clock>
         </Card>
 
@@ -71,7 +71,7 @@ export default function Pathway() {
                   <div className="flex items-baseline gap-3 flex-wrap">
                     <span className={cx('font-serif text-6xl leading-none', overdue && 'text-terra')}>{st.waited}</span>
                     <span className="font-type text-sm uppercase tracking-widest">/ {t('p.target', { n: st.next.targetDays ?? 0 })}</span>
-                    <SourceBadge id="thlTargets" kind="estimate" how={t('how.targets')} />
+                    <SourceBadge id="thlTargets" kind="estimate" demo={false} how={t('how.targets')} />
                   </div>
                   <div className="mt-3 h-3 rounded-full bg-black/10 relative overflow-hidden" aria-hidden>
                     <div className={cx('absolute inset-y-0 left-0 rounded-full', overdue ? 'bg-terra' : 'bg-mustard')}

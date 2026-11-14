@@ -196,7 +196,7 @@ function StepCard({ st }: { st: NextStep }) {
             <span className="font-type text-sm uppercase tracking-widest opacity-60">{model}</span>
             {st.id === 'lung'
               ? <SourceBadge id="plco" kind="estimate" how={PLCO_HOW} demo={false} />
-              : <><SourceBadge id="ourModel" kind="estimate" how={t('how.estimate')} /><SourceBadge id="cancerRegistry" kind="direct" /></>}
+              : <SourceBadge id="ourModel" kind="estimate" how={t('how.estimate')} />}
           </div>
         </div>
       )}

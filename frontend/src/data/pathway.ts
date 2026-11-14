@@ -1,5 +1,7 @@
 // Care-pathway steps and target times (days from the previous step).
-// Targets follow THL guidance 21/2016 as currently understood; flagged "to verify" in final-ideas.md.
+// Published rule (Ministry of Social Affairs and Health report 2010:6): first treatment within 6 weeks of the
+// referral arriving, tests included. Referral → treatment below adds up to 14 + 14 + 7 + 7 = 42 days; how the
+// 6 weeks split across steps, and the 7 days from GP visit to referral, are our assumptions (see SOURCES.thlTargets).
 export type StepId = 'gp' | 'referral' | 'scan' | 'diagnosis' | 'mdt' | 'treatment'
 
 export interface PathwayStep {
@@ -18,7 +20,7 @@ export const PATHWAY: PathwayStep[] = [
   { id: 'scan', label: 'Scan / specialist visit', short: 'Scan', targetDays: 14, owner: 'hospital', expect: 'The hospital calls or sends a letter with a time.' },
   { id: 'diagnosis', label: 'Diagnosis', short: 'Diagnosis', targetDays: 14, owner: 'hospital', expect: 'A doctor goes through the results with you.' },
   { id: 'mdt', label: 'Treatment-planning meeting', short: 'Planning', targetDays: 7, owner: 'hospital', expect: 'Specialists agree a plan together.' },
-  { id: 'treatment', label: 'Treatment start', short: 'Treatment', targetDays: 14, owner: 'hospital', expect: 'First surgery, radiotherapy or medicine.' },
+  { id: 'treatment', label: 'Treatment start', short: 'Treatment', targetDays: 7, owner: 'hospital', expect: 'First surgery, radiotherapy or medicine.' },
 ]
 
 export type BarrierId = 'no-contact' | 'transport' | 'cost' | 'unwell' | 'scared' | 'other'

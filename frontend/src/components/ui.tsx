@@ -1,6 +1,6 @@
 // Shared visual primitives drawn from the reference design:
 // paper cards in mustard / terracotta / stone / ink, serif display type, typewriter labels.
-import { useEffect, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type ButtonHTMLAttributes, type PointerEvent as RPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { SOURCES, type SourceKind } from '../data/sources'
 
@@ -113,26 +113,53 @@ export function TextRing({ text, className, size = 180 }: { text: string; classN
   )
 }
 
-const KIND: Record<SourceKind, { label: string; cls: string }> = {
-  direct: { label: 'Direct data', cls: 'bg-ink text-paper' },
-  estimate: { label: 'Estimate', cls: 'bg-mustard text-ink ring-1 ring-ink/50' },
-  gap: { label: 'Data gap', cls: 'bg-terra text-paper' },
-  mentor: { label: 'Mentor interview', cls: 'bg-moss text-paper' },
+const KIND: Record<SourceKind, { label: string; cls: string; glyph: string; means: string }> = {
+  direct: { label: 'Direct data', cls: 'bg-ink text-paper', glyph: 'D', means: 'Taken as published by an official source' },
+  estimate: { label: 'Estimate', cls: 'bg-mustard text-ink ring-1 ring-ink/50', glyph: 'E', means: 'Our calculation from published inputs; the badge shows how' },
+  gap: { label: 'Data gap', cls: 'bg-terra text-paper', glyph: '!', means: 'Nobody publishes this' },
+  mentor: { label: 'Mentor interview', cls: 'bg-moss text-paper', glyph: 'M', means: 'Insight from an AstraZeneca mentor' },
+  example: { label: 'Illustrative', cls: 'bg-paper text-ink border border-dashed border-ink/70 italic', glyph: 'i', means: 'Made-up numbers that show how a feature works' },
+}
+
+/** The badge glyph alone, not clickable. Used in legends. */
+export function KindDot({ kind, className }: { kind: SourceKind; className?: string }) {
+  const k = KIND[kind]
+  return <span aria-hidden className={cx('w-5 h-5 rounded-full text-sm font-type leading-none inline-flex items-center justify-center shrink-0', k.cls, className)}>{k.glyph}</span>
+}
+
+/** What the badge letters mean. `long` adds the one-line definition. */
+export function KindLegend({ kinds = ['direct', 'estimate', 'gap', 'example'], long, className }: { kinds?: SourceKind[]; long?: boolean; className?: string }) {
+  return (
+    <ul className={cx(long ? 'space-y-3' : 'flex flex-wrap gap-x-4 gap-y-2', className)}>
+      {kinds.map((kd) => (
+        <li key={kd} className="flex items-start gap-2">
+          <KindDot kind={kd} />
+          <span className="leading-5">
+            <span className="font-type uppercase tracking-widest text-sm">{KIND[kd].label}</span>
+            {long && <span className="block font-sans text-[15px] opacity-70 leading-snug mt-0.5">{KIND[kd].means}</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 /**
- * Clickable source badge. Put one next to every number.
- * kind: direct | estimate | gap | mentor. `how` explains the calculation for estimates.
+ * Source badge. Put one next to every number. Hover (mouse) previews the source; click pins it.
+ * kind: direct | estimate | gap | mentor | example. `how` explains the calculation for estimates.
  */
 export function SourceBadge({ id, kind, how, demo = true, className }: { id: keyof typeof SOURCES | string; kind: SourceKind; how?: ReactNode; demo?: boolean; className?: string }) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ x: 0, y: 0 })
   const ref = useRef<HTMLSpanElement>(null)
+  const btn = useRef<HTMLButtonElement>(null)
   const pop = useRef<HTMLSpanElement>(null)
+  const pinned = useRef(false)
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const src = SOURCES[id]
   const k = KIND[kind]
   useEffect(() => {
-    if (!open) return
+    if (!open) { pinned.current = false; return }
     const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node) && !pop.current?.contains(e.target as Node)) setOpen(false) }
     const hide = () => setOpen(false)
     document.addEventListener('mousedown', close)
@@ -140,26 +167,47 @@ export function SourceBadge({ id, kind, how, demo = true, className }: { id: key
     window.addEventListener('resize', hide)
     return () => { document.removeEventListener('mousedown', close); window.removeEventListener('scroll', hide, true); window.removeEventListener('resize', hide) }
   }, [open])
+  useEffect(() => () => clearTimeout(timer.current), [])
+  const place = () => {
+    const r = btn.current!.getBoundingClientRect()
+    const x = Math.min(Math.max(r.left + r.width / 2 - 128, 8), window.innerWidth - 264)
+    const y = r.bottom + 256 > window.innerHeight ? Math.max(8, r.top - 8 - 240) : r.bottom + 8
+    setPos({ x, y })
+  }
+  const enter = (e: RPointerEvent) => {
+    if (e.pointerType !== 'mouse') return
+    clearTimeout(timer.current)
+    if (!open) timer.current = setTimeout(() => { place(); setOpen(true) }, 90)
+  }
+  const leave = (e: RPointerEvent) => {
+    if (e.pointerType !== 'mouse' || pinned.current) return
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => setOpen(false), 200)
+  }
+  const meta = [src?.years && `Data ${src.years}`, src?.retrieved && `retrieved ${src.retrieved}`].filter(Boolean).join(' · ')
   return (
     <span ref={ref} className={cx('relative inline-flex align-middle', className)}>
-      <button onClick={(e) => {
+      <button ref={btn} type="button" aria-label={`${k.label}: ${src?.name ?? id}`} aria-expanded={open}
+        onPointerEnter={enter} onPointerLeave={leave}
+        onClick={(e) => {
           e.stopPropagation()
-          const r = e.currentTarget.getBoundingClientRect()
-          const x = Math.min(Math.max(r.left + r.width / 2 - 128, 8), window.innerWidth - 264)
-          const y = r.bottom + 256 > window.innerHeight ? Math.max(8, r.top - 8 - 240) : r.bottom + 8
-          setPos({ x, y }); setOpen((o) => !o)
+          clearTimeout(timer.current)
+          if (open && pinned.current) { setOpen(false); return }
+          place(); pinned.current = true; setOpen(true)
         }}
-        title={k.label}
         className={cx('w-5 h-5 rounded-full text-sm font-type leading-none flex items-center justify-center hover:scale-125 transition-transform', k.cls)}>
-        {kind === 'direct' ? 'D' : kind === 'estimate' ? 'E' : kind === 'gap' ? '!' : 'M'}
+        {k.glyph}
       </button>
       {open && createPortal(
-        <span ref={pop} onClick={(e) => e.stopPropagation()} style={{ left: pos.x, top: pos.y }} className="rise fixed z-[70] w-64 max-h-[240px] overflow-y-auto bg-paper text-ink border border-black/15 rounded-lg shadow-2xl p-4 text-left font-sans text-sm normal-case tracking-normal">
+        <span ref={pop} role="dialog" aria-label={src?.name ?? id} onClick={(e) => { e.stopPropagation(); pinned.current = true }}
+          onPointerEnter={() => clearTimeout(timer.current)} onPointerLeave={leave}
+          style={{ left: pos.x, top: pos.y }} className="rise fixed z-[70] w-64 max-h-[240px] overflow-y-auto bg-paper text-ink border border-black/15 rounded-lg shadow-2xl p-4 text-left font-sans text-sm normal-case tracking-normal not-italic">
           <span className={cx('inline-block font-type uppercase tracking-widest text-sm px-2 py-0.5 rounded-full mb-2', k.cls)}>{k.label}</span>
           <span className="block font-serif text-base leading-tight mb-1">{src?.name ?? id}</span>
           {src?.note && <span className="block opacity-70 mb-1">{src.note}</span>}
+          {meta && <span className="block font-type text-[13px] uppercase tracking-wider opacity-60 mb-1">{meta}</span>}
           {how && <span className="block font-type text-[15px] bg-black/5 rounded p-2 my-2">{how}</span>}
-          {demo && kind !== 'gap' && <span className="block font-type text-sm text-terra uppercase tracking-wider">Demo value · placeholder, not the published figure</span>}
+          {demo && kind !== 'gap' && kind !== 'example' && <span className="block font-type text-sm text-terra uppercase tracking-wider">Demo value · placeholder, not the published figure</span>}
           {src?.links ? src.links.map((l) => <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="block mt-1 underline underline-offset-2 hover:text-terra">{l.label} ↗</a>)
             : src?.url && <a href={src.url} target="_blank" rel="noreferrer" className="block mt-2 underline underline-offset-2 hover:text-terra">Open source ↗</a>}
         </span>, document.body,

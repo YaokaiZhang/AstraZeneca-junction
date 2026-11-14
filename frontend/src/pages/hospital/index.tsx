@@ -128,7 +128,7 @@ export default function HospitalPage() {
         <span className="shrink-0 uppercase tracking-widest text-terra">Demo data</span>
         <span className="min-w-0">
           {demo.length} made-up patients, scaled from {county.name}'s yearly case numbers. Real use needs a link to hospital systems.
-          <SourceBadge id="demoPatients" kind="estimate" demo={false} className="ml-2"
+          <SourceBadge id="demoPatients" kind="example" className="ml-2"
             how={`Caseload scaled from ${county.name}'s yearly lung, bowel, pancreas and liver cases (40 patients in the smallest county, 80 in the largest). ${open.length} open pathways.`} />
         </span>
       </p>
@@ -140,7 +140,7 @@ export default function HospitalPage() {
         <Stat big label="Escalated" value={<span className="lining-nums">{escalated.length}</span>}
           badge={<SourceBadge id="ourModel" kind="estimate" demo={false} how={`Overdue ≥ ${threshold} d, or escalated by staff; not yet resolved.`} />} />
         <Stat big label="Median late" value={<span className="lining-nums">{med}</span>} unit="d"
-          badge={<SourceBadge id="demoPatients" kind="estimate" how="Median days past target among off-track patients." />} />
+          badge={<SourceBadge id="demoPatients" kind="example" how="Median days past target among off-track patients." />} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_380px] gap-8 xl:gap-10 mt-10 items-start">

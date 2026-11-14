@@ -26,9 +26,10 @@ const CELL_CLS: Record<SourceKind | 'na', string> = {
   estimate: 'bg-mustard text-ink',
   gap: 'bg-terra text-paper',
   mentor: 'bg-moss text-paper',
+  example: 'bg-paper text-ink border border-dashed border-ink/60',
   na: 'bg-transparent text-ink/30 border border-dashed border-black/15',
 }
-const CELL_TXT: Record<SourceKind | 'na', string> = { direct: 'Direct', estimate: 'Estimate', gap: 'Gap', mentor: 'Mentor', na: '—' }
+const CELL_TXT: Record<SourceKind | 'na', string> = { direct: 'Direct', estimate: 'Estimate', gap: 'Gap', mentor: 'Mentor', example: 'Example', na: '—' }
 
 const PLAN: { id: StepId; label: string }[] = [
   { id: 'referral', label: 'Referral received' },
@@ -87,7 +88,7 @@ export function DataGaps({ countyId }: TabProps) {
         <div className="mt-8 flex flex-wrap gap-x-12 gap-y-4">
           <div>
             <Label className="!opacity-80">Target</Label>
-            <p className="font-serif text-4xl leading-none mt-1 flex items-baseline gap-2">≈ {target} d <SourceBadge id="thlTargets" kind="estimate" how={`Sum of step targets scan → treatment: ${PATHWAY.filter((s) => ['scan', 'diagnosis', 'mdt', 'treatment'].includes(s.id)).map((s) => s.targetDays).join(' + ')} days (to verify). Strategy goal 3 sets the target.`} /></p>
+            <p className="font-serif text-4xl leading-none mt-1 flex items-baseline gap-2">≈ {target} d <SourceBadge id="thlTargets" kind="estimate" demo={false} how={`Referral → treatment start. Step targets ${PATHWAY.filter((s) => ['scan', 'diagnosis', 'mdt', 'treatment'].includes(s.id)).map((s) => s.targetDays).join(' + ')} days. The Strategy tracks the share of patients treated within the target times (THL 21/2016), but no figures are published.`} /></p>
           </div>
           <div>
             <Label className="!opacity-80">Measured</Label>
@@ -141,7 +142,7 @@ export function DataGaps({ countyId }: TabProps) {
             <div>
               <Label className="!opacity-70">Shared by patients</Label>
               <p className="font-serif text-4xl leading-none mt-1 flex items-baseline gap-1.5">
-                {fmt(records)} <SourceBadge id="demoPatients" kind="estimate" how="Simulated opt-in records from the patient pathway clock, + 1 if this browser shared its dates for statistics." />
+                {fmt(records)} <SourceBadge id="demoPatients" kind="example" how="Simulated opt-in records from the patient pathway clock, + 1 if this browser shared its dates for statistics." />
               </p>
               {you && <span className="inline-block mt-2 font-type text-sm uppercase tracking-wider bg-mustard text-ink px-2 py-0.5 rounded-full">+1 you</span>}
             </div>

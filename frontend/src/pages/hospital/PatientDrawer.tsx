@@ -2,7 +2,8 @@ import { Btn, Label, SourceBadge, cx } from '../../components/ui'
 import { PATHWAY, daysBetween, today } from '../../data/pathway'
 import type { HospitalAction } from '../../lib/store'
 import { CANCER_LABEL, EST_KEYS, type Coordinator, type EstKey } from './demoPatients'
-import { ESTIMATE_HOW, PLCO_HOW, PLCO_THRESHOLD } from '../patient/logic'
+import { PLCO_HOW, PLCO_THRESHOLD } from '../patient/logic'
+import { tr } from '../patient/i18n'
 import { IconLock, IconUndo } from './icons'
 import { StatusPill, ReasonChip } from './OffTrackList'
 import { ago, barrierMeta, fmtDate, type Row } from './model'
@@ -136,6 +137,9 @@ function Timeline({ row }: { row: Row }) {
     </ol>
   )
 }
+
+/** Same wording the patient sees (logic.ts keeps the code; the text lives in i18n). */
+const ESTIMATE_HOW = tr('en', 'how.estimate')
 
 function SharedRecords({ row }: { row: Row }) {
   const { diary, risk, est, estHigh } = row.p

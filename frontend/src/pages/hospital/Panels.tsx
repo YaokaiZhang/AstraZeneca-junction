@@ -98,7 +98,7 @@ export function DelayChart({ rows, step, reason, onStep, onReason }: {
     <Card tone="stone" className="p-5 sm:p-6">
       <div className="flex items-start justify-between mb-3">
         <Label>Where delays pile up</Label>
-        <SourceBadge id="demoPatients" kind="estimate" how="Count of open overdue cases, grouped by the step they wait for." />
+        <SourceBadge id="demoPatients" kind="example" how="Count of open overdue cases, grouped by the step they wait for." />
       </div>
       <div className="space-y-2" role="list">
         {data.map((d) => {

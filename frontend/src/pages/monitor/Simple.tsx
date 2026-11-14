@@ -7,31 +7,7 @@ import {
   DETECTION_FIXES, EMPTY_PLAN, evaluate, flags, in2031, losses, n0, n1,
   type Plan, type Result, type Step,
 } from './model'
-
-/** Round for the main view: whole numbers below 20, then to 5, then to 10. */
-const about = (v: number) => {
-  const a = Math.abs(v)
-  const r = a < 20 ? Math.round(a) : a < 100 ? Math.round(a / 5) * 5 : Math.round(a / 10) * 10
-  return r.toLocaleString('en-GB')
-}
-
-/**
- * The step to act on first. Among the steps falling behind, in order of how serious the loss is for one person:
- * a positive test never followed up (a known positive without a diagnosis), then a long wait (diagnosis delayed),
- * then kits not returned (result unknown). If nothing is falling behind: the step furthest from the national figure.
- */
-function weakestStep(r: ScreeningRow): Step {
-  const f = flags(r)
-  const order: Step[] = ['referral', 'capacity', 'detection']
-  const hit = order.find((s) => f[s])
-  if (hit) return hit
-  const fi = SCREENING_FI
-  return ([
-    ['detection', (fi.participationPct - r.participationPct) / fi.participationPct],
-    ['referral', (fi.colonoscopyOfPositivesPct - r.colonoscopyOfPositivesPct) / fi.colonoscopyOfPositivesPct],
-    ['capacity', (r.medianMonths - fi.medianMonths) / fi.medianMonths],
-  ] as [Step, number][]).sort((a, b) => b[1] - a[1])[0][0]
-}
+import { about, weakestStep } from './plain'
 
 const waitRatio = (r: ScreeningRow) => r.medianMonths / SCREENING_FI.medianMonths
 const waitWords = (r: ScreeningRow) => {

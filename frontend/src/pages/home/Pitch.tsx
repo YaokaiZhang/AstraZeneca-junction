@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Card, EdgeText, KindLegend, KindDot, Label, Picker, SourceBadge, Stamp, cx } from '../../components/ui'
 import { CANCERS, COUNTIES, type RadarCancerId } from '../../data/counties'
 import { buildBrief } from '../county/Brief'
-import { RADAR_CANCERS, stepInfo } from '../county/model'
+import { RADAR_CANCERS, pct, spreadContrast, stepInfo, unknownMajority } from '../county/model'
 import { REGISTRY_FI } from '../../data/registry.generated'
 import { SOURCES } from '../../data/sources'
 import { PATHWAY } from '../../data/pathway'
@@ -42,28 +42,17 @@ export function Marquee({ words, reverse }: { words: string[]; reverse?: boolean
 }
 
 /* ───────────── 1 · the clock (sticky, scroll-driven) ───────────── */
-const STEPS = PATHWAY.map((s) => ({ id: s.id === 'gp' ? 'GP' : s.id === 'mdt' ? 'Team meeting' : s.short, d: s.targetDays ?? 0 }))
+const STEPS = PATHWAY.map((s) => ({ id: s.id === 'gp' ? 'Doctor visit' : s.short, d: s.targetDays ?? 0 }))
 const CUM = STEPS.reduce<number[]>((a, s) => [...a, (a[a.length - 1] ?? 0) + s.d], [])
 const TOTAL = CUM[CUM.length - 1]
 
-function Scramble({ on }: { on: boolean }) {
-  const [v, setV] = useState('??')
-  useEffect(() => {
-    if (!on) { setV('??'); return }
-    const id = setInterval(() => setV(String(40 + Math.floor(Math.random() * 160))), 70)
-    const stop = setTimeout(() => { clearInterval(id); setV('?') }, 1500)
-    return () => { clearInterval(id); clearTimeout(stop) }
-  }, [on])
-  return <>{v}</>
-}
-
 export function Clock() {
   const [ref, p] = useScrollProgress<HTMLElement>()
-  const fill = Math.min(1, Math.max(0, (p - 0.05) / 0.45))
-  const real = p > 0.58
+  const fill = Math.min(1, Math.max(0, (p - 0.05) / 0.5))
+  const real = p > 0.68
   const days = Math.round(TOTAL * fill)
   return (
-    <section ref={ref} className="relative h-[300vh]">
+    <section ref={ref} className="relative h-[150vh]">
       <div className="sticky top-0 h-[100svh] flex flex-col justify-center px-5 lg:px-24 overflow-hidden">
         <div className="absolute right-[-6vw] xl:right-[4vw] top-1/2 -translate-y-1/2 w-[46vh] h-[46vh] hidden lg:block pointer-events-none" aria-hidden>
           <svg viewBox="0 0 200 200" className="w-full h-full">
@@ -91,38 +80,49 @@ export function Clock() {
         </div>
         <div className="relative mt-6 max-w-xl h-[5.5em] lg:h-[4.5em] font-sans text-base lg:text-lg leading-relaxed">
           <p className={cx('absolute inset-0 transition-opacity duration-700', real ? 'opacity-0' : 'opacity-75')}>
-            Finnish guidance allows 6 weeks from referral to the first treatment. Split into steps, from the first GP visit on. Keep scrolling to add them up.
+            Treatment within 6 weeks of referral, plus a week to get referred.
           </p>
           <p className={cx('absolute inset-0 transition-opacity duration-700', real ? 'opacity-75' : 'opacity-0')}>
-            But nobody publishes how long patients actually wait between those steps. Ajoissa records the dates, so the real number can finally be counted.
+            Nobody publishes how long patients actually wait. Ajoissa records the dates, so it can be counted.
           </p>
         </div>
 
         <div className="mt-10 lg:mt-14 relative max-w-6xl lg:w-[calc(100%-46vh-4vw)]">
           {/* target track */}
-          <div className="flex items-center gap-3 mb-3"><span className="label">Target</span><SourceBadge id="thlTargets" kind="estimate" demo={false} how={tr('en', 'how.targets')} /></div>
-          <div className="relative h-24">
+          <div className="flex items-center gap-3 mb-3"><span className="label">Target</span><SourceBadge id="thlTargets" kind="estimate" demo={false} how={`${tr('en', 'how.targets')} The split into steps is ours, not official.`} /></div>
+          <div className="relative h-8 sm:h-24">
             <div className="absolute left-0 right-0 top-3 h-px bg-ink/20" />
             <div className="absolute left-0 top-3 h-[3px] -mt-px bg-ink origin-left" style={{ width: `${fill * 100}%` }} />
             {STEPS.map((s, i) => {
               const at = CUM[i] / TOTAL
               const lit = fill >= at - 0.001
               return (
-                <div key={s.id} className="absolute top-0 -translate-x-1/2 flex flex-col items-center" style={{ left: `${at * 100}%` }}>
-                  <span className={cx('w-6 h-6 rounded-full border-2 border-ink transition-all duration-300', lit ? 'bg-mustard scale-110' : 'bg-paper')} />
-                  <span className={cx('mt-3 font-type text-[11px] lg:text-[13px] uppercase tracking-widest whitespace-nowrap transition-opacity', lit ? 'opacity-90' : 'opacity-30', i % 2 === 1 && "max-sm:mt-10")}>{s.id}</span>
-                  {i > 0 && <span className={cx('font-serif italic text-lg lg:text-xl transition-opacity', lit ? 'opacity-100' : 'opacity-20')}>+{s.d}</span>}
+                <div key={s.id} className={cx('absolute top-0 flex flex-col', i === 0 ? 'items-start' : '-translate-x-1/2 items-center')} style={{ left: `${at * 100}%` }}>
+                  {/* the first label starts at the margin instead of hanging past it */}
+                  <span className={cx('w-6 h-6 rounded-full border-2 border-ink transition-all duration-300', i === 0 && '-ml-3', lit ? 'bg-mustard scale-110' : 'bg-paper')} />
+                  <span className={cx('hidden sm:block mt-3 font-type text-[13px] uppercase tracking-widest whitespace-nowrap transition-opacity', lit ? 'opacity-90' : 'opacity-30')}>{s.id}</span>
+                  {i > 0 && <span className={cx('hidden sm:block font-serif italic text-xl transition-opacity', lit ? 'opacity-100' : 'opacity-20')}>+{s.d}</span>}
                 </div>
               )
             })}
           </div>
+
+          {/* phones: the same steps as a list, so the labels never collide */}
+          <ol className="sm:hidden mt-2 grid grid-cols-3 gap-x-3 gap-y-2">
+            {STEPS.map((s, i) => (
+              <li key={s.id} className={cx('transition-opacity', fill >= CUM[i] / TOTAL - 0.001 ? 'opacity-100' : 'opacity-30')}>
+                <span className="block font-type text-[11px] uppercase tracking-widest leading-tight">{s.id}</span>
+                <span className="font-serif italic text-lg leading-none">{i > 0 ? `+${s.d}` : 'day 0'}</span>
+              </li>
+            ))}
+          </ol>
 
           {/* reality track */}
           <div className={cx('mt-10 transition-all duration-700', real ? 'opacity-100' : 'opacity-0 translate-y-6')}>
             <div className="flex items-center gap-3 mb-3"><span className="label !opacity-90 text-terra">Reality</span><SourceBadge id="waitGap" kind="gap" /></div>
             <div className="relative h-10">
               <div className="absolute left-0 top-3 h-[3px] reality-line" style={{ width: real ? '125%' : '0%' }} />
-              <div className="absolute right-0 -top-8 lg:-top-10 font-serif text-6xl lg:text-8xl text-terra tabular-nums lining-nums leading-none"><Scramble on={real} /></div>
+              <div className="absolute right-0 -top-8 lg:-top-10 font-serif text-6xl lg:text-8xl text-terra leading-none">?</div>
             </div>
           </div>
         </div>
@@ -134,44 +134,94 @@ export function Clock() {
   )
 }
 
-/* ───────────── 2 · found too late (rings) ───────────── */
-function Ring({ label, value, delay }: { label: string; value: number; delay: number }) {
+/* ───────────── 2 · found too late: one real county contrast, then the whole country ───────────── */
+/** Headline finding, computed from the Registry: breast cancer found after spread, highest vs lowest county. */
+const BREAST = spreadContrast('breast')
+
+function Ring({ label, value, unknown, delay }: { label: string; value: number; unknown: number; delay: number }) {
   const [ref, on] = useInView<HTMLDivElement>(0.4)
   const n = useCount(value * 100, on, 1600 + delay)
   const C = 2 * Math.PI * 54
   return (
     <div ref={ref} className="flex flex-col items-center">
-      <div className="relative w-36 h-36 lg:w-48 lg:h-48">
+      <div className="relative w-28 h-28 lg:w-40 lg:h-40">
         <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
           <circle cx="60" cy="60" r="54" fill="none" stroke="#D1D1C9" strokeWidth="5" />
           <circle cx="60" cy="60" r="54" fill="none" stroke="#C65D3B" strokeWidth="5" strokeLinecap="round"
             strokeDasharray={C} strokeDashoffset={on ? C * (1 - value) : C}
             style={{ transition: `stroke-dashoffset 1.8s cubic-bezier(.2,.7,.2,1) ${delay}ms` }} />
-          <circle cx="60" cy="60" r="44" fill="none" stroke="#1F1F1F" strokeOpacity=".15" strokeDasharray="1 4" />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center font-serif text-5xl lg:text-6xl tabular-nums lining-nums">
-          {Math.round(n)}<span className="text-2xl">%</span>
+        <div className="absolute inset-0 flex items-center justify-center font-serif text-4xl lg:text-5xl tabular-nums lining-nums">
+          {Math.round(n)}<span className="text-xl">%</span>
         </div>
       </div>
-      <div className="mt-4 font-serif italic text-3xl">{label}</div>
+      <div className="mt-3 font-serif italic text-2xl">{label}</div>
+      <div className="font-type text-xs tracking-wider opacity-50">stage unknown {pct(unknown)}</div>
+    </div>
+  )
+}
+
+/** One county as a bar with its 95% range drawn as a whisker; Finland as a dashed tick. */
+function ContrastBar({ name, v, lo, hi, nat, hot, on, delay }: { name: string; v: number; lo: number; hi: number; nat: number; hot?: boolean; on: boolean; delay: number }) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-4">
+        <span className={cx('font-serif text-2xl lg:text-3xl leading-none', hot && 'italic text-terra')}>{name}</span>
+        <span className={cx('font-serif text-5xl lg:text-6xl leading-none tabular-nums lining-nums', hot && 'text-terra')}>{pct(v)}</span>
+      </div>
+      <div className="relative mt-3 h-4">
+        <div className="absolute inset-0 rounded-full bg-ink/[0.07]" />
+        <div className={cx('absolute inset-y-0 left-0 rounded-full origin-left transition-transform duration-[1400ms] ease-out', hot ? 'bg-terra' : 'bg-ink/80')}
+          style={{ width: `${v * 100}%`, transform: `scaleX(${on ? 1 : 0})`, transitionDelay: `${delay}ms` }} />
+        <div className={cx('absolute top-1/2 h-px bg-ink transition-opacity duration-500', on ? 'opacity-100' : 'opacity-0')}
+          style={{ left: `${lo * 100}%`, width: `${(hi - lo) * 100}%`, transitionDelay: `${delay + 1300}ms` }} aria-hidden>
+          <span className="absolute left-0 -top-2 h-4 border-l border-ink" />
+          <span className="absolute right-0 -top-2 h-4 border-r border-ink" />
+        </div>
+        <div className="absolute -top-1.5 -bottom-1.5 border-l-2 border-dashed border-ink/50" style={{ left: `${nat * 100}%` }} aria-hidden />
+      </div>
     </div>
   )
 }
 
 export function TooLate() {
+  const [ref, on] = useInView<HTMLDivElement>(0.35)
+  const { worst, best, nat, counted } = BREAST
   return (
     <section className="relative px-5 lg:px-24 py-28 lg:py-40">
-      <div className="flex items-end justify-between flex-wrap gap-6">
-        <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
-          <WordsUp text="Found" /><br /><WordsUp text="too late." className="italic text-terra" delay={140} />
-        </h2>
-        <Reveal fx="blur" delay={300} className="flex items-center gap-2"><Label>Share spread at diagnosis</Label><SourceBadge id="cancerRegistry" kind="direct" demo={false} how={`Whole country, non-localized share of cases with known stage, 2021–25 preliminary statistics. Stage unknown for ${CANCERS.map((c) => `${c.label.toLowerCase()} ${Math.round(c.unknownStage * 100)}%`).join(", ")}.`} /></Reveal>
+      <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
+        <WordsUp text="Found" /><br /><WordsUp text="too late." className="italic text-terra" delay={140} />
+      </h2>
+
+      <div ref={ref} className="mt-14 lg:mt-20 grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-12 lg:gap-24 items-center">
+        <div>
+        <div className="flex items-center gap-2">
+          <Label>Breast cancers found after they had spread</Label>
+          <SourceBadge id="cancerRegistry" kind="direct" demo={false}
+            how={`Non-localized share of breast cancers with known stage, 2021–25 preliminary statistics. ${worst.c.name} ${pct(worst.v)} (95% range ${pct(worst.lo)}–${pct(worst.hi)}, ${worst.n} cases; stage unknown for ${pct(worst.unknown)}, close to half). ${best.c.name} ${pct(best.v)} (${pct(best.lo)}–${pct(best.hi)}, ${best.n} cases; unknown ${pct(best.unknown)}). Finland ${pct(nat)}. Highest and lowest of the ${counted} counties where stage is known for at least half of cases.`} />
+        </div>
+        <div className="mt-8 space-y-8">
+          <ContrastBar name={worst.c.name} v={worst.v} lo={worst.lo} hi={worst.hi} nat={nat} hot on={on} delay={0} />
+          <ContrastBar name={best.c.name} v={best.v} lo={best.lo} hi={best.hi} nat={nat} on={on} delay={200} />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 font-type text-xs uppercase tracking-widest opacity-60">
+          <span className="flex items-center gap-2"><span className="h-3 border-l-2 border-dashed border-ink/60" />Finland {pct(nat)}</span>
+          <span className="flex items-center gap-2"><span className="relative w-4 h-2 border-x border-ink"><span className="absolute inset-x-0 top-1/2 h-px bg-ink" /></span>95% range</span>
+        </div>
+        </div>
+        <p className="font-serif text-3xl lg:text-4xl leading-snug lg:border-l lg:border-ink/15 lg:pl-10">
+          The gap opens before treatment: <span className="italic text-terra">at screening and when symptoms are noticed.</span>
+        </p>
       </div>
-      <Lede className="mt-8">
-        The share of cancers found only after they have already spread, when they are far harder to treat. Finding them earlier is what changes these numbers.
-      </Lede>
-      <div className="mt-16 lg:mt-24 grid grid-cols-2 lg:grid-cols-4 gap-y-14">
-        {CANCERS.map((c, i) => <Ring key={c.id} label={c.label} value={c.lateShare} delay={i * 150} />)}
+
+      <div className="mt-24 lg:mt-32">
+        <div className="flex items-center gap-2">
+          <Label>Whole country · found after spread</Label>
+          <SourceBadge id="cancerRegistry" kind="direct" demo={false} how="Whole country, 2021–25 preliminary statistics. Share of cases with known stage that had spread beyond the organ (non-localized). This includes spread to nearby lymph nodes, so it is not the same as stage III–IV. Cases with unknown stage are left out; the share unknown is shown under each ring." />
+        </div>
+        <div className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-y-12">
+          {CANCERS.map((c, i) => <Ring key={c.id} label={c.label} value={c.lateShare} unknown={c.unknownStage} delay={i * 150} />)}
+        </div>
       </div>
     </section>
   )
@@ -515,16 +565,17 @@ const REAL_SRC: [string, string][] = [
   ['plco', 'Lung risk model'],
 ]
 const unk = Object.values(REGISTRY_FI).map((r) => r.unknownStage)
-const pc = (v: number) => `${Math.round(v * 100)}%`
 const OURS = [
   'Survival stand-in: deaths ÷ new cases per county.',
-  'People at high risk: residents × county risk-factor prevalence.',
+  'People at higher risk: a rough rule of ours, residents × county risk-factor prevalence. Not validated.',
   'Bowel, breast and cervical check: Registry incidence × published relative risks. Not a clinical score.',
   'Step targets: the 6-week rule, split into steps by us.',
 ]
+/** Stage reporting is itself a finding: how many counties miss it for most bowel cancers. */
+const STAGE_FINDING = `Stage is missing for most bowel cancers in ${unknownMajority('bowel')} of ${COUNTIES.length} counties.`
 const LIMITS = [
   'No waiting times for cancer are published, so the real pathway length is unknown.',
-  `Stage is unknown for ${Math.round(Math.min(...unk) * 100)}–${pc(Math.max(...unk))} of cases, so “found late” counts only cases with a known stage.`,
+  `Nationally, stage is unknown for ${pct(Math.min(...unk))}–${pct(Math.max(...unk))} of cases, so “found late” counts only cases with a known stage.`,
   'Small counties have wide 95% ranges; the Registry hides counts of 1–4.',
   'The lung model was built on US trial data and is not validated in Finland.',
   'Hospital patients in the demo are synthetic, scaled from real county case numbers.',
@@ -571,7 +622,11 @@ export function Transparency() {
           <Card tone="ink" tilt={-1} className="relative p-6 pl-10">
             <EdgeText>Limits</EdgeText>
             <div className="flex items-center gap-2"><KindDot kind="gap" /><Label className="!opacity-70">What we cannot say</Label></div>
-            <ul className="mt-4 space-y-3 font-sans text-[15px] leading-snug">
+            <p className="mt-4 pb-3 border-b border-dashed border-paper/20 font-serif text-2xl leading-tight">
+              {STAGE_FINDING}{' '}
+              <SourceBadge id="cancerRegistry" kind="direct" demo={false} className="[&>button]:ring-1 [&>button]:ring-paper/60" how="Counties where the Cancer Registry has no stage for more than half of bowel cancers, 2021–25 preliminary statistics. Stage comes from clinical notifications; where they are missing, it stays unknown. The radar counts those counties half." />
+            </p>
+            <ul className="mt-3 space-y-3 font-sans text-[15px] leading-snug">
               {LIMITS.map((t) => <li key={t} className="border-b border-dashed border-paper/20 pb-3">{t}</li>)}
             </ul>
           </Card>
@@ -583,49 +638,49 @@ export function Transparency() {
 
 /* ───────────── 7 · from finding to action ───────────── */
 type Effort = 1 | 2 | 3
-const PLAYBOOK: { step: string; finding: string; action: string; who: string; lever: string; effort: Effort; target: string; badge: React.ReactNode }[] = [
+const PLAYBOOK: { finding: string; action: string; who: string; lever: string; effort: Effort; target: string; badge: React.ReactNode }[] = [
   {
-    step: 'Step 2', finding: 'Low screening turnout', action: 'Reminder letter + second test kit to non-attenders, lowest towns first',
-    who: 'Screening unit', lever: 'National screening programme invitations', effort: 1, target: '80% turnout in every county',
+    finding: 'Few people get screened', action: 'Send a reminder and a second test kit, lowest towns first',
+    who: 'Screening unit', lever: 'Existing screening invitations', effort: 1, target: '80% turnout in every county',
     badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 80% screening turnout in every county. Tracked with THL Sotkanet 6103 / 3621 / 3620, already on the radar." />,
   },
   {
-    step: 'Pathway', finding: 'Waiting time unknown', action: 'Log three dates; a nurse coordinator calls anyone past a step target',
-    who: 'Hospital nurse coordinator', lever: 'The 6-week referral-to-treatment rule', effort: 1, target: 'Treated within 6 weeks of referral',
+    finding: 'Waiting time unknown', action: 'Record three dates per patient; a nurse calls anyone running late',
+    who: 'Nurse coordinator', lever: 'The 6-week rule', effort: 1, target: 'Treated within 6 weeks of referral',
     badge: <SourceBadge id="thlTargets" kind="direct" demo={false} how="Referral arriving → first treatment within 6 weeks, tests included (STM report 2010:6). Tracked by the hospital off-track list." />,
   },
   {
-    step: 'Step 3', finding: 'Found after spread', action: 'Direct CT referral for weight loss + new diabetes or jaundice',
-    who: 'Health centre GP', lever: 'Regional care pathway (hoitoketju), urgent referral', effort: 2, target: '70% found at stage I–II',
-    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 70% of cancers found at stage I–II. Tracked on the radar as the Registry's spread share (step 3)." />,
+    finding: 'Found after spread', action: 'Health centres order a scan straight away for warning signs',
+    who: 'Health centre doctor', lever: 'Urgent referral in the regional care pathway', effort: 2, target: '70% found early',
+    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 70% of cancers found at stage I–II. Warning signs, for example: weight loss with new diabetes, or jaundice (pancreas and liver). Tracked on the radar as the Registry's spread share (step 3)." />,
   },
   {
-    step: 'Step 1', finding: 'Many at high risk', action: 'Self-check in the app, then a GP visit; lung CT only above the risk cut-off',
-    who: 'Health centre nurse', lever: 'PLCOm2012 risk cut-off ≥ 1.51%', effort: 2, target: 'High-risk people reached',
-    badge: <SourceBadge id="plco" kind="direct" demo={false} how="Cut-off ≥ 1.51% six-year lung cancer risk (Tammemägi et al. 2014). Built on US data; not validated in Finland. Lung CT screening is only piloted in Finland." />,
+    finding: 'Many people at higher risk', action: 'A self-check in the app, then a doctor visit',
+    who: 'Health centre nurse', lever: 'A published lung-risk cut-off', effort: 2, target: 'More people at risk reached',
+    badge: <SourceBadge id="plco" kind="estimate" demo={false} how="Lung: PLCOm2012 six-year risk ≥ 1.51% (Tammemägi et al. 2014). Built on US data; not validated in Finland. Lung CT screening is only piloted in Finland. Other cancers: our rough county heuristic." />,
   },
   {
-    step: 'Step 4', finding: 'Cases rise to 2035', action: 'Book scan + specialist slots before the overload year',
-    who: 'County', lever: 'Annual budget and service plan', effort: 3, target: 'Fewer waiting > 6 months',
+    finding: 'More cases by 2035', action: 'Book scan and specialist time before the overload year',
+    who: 'County', lever: 'Yearly budget and service plan', effort: 3, target: 'Fewer waiting over 6 months',
     badge: <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how="THL Sotkanet 3336: waited over 6 months for specialist care, per 10 000 residents. Shown with the 2035 projection on the Overload tab." />,
   },
 ]
-const EFFORT = ['', 'Low', 'Medium', 'High']
+const EFFORT = ['', 'Low effort', 'Medium effort', 'High effort']
 
 function EffortDots({ n }: { n: Effort }) {
   return (
-    <span className="inline-flex items-center gap-2" aria-label={`Effort ${EFFORT[n]}`}>
+    <span className="inline-flex items-center gap-2" aria-label={EFFORT[n]}>
       <span className="flex gap-1">{[1, 2, 3].map((i) => <i key={i} className={cx('w-2 h-2 rounded-full border border-ink', i <= n ? 'bg-ink' : 'bg-transparent')} />)}</span>
-      <span className="font-type text-xs uppercase tracking-widest opacity-70">{EFFORT[n]}</span>
+      <span className="font-sans text-sm opacity-70">{EFFORT[n]}</span>
     </span>
   )
 }
 
 const EASY: [string, string, React.ReactNode][] = [
-  ['Open data', 'Cancer Registry CC BY 4.0 · Statistics Finland · THL', <SourceBadge key="r" id="cancerRegistry" kind="direct" demo={false} />],
-  ['No record link', 'The radar uses public totals only', null],
+  ['Open data', 'Cancer Registry, Statistics Finland, THL', <SourceBadge key="r" id="cancerRegistry" kind="direct" demo={false} />],
+  ['No record linking', 'The radar uses public totals only', null],
   ['A browser', 'Nothing to install', null],
-  ['Yearly refresh', 'Committed Registry scripts + open THL / StatFin APIs', null],
+  ['A yearly refresh', 'Scripts and open data feeds', null],
   ['Diary first', 'Works without records; AI optional', null],
 ]
 
@@ -636,34 +691,27 @@ export function Actions() {
   const brief = buildBrief(county, k)
   return (
     <section id="act" className="relative px-5 lg:px-24 py-28 lg:py-40" aria-label="Actions">
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
-          <WordsUp text="A gap found." /><br /><WordsUp text="A step to take." className="italic text-terra" delay={180} />
-        </h2>
-        <Reveal fx="blur" delay={300} className="flex flex-wrap gap-x-6 gap-y-2"><EffortDots n={1} /><EffortDots n={2} /><EffortDots n={3} /></Reveal>
-      </div>
-      <Lede className="mt-8">Each radar finding comes with an action, an owner, a lever that already exists and a target the radar keeps tracking.</Lede>
+      <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
+        <WordsUp text="A gap found." /><br /><WordsUp text="A step to take." className="italic text-terra" delay={180} />
+      </h2>
+      <Lede className="mt-8">Each finding comes with an action, an owner and a target.</Lede>
 
       {/* playbook */}
       <div className="mt-16 lg:mt-20">
-        <div className="hidden lg:grid grid-cols-[9rem_1.6fr_1fr_1.2fr_7rem_1.2fr] gap-6 pb-3 border-b border-ink">
-          {['Finding', 'Action', 'Who', 'Existing lever', 'Effort', 'Target'].map((h) => <span key={h} className="label">{h}</span>)}
+        <div className="hidden lg:grid grid-cols-[1fr_1.6fr_1fr_1.1fr_1.2fr] gap-6 pb-3 border-b border-ink">
+          {['Finding', 'Action', 'Who', 'Uses', 'Target'].map((h) => <span key={h} className="label">{h}</span>)}
         </div>
         {PLAYBOOK.map((r, i) => (
-          <Reveal key={r.step + r.finding} delay={i * 90}
-            className="grid grid-cols-2 lg:grid-cols-[9rem_1.6fr_1fr_1.2fr_7rem_1.2fr] gap-x-6 gap-y-2 py-5 border-b border-dashed border-ink/20 items-baseline">
-            <div className="col-span-2 lg:col-span-1">
-              <div className="font-type text-xs uppercase tracking-widest opacity-60">{r.step}</div>
-              <div className="font-serif italic text-xl leading-tight text-terra">{r.finding}</div>
-            </div>
-            <div className="col-span-2 lg:col-span-1 font-serif text-xl lg:text-2xl leading-tight">{r.action}</div>
-            <div className="font-type text-[13px] uppercase tracking-wider"><span className="lg:hidden opacity-50">Who · </span>{r.who}</div>
-            <div className="font-sans text-[15px] leading-snug opacity-80"><span className="lg:hidden font-type text-[13px] uppercase opacity-60">Lever · </span>{r.lever}</div>
-            <div className="flex flex-wrap lg:flex-col items-start gap-2">
+          <Reveal key={r.finding} delay={i * 90}
+            className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr_1fr_1.1fr_1.2fr] gap-x-6 gap-y-2 py-6 border-b border-dashed border-ink/20 lg:items-baseline">
+            <div className="font-serif italic text-xl leading-tight text-terra">{r.finding}</div>
+            <div className="font-serif text-2xl leading-tight">{r.action}</div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 lg:flex-col lg:items-start">
+              <span className="font-sans text-base">{r.who}</span>
               <EffortDots n={r.effort} />
-              {r.effort === 1 && <span className="font-type text-[11px] uppercase tracking-widest bg-mustard rounded-full px-2 py-0.5">Quick win</span>}
             </div>
-            <div className="font-sans text-[15px] leading-snug flex items-baseline gap-2"><span>{r.target}</span>{r.badge}</div>
+            <div className="hidden lg:block font-sans text-[15px] leading-snug opacity-75">{r.lever}</div>
+            <div className="font-sans text-base leading-snug flex items-center gap-2"><span className="lg:hidden opacity-60">Target:</span><span>{r.target}</span>{r.badge}</div>
           </Reveal>
         ))}
       </div>
@@ -693,7 +741,7 @@ export function Actions() {
                   <span className={cx('w-8 h-8 rounded-full flex items-center justify-center font-serif shrink-0', i === 0 ? 'bg-ink text-mustard' : 'border border-ink')}>{i + 1}</span>
                   <div className="min-w-0">
                     <p className="font-serif text-xl leading-tight flex items-center gap-2">{a.title} {a.badge}</p>
-                    <p className="font-type text-[13px] opacity-75 mt-0.5">{a.detail}</p>
+                    <p className="font-sans text-[15px] leading-snug opacity-75 mt-1">{a.detail}</p>
                   </div>
                 </li>
               ))}
@@ -711,7 +759,7 @@ export function Actions() {
             {EASY.map(([a, b, badge], i) => (
               <Reveal key={a} delay={200 + i * 100} className="border-t border-ink/20 pt-3">
                 <div className="font-serif text-3xl italic flex items-center gap-2">{a}{badge}</div>
-                <div className="font-type text-[13px] uppercase tracking-widest opacity-60 mt-1">{b}</div>
+                <div className="font-sans text-base opacity-70 mt-1">{b}</div>
               </Reveal>
             ))}
           </div>

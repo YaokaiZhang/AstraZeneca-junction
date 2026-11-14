@@ -13,7 +13,8 @@ import { Missed } from './Missed'
 import { MixGap } from './MixGap'
 import { Fixes } from './Fixes'
 import { Bottleneck } from './Bottleneck'
-import { ActionSheet } from './ActionSheet'
+import { ActionSheet, type Briefing } from './ActionSheet'
+import { buildFacts, numbersMatch, templateBriefing } from './briefing'
 import { LeakMap, Ranking } from './Compare'
 import { SHOW_FULL_STORY } from '../../config'
 
@@ -63,6 +64,34 @@ export default function MonitorPage() {
   const res = useMemo(() => evaluate(r, plan), [r, plan])
   const select = (id: string) => setQ((p) => { const n = new URLSearchParams(p); n.set('c', id); return n }, { replace: true })
   const touched = JSON.stringify(plan) !== JSON.stringify(EMPTY_PLAN)
+
+  // the briefing on the one-page plan: template by default; AI text only if every number in it matches the facts
+  const facts = useMemo(() => buildFacts(r, plan, res), [r, plan, res])
+  const factsKey = JSON.stringify(facts)
+  const [ai, setAi] = useState<{ key: string; text: string } | null>(null)
+  const [aiNote, setAiNote] = useState<{ key: string; note: string } | null>(null)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiOn, setAiOn] = useState<boolean | null>(null)
+  useEffect(() => {
+    fetch('/api/health').then((x) => x.json()).then((h) => setAiOn(!!h.ai)).catch(() => setAiOn(false))
+  }, [])
+  const briefing: Briefing = ai?.key === factsKey
+    ? { text: ai.text, source: 'ai' }
+    : { text: templateBriefing(facts), source: 'template', note: aiNote?.key === factsKey ? aiNote.note : undefined }
+  const writeBriefing = async () => {
+    const key = factsKey
+    setAiBusy(true)
+    try {
+      const resp = await fetch('/api/briefing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ facts }) })
+      const body = await resp.json().catch(() => ({}))
+      if (resp.ok && typeof body.text === 'string' && numbersMatch(body.text, facts)) { setAi({ key, text: body.text }); setAiNote(null) }
+      else setAiNote({ key, note: resp.ok ? 'The AI text used a number we could not match, so it was not used.' : body.error === 'ai_off' ? 'AI is off on this server.' : 'The AI could not be reached.' })
+    } catch {
+      setAiNote({ key, note: 'The AI could not be reached.' })
+    } finally {
+      setAiBusy(false)
+    }
+  }
 
   return (
     <div className="monitor-root county-root px-4 sm:px-6 lg:px-10 pb-20 max-w-[1400px] overflow-x-clip">
@@ -160,15 +189,22 @@ export default function MonitorPage() {
         <div className="p-6 pt-16">
           <div className="flex items-center justify-between mb-4 gap-3">
             <Label>Preview · one printable page</Label>
-            <Btn onClick={() => window.print()}>Print</Btn>
+            <div className="flex items-center gap-2">
+              <Btn variant="ghost" disabled={aiBusy || aiOn === false} onClick={writeBriefing}
+                title={aiOn === false ? 'Start the server with LLM_KEY to use AI' : undefined}>
+                {aiBusy ? 'Writing…' : briefing.source === 'ai' ? 'Rewrite with AI' : 'Write briefing with AI'}
+              </Btn>
+              <Btn onClick={() => window.print()}>Print</Btn>
+            </div>
           </div>
+          {aiOn === false && <p className="font-sans text-[13px] opacity-60 mb-3">AI is off on this server, so the briefing comes from a template. The numbers are the same either way.</p>}
           <div className="border border-black/15 rounded-lg p-4 bg-paper shadow-inner sheet-preview">
-            <ActionSheet r={r} plan={plan} res={res} />
+            <ActionSheet r={r} plan={plan} res={res} briefing={briefing} />
           </div>
         </div>
       </Drawer>
 
-      {createPortal(<div id="monitor-print"><ActionSheet r={r} plan={plan} res={res} /></div>, document.body)}
+      {createPortal(<div id="monitor-print"><ActionSheet r={r} plan={plan} res={res} briefing={briefing} /></div>, document.body)}
     </div>
   )
 }
@@ -186,6 +222,7 @@ const OURS: [string, string][] = [
   ['The 2031 estimate', 'Everyone aged 56–74 is invited every two years, so invites and colonoscopies grow in proportion, at today’s rates.'],
   ['What a fix does here', 'The effect measured in other programmes, applied to this county’s 2024 numbers.'],
   ['Expected vs actual kit return', 'What the county would reach if each language and education group sent kits back at the national rate.'],
+  ['The briefing on the one-page plan', 'The briefing text is written by AI from our calculated numbers; it adds no numbers of its own. Any number it writes is checked against ours, and if one doesn’t match, a fixed template is used instead.'],
 ]
 
 /** Where the numbers come from, in plain words, plus what we calculated ourselves. Always visible at the bottom. */

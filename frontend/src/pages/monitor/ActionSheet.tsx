@@ -10,7 +10,9 @@ const SOURCES = [
   ['Statistics Finland, population by age and language (vaerak/11rz), 2025, rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/'],
 ]
 
-export function ActionSheet({ r, plan, res }: { r: ScreeningRow; plan: Plan; res: Result }) {
+export interface Briefing { text: string; source: 'ai' | 'template'; note?: string }
+
+export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan: Plan; res: Result; briefing?: Briefing }) {
   const f = flags(r)
   const l = losses(r)
   const leaks = (Object.keys(f) as Step[]).filter((s) => f[s])
@@ -39,6 +41,18 @@ export function ActionSheet({ r, plan, res }: { r: ScreeningRow; plan: Plan; res
         </div>
         <p className="font-type text-[12px] uppercase tracking-wider opacity-70 text-right">{date}<br />2024 screening round, ages 60–70</p>
       </header>
+
+      {briefing && (
+        <section className="mt-4 border-l-4 border-terra pl-3">
+          <h2 className="font-type uppercase tracking-widest text-[12px] opacity-70 mb-1">Briefing</h2>
+          <p className="text-[14px] leading-snug">{briefing.text}</p>
+          <p className="text-[11px] opacity-60 mt-1 italic">
+            {briefing.source === 'ai'
+              ? 'Written by AI from the numbers below. Numbers come from our calculations, not the AI.'
+              : `Template briefing, built from the numbers below.${briefing.note ? ` ${briefing.note}` : ''}`}
+          </p>
+        </section>
+      )}
 
       <section className="mt-4">
         <h2 className="font-type uppercase tracking-widest text-[12px] opacity-70 mb-1">1 · Where the chain leaks</h2>
@@ -109,6 +123,7 @@ export function ActionSheet({ r, plan, res }: { r: ScreeningRow; plan: Plan; res
         <ol className="list-decimal pl-4 space-y-0.5">
           {SOURCES.map(([t, u]) => <li key={u}>{t}. {u}</li>)}
         </ol>
+        {briefing?.source === 'ai' && <p className="mt-1">The briefing text is written by AI from our calculated numbers; it adds no numbers of its own, and it is checked against them.</p>}
         <p className="mt-1">Effects come from mostly US studies and are estimates. Waits were read from a chart (± 0.1 month). Group figures are national. The queue model (Little&apos;s law) uses the median wait as if it were the mean. &quot;No colonoscopy&quot; may include private colonoscopies not reported to the register. Every number on this sheet is calculated from the sources above; none is written by a language model.</p>
       </footer>
     </article>

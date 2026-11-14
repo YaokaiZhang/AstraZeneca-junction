@@ -1,4 +1,4 @@
-// usage: node fetch.js <name> <theme> <tabu> <value_type> <sites,comma> [sex,comma]
+// usage: node fetch.cjs <name> <theme> <tabu> <value_type> <sites,comma> [sex,comma]
 const { chromium } = require('playwright');
 const [name, theme, tabu, vtype, sites, sex] = process.argv.slice(2);
 (async () => {

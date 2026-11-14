@@ -4,7 +4,7 @@ Data file: `incidence_age_sex.json` (same folder).
 
 ## Source
 - Finnish Cancer Registry, Cancer statistics application (R Shiny): https://tilastot.syoparekisteri.fi/syovat/ (linked from https://cancerregistry.fi/statistics/). I used this source; NORDCAN was not needed.
-- Retrieved on 2026-11-14 with headless Playwright (scripts: `fetch.js`, `build.py`). The raw CSV downloads (the app's ".CSV" button, wide table, `;`-separated, decimal comma) and screenshots are in `raw/`.
+- Retrieved on 2026-11-14 with headless Playwright (scripts: `fetch.cjs`, `build.py`). The raw CSV downloads (the app's ".CSV" button, wide table, `;`-separated, decimal comma) and screenshots are in `raw/`.
 - Area: Whole country. Sex: Male and Female, each separately.
 - Period: **2020–2024**, the latest 5-year period the app offers. Rates are per 100 000 person-years (per 100 000 per year). Counts in the raw files are totals for the whole 5-year period.
 

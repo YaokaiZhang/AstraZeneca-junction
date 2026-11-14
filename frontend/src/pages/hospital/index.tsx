@@ -127,9 +127,8 @@ export default function HospitalPage() {
       <p data-testid="demo-note" className="mt-4 max-w-3xl flex items-start gap-2 font-type text-sm leading-relaxed text-ink/70">
         <span className="shrink-0 uppercase tracking-widest text-terra">Demo data</span>
         <span className="min-w-0">
-          {demo.length} made-up patients, scaled from {county.name}'s yearly case numbers. Real use needs a link to hospital systems.
-          <SourceBadge id="demoPatients" kind="example" className="ml-2"
-            how={`Caseload scaled from ${county.name}'s yearly lung, bowel, pancreas and liver cases (40 patients in the smallest county, 80 in the largest). ${open.length} open pathways.`} />
+          <SourceBadge id="demoPatients" kind="example"
+            how={`${demo.length} made-up patients. Caseload scaled from ${county.name}'s yearly lung, bowel, pancreas and liver cases (40 patients in the smallest county, 80 in the largest). ${open.length} open pathways. Real use needs a link to hospital systems.`} />
         </span>
       </p>
 

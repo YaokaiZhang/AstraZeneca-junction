@@ -1,7 +1,7 @@
 // The two-minute view of the monitor: a verdict, three plain tiles, one recommended action and what it takes.
 // Every number comes from model.ts (the same calculations as the evidence below); only the wording is simpler.
 import type { ReactNode } from 'react'
-import { Card, Label, Toggle, cx } from '../../components/ui'
+import { Label, Toggle, cx } from '../../components/ui'
 import { SCREENING_FI, type ScreeningRow } from './data'
 import {
   DETECTION_FIXES, EMPTY_PLAN, evaluate, flags, in2031, losses, n0, n1,
@@ -42,40 +42,43 @@ export function Verdict({ r }: { r: ScreeningRow }) {
 }
 
 const TILES: Record<Step, { title: string }> = {
-  detection: { title: 'Send the kit back' },
-  referral: { title: 'Get the colonoscopy' },
-  capacity: { title: 'Wait for it' },
+  detection: { title: 'Kit sent back' },
+  referral: { title: 'Colonoscopy done' },
+  capacity: { title: 'Wait for colonoscopy' },
 }
+const STEPS: Step[] = ['detection', 'referral', 'capacity']
 
-function Tile({ step, r }: { step: Step; r: ScreeningRow }) {
+function Tile({ step, i, r }: { step: Step; i: number; r: ScreeningRow }) {
   const behind = flags(r)[step]
+  const hero = weakestStep(r) === step && behind
   const fi = SCREENING_FI
   const l = losses(r)
-  const big = step === 'detection' ? `${n1(r.participationPct)}%` : step === 'referral' ? `${n1(r.colonoscopyOfPositivesPct)}%` : <>{n1(r.medianMonths)}<span className="text-2xl sm:text-3xl ml-2">months</span></>
+  const big = step === 'detection' ? `${n1(r.participationPct)}%` : step === 'referral' ? `${n1(r.colonoscopyOfPositivesPct)}%` : <>{n1(r.medianMonths)}<span className="text-2xl ml-2">months</span></>
   const vs = step === 'detection' ? `${n1(fi.participationPct)}%` : step === 'referral' ? `${n1(fi.colonoscopyOfPositivesPct)}%` : `${n1(fi.medianMonths)} months`
   const line = step === 'detection' ? <>{n0(l.detection.lost)} people did not send it back</>
-    : step === 'referral' ? <>{n0(r.noColonoscopy)} people not followed up</>
-    : waitRatio(r) >= 1.15 ? <>{waitRatio(r) >= 1.75 && waitRatio(r) <= 2.25 ? 'About twice' : `About ${n1(waitRatio(r))} times`} as long as the national wait</>
+    : step === 'referral' ? <>{n0(r.noColonoscopy)} with a positive test not followed up</>
+    : waitRatio(r) >= 1.15 ? <>{waitRatio(r) >= 1.75 && waitRatio(r) <= 2.25 ? 'About twice' : `About ${n1(waitRatio(r))} times`} the national wait</>
     : waitRatio(r) <= 0.85 ? <>Shorter than the national wait</>
     : <>Close to the national wait</>
   return (
-    <div className={cx('rounded-lg border p-5 sm:p-6 bg-paper min-w-0', behind ? 'border-terra/60' : 'border-black/15')}>
-      <p className={cx('flex items-center gap-2 font-type text-[13px] uppercase tracking-wider', behind ? 'text-terra' : 'opacity-60')}>
-        <span className={cx('w-2 h-2 rounded-full', behind ? 'bg-terra' : 'bg-black/30')} />{behind ? 'Falling behind' : 'On track'}
-      </p>
-      <p className="mt-2 font-serif text-2xl leading-tight">{TILES[step].title}</p>
-      <p className={cx('mt-4 font-serif text-5xl sm:text-6xl leading-none', behind && 'text-terra')}>{big}</p>
-      <p className="mt-2 font-sans text-[15px] opacity-70">Finland: {vs}</p>
-      <p className="mt-4 pt-4 border-t border-black/10 font-sans text-[16px] leading-snug">{line}</p>
-    </div>
+    <li className={cx('rounded-xl p-6 flex flex-col min-w-0', hero ? 'bg-terra text-paper shadow-xl -rotate-1' : 'bg-black/[.04]')}>
+      <div className="flex items-center justify-between gap-3">
+        <span className={cx('w-10 h-10 rounded-full flex items-center justify-center font-serif text-xl shrink-0', hero ? 'bg-paper text-terra' : 'border border-ink')}>{i + 1}</span>
+        <span className={cx('font-type text-[13px] uppercase tracking-widest', hero ? 'opacity-90' : behind ? 'text-terra' : 'opacity-60')}>{behind ? 'Falling behind' : 'On track'}</span>
+      </div>
+      <p className="mt-5 label !opacity-80">{TILES[step].title}</p>
+      <p className={cx('mt-2 font-serif text-6xl leading-none', behind && !hero && 'text-terra')}>{big}</p>
+      <p className="mt-2 font-type text-[13px] uppercase tracking-wider opacity-70">Finland {vs}</p>
+      <p className="mt-auto pt-5 font-sans text-[16px] leading-snug">{line}</p>
+    </li>
   )
 }
 
 export function SimpleChain({ r }: { r: ScreeningRow }) {
   return (
-    <div className="grid md:grid-cols-3 gap-4 lg:gap-5">
-      {(['detection', 'referral', 'capacity'] as Step[]).map((s) => <Tile key={s} step={s} r={r} />)}
-    </div>
+    <ol className="grid md:grid-cols-3 gap-5" aria-label="The three steps of bowel cancer screening">
+      {STEPS.map((s, i) => <Tile key={s} step={s} i={i} r={r} />)}
+    </ol>
   )
 }
 
@@ -113,36 +116,56 @@ export function Recommend({ r, plan, setPlan, res, otherOptions }: {
     set = (v) => setPlan({ ...plan, catchUp: v })
   }
   return (
-    <Card tone={on ? 'ink' : 'paper'} className="p-6 sm:p-8">
-      <Label className="!opacity-70">{behind ? 'Start here' : 'Nothing is falling behind. To do even better'}</Label>
-      <p className="mt-2 font-serif text-3xl sm:text-4xl leading-tight">{title}</p>
-      <p className="mt-3 font-sans text-[17px] leading-relaxed max-w-2xl opacity-90">{text}</p>
-      <p className={cx('mt-4 font-serif text-2xl leading-snug', on ? 'text-mustard' : 'text-terra')}>{result}</p>
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <Toggle on={on} onChange={set} label={on ? 'In the plan' : 'Add to the plan'} />
-        {otherOptions}
+    <div className={cx('rounded-xl p-6 sm:p-8 shadow-lg transition-colors grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-6 lg:gap-10', on ? 'bg-ink text-paper' : 'bg-mustard')}>
+      <div className="flex gap-5">
+        <span className={cx('w-10 h-10 rounded-full flex items-center justify-center font-serif text-xl shrink-0', on ? 'bg-mustard text-ink' : 'bg-ink text-mustard')}>1</span>
+        <div className="min-w-0">
+          <Label className="!opacity-70">{behind ? 'Start here' : 'All on track · to do even better'}</Label>
+          <p className="mt-2 font-serif text-3xl sm:text-4xl leading-tight">{title}</p>
+          <p className="mt-3 font-sans text-[17px] leading-relaxed opacity-85">{text}</p>
+        </div>
       </div>
-    </Card>
+      <div className={cx('flex flex-col justify-between gap-5 lg:pl-10 lg:border-l', on ? 'border-paper/20' : 'border-ink/15')}>
+        <div>
+          <Label className="!opacity-70">Expected result</Label>
+          <p className="mt-2 font-serif text-2xl leading-snug">{result}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <Toggle on={on} onChange={set} label={on ? 'In the plan' : 'Add to the plan'} />
+          {otherOptions}
+        </div>
+      </div>
+    </div>
   )
 }
 
-const colon = (v: number) => (about(v) === '1' ? 'colonoscopy' : 'colonoscopies')
+function Fig({ label, value, unit, hot }: { label: ReactNode; value: string; unit: string; hot?: boolean }) {
+  return (
+    <div>
+      <Label className="!opacity-70">{label}</Label>
+      <p className={cx('mt-2 font-serif text-6xl leading-none', hot && 'text-terra')}>{value}<span className="text-2xl ml-2">{unit}</span></p>
+    </div>
+  )
+}
 
-/** One sentence, at most two numbers: what colonoscopy capacity the plan and 2031 need. */
+/** Colonoscopy capacity the plan and 2031 need, as at most three figures. */
 export function WhatItTakes({ r, plan, setPlan, res }: { r: ScreeningRow; plan: Plan; setPlan: (p: Plan) => void; res: Result }) {
   const now = res.queue.extraPerWeek
   const y = in2031(r, res)
   const hasNow = now >= 0.5
+  const by31 = hasNow ? y.extraWithFixesWeek : y.extraWeek
   return (
     <div>
-      <p className="font-serif text-3xl sm:text-4xl leading-tight max-w-4xl">
-        {hasNow
-          ? <>To keep the wait from growing, {r.name} needs about <span className="italic text-terra">{about(now)} more {colon(now)} a week</span> now, and about <span className="italic text-terra">{about(y.extraWithFixesWeek)} more</span> by 2031, when screening widens to everyone aged 56–74.</>
-          : <>By 2031, when screening widens to everyone aged 56–74, {r.name} will need about <span className="italic text-terra">{about(y.extraWeek)} more {colon(y.extraWeek)} a week</span> than today.</>}
+      <div className="flex flex-wrap gap-x-14 gap-y-8">
+        {hasNow && <Fig label="Extra colonoscopies now" value={about(now)} unit="a week" hot />}
+        <Fig label="Extra by 2031 · ages 56–74" value={about(by31)} unit="a week" hot={!hasNow} />
+        {hasNow && !plan.addCapacity && <Fig label="Wait in a year without them" value={n1(res.queue.waitIn12m)} unit="months" />}
+      </div>
+      <p className="mt-6 font-sans text-[17px] leading-relaxed opacity-80 max-w-2xl">
+        {hasNow ? <>Colonoscopies on top of what {r.name} does today, so the wait does not grow.</> : <>{r.name} keeps up today. Screening widens to everyone aged 56–74 by 2031.</>}
       </p>
-      {hasNow && !plan.addCapacity && <p className="mt-3 font-sans text-[16px] opacity-75 max-w-3xl">Without them, the wait grows to about {about(res.queue.waitIn12m)} months within a year.</p>}
       {hasNow && (
-        <div className="mt-5">
+        <div className="mt-6">
           <Toggle on={plan.addCapacity} onChange={(v) => setPlan({ ...plan, addCapacity: v })} label={`Add ${about(now)} a week to the plan`} />
         </div>
       )}

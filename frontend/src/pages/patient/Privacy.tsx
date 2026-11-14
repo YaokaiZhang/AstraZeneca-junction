@@ -54,7 +54,6 @@ function AiNote() {
 /** AI replies in the diary chat: on by default when the server offers them; the person can turn them off. */
 function AiSwitch() {
   const { t } = useT()
-  const server = useAi((s) => s.server)
   const aiChat = useStore((s) => s.aiChat)
   const set = useStore((s) => s.set)
   const on = aiChat !== false
@@ -68,8 +67,6 @@ function AiSwitch() {
           <span className={cx('absolute top-0.5 w-6 h-6 rounded-full bg-paper shadow transition-all', on ? 'left-[22px]' : 'left-0.5')} />
         </button>
       </div>
-      <p className="font-type text-sm leading-snug mt-2 opacity-75">{t('pr.aiWhat')}</p>
-      {on && server === 'off' && <p className="font-type text-sm leading-snug mt-1 opacity-75">{t('pr.aiNA')}</p>}
     </div>
   )
 }

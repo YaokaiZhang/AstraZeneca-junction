@@ -4,11 +4,12 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
-import { Btn, Display, Drawer, KindLegend, Label, Picker, cx } from '../../components/ui'
-import { SCREENING, SCREENING_FI, screeningById, MISSED_CANCERS_2022 } from './data'
-import { EMPTY_PLAN, evaluate, flags, type Plan } from './model'
+import { Btn, Display, Drawer, KindLegend, Label, Picker, SourceBadge, cx } from '../../components/ui'
+import { GROUPS, SCREENING, SCREENING_FI, screeningById, MISSED_CANCERS_2022 } from './data'
+import { EMPTY_PLAN, GROUP_FACTS, evaluate, flags, n1, type Plan } from './model'
 import { Chain, headline } from './Chain'
 import { Missed } from './Missed'
+import { MixGap } from './MixGap'
 import { Fixes } from './Fixes'
 import { Bottleneck } from './Bottleneck'
 import { ActionSheet } from './ActionSheet'
@@ -81,6 +82,7 @@ export default function MonitorPage() {
 
       <Section n="02" a="Who is" b="being missed">
         <Missed />
+        <div key={countyId} className="rise"><MixGap r={r} /></div>
       </Section>
 
       <Section n="03" a="Proven fixes," b={`in ${r.name}`}
@@ -120,6 +122,11 @@ export default function MonitorPage() {
   )
 }
 
+const groupRate = (dimension: string, group: string) => GROUPS.find((g) => g.dimension === dimension && g.group === group)!.participationPct
+const nativeRate = groupRate('mother_tongue', 'Finnish/Swedish/Sami')
+const upperRate = groupRate('education', 'Upper secondary')
+const higherRate = groupRate('education', 'Higher')
+
 function About() {
   return (
     <div className="min-w-0">
@@ -130,10 +137,20 @@ function About() {
         <li><b>&quot;No colonoscopy&quot;</b> may partly be private colonoscopies not reported to the register. Still: in the 2022 round, {MISSED_CANCERS_2022} people who tested positive and skipped colonoscopy were later diagnosed with bowel cancer.</li>
         <li><b>Effects</b> come from two meta-analyses, mostly of US programmes. They are estimates, not promises. Referral effects are not stacked: only the strongest chosen fix counts, and follow-through is capped at 95%.</li>
         <li><b>The queue model</b> (Little&apos;s law) treats today&apos;s throughput as today&apos;s capacity and the median wait as if it were the mean. It shows direction and size, not an exact forecast.</li>
-        <li><b>The multilingual card</b> estimates each county&apos;s share of other mother tongues from Statistics Finland&apos;s foreign-language share (2024), scaled to the national screening-age share.</li>
+        <li><b>Population mix.</b> Statistics Finland PxWeb tables vaerak/11rz (population by age and language, 2025) and vkour/12bq (education by age, 2025), rolled up from municipalities to wellbeing counties. The multilingual card uses each county&apos;s share of residents aged 56–74 with another mother tongue.</li>
+        <li><b>Expected participation</b> = national 2024 group rates weighted by the county&apos;s mix: other mother tongue {n1(GROUP_FACTS.otherTongue)}% vs {n1(nativeRate)}%; basic education {n1(GROUP_FACTS.basicEducation)}%, upper secondary {n1(upperRate)}%, higher {n1(higherRate)}%.</li>
+        <li><b>2031.</b> Screening widens to everyone aged 56–74, invited every two years by even age (<a className="underline underline-offset-2" href="https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/" target="_blank" rel="noreferrer">Cancer Registry programme page</a>). Invites in 2031 = people aged 56–74 × 10/19; colonoscopies grow by the same factor at today&apos;s rates. It ignores ageing to 2031 and lower positivity in younger people.</li>
+        <li><b>Earlier rounds.</b> 2022 and 2023 county figures from the same <a className="underline underline-offset-2" href="https://stats.cancerregistry.fi/joukkistilastot/suolisto.html" target="_blank" rel="noreferrer">Cancer Registry screening statistics</a>. National colonoscopy follow-through fell from 78.6% (2023) to 72.7% (2024), probably partly reports still to come in.</li>
         <li><b>No number</b> on this page or the action sheet is written by a language model; all come from the calculations in the badges.</li>
       </ul>
       <KindLegend kinds={['direct', 'estimate']} long className="mt-5" />
+      <ul className="mt-4 font-type text-[13px] uppercase tracking-wider opacity-70 flex flex-wrap gap-2 items-center">
+        <li className="flex items-center gap-1">2024 round <SourceBadge id="bowelScreening2024" kind="direct" demo={false} /></li>
+        <li className="flex items-center gap-1">2022–2023 <SourceBadge id="bowelScreeningRounds" kind="direct" demo={false} /></li>
+        <li className="flex items-center gap-1">Language <SourceBadge id="statfinLang" kind="direct" demo={false} /></li>
+        <li className="flex items-center gap-1">Education <SourceBadge id="statfinEdu" kind="direct" demo={false} /></li>
+        <li className="flex items-center gap-1">2031 <SourceBadge id="bowelExpansion" kind="direct" demo={false} /></li>
+      </ul>
     </div>
   )
 }

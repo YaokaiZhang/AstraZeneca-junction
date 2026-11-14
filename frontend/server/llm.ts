@@ -11,6 +11,11 @@ import type { Connect, Plugin } from 'vite'
 
 const MODEL = 'claude-haiku-5-5'
 
+/** The Anthropic API key from the server's environment, trimmed. Never sent to the browser or logged. */
+const llmKey = () => process.env.LLM_KEY?.trim() || undefined
+/** Anthropic API keys start with sk-ant-; anything else (a key's name, another provider's key) is rejected with a 401. */
+const keyLooksRight = () => !!llmKey()?.startsWith('sk-ant-')
+
 /** Same vocabulary as SYMPTOM_KEYS in src/pages/patient/logic.ts (minus 'smoking', which has its own field). */
 export const TAGS = ['cough', 'weight-loss', 'blood-cough', 'blood-stool', 'blood', 'breathless', 'chest-pain', 'fatigue', 'bowel-change', 'jaundice', 'abdominal-pain', 'hoarse'] as const
 type Tag = (typeof TAGS)[number]
@@ -134,7 +139,7 @@ function userPrompt(q: ChatRequest) {
 
 let client: Anthropic | null = null
 export async function chat(q: ChatRequest): Promise<{ ok: true; result: ChatResult } | { ok: false; status: number; error: string }> {
-  const apiKey = process.env.LLM_KEY
+  const apiKey = llmKey()
   if (!apiKey) return { ok: false, status: 503, error: 'ai_off' }
   // no retries and a short timeout: the browser gives up after 8 s and falls back to the scripted bot
   client ??= new Anthropic({ apiKey, maxRetries: 0, timeout: 7_000 })
@@ -196,8 +201,9 @@ function parseFacts(b: unknown): Record<string, number | string> | null {
 
 let briefingClient: Anthropic | null = null
 export async function briefing(facts: Record<string, number | string>): Promise<{ ok: true; text: string } | { ok: false; status: number; error: string }> {
-  const apiKey = process.env.LLM_KEY
+  const apiKey = llmKey()
   if (!apiKey) return { ok: false, status: 503, error: 'ai_off' }
+  if (!keyLooksRight()) return { ok: false, status: 503, error: 'key_format' }
   // no retries and a 30 s timeout: the browser shows the template briefing on any failure
   briefingClient ??= new Anthropic({ apiKey, maxRetries: 0, timeout: 30_000 })
   try {
@@ -242,7 +248,7 @@ function json(res: ServerResponse, status: number, body: unknown) {
 
 const middleware: Connect.NextHandleFunction = (req, res, next) => {
   const path = (req.url ?? '').split('?')[0]
-  if (path === '/api/health' && req.method === 'GET') return json(res, 200, { ai: !!process.env.LLM_KEY, model: process.env.LLM_KEY ? MODEL : null })
+  if (path === '/api/health' && req.method === 'GET') return json(res, 200, { ai: !!llmKey(), keyFormatOk: keyLooksRight(), model: llmKey() ? MODEL : null })
   if (path === '/api/briefing') {
     if (req.method !== 'POST') return json(res, 405, { error: 'method' })
     readBody(req, 16_000)

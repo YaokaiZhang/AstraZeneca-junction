@@ -85,7 +85,7 @@ export default function MonitorPage() {
       const resp = await fetch('/api/briefing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ facts }) })
       const body = await resp.json().catch(() => ({}))
       if (resp.ok && typeof body.text === 'string' && numbersMatch(body.text, facts)) { setAi({ key, text: body.text }); setAiNote(null) }
-      else setAiNote({ key, note: resp.ok ? 'The AI text used a number we could not match, so it was not used.' : body.error === 'ai_off' ? 'AI is off on this server.' : 'The AI could not be reached.' })
+      else setAiNote({ key, note: resp.ok ? 'The AI text used a number we could not match, so it was not used.' : body.error === 'ai_off' ? 'AI is off on this server.' : body.error === 'key_format' ? 'The server’s LLM_KEY is not an Anthropic API key (it should start with sk-ant-).' : String(body.error ?? '').includes('401') ? 'The server’s LLM_KEY was not accepted by Anthropic.' : 'The AI could not be reached.' })
     } catch {
       setAiNote({ key, note: 'The AI could not be reached.' })
     } finally {

@@ -321,3 +321,42 @@ export function weakestSentence(r: RadarRow, k: RadarCancerId) {
   if (r.weakest === 'late') return `${lbl} found late: ${pct(s.v!)} had spread (of known stage) vs FI ${pct(s.nat!)}`
   return `${lbl}: ${fmt(s.v!, 2)} deaths per new case vs FI ${fmt(s.nat!, 2)}`
 }
+
+// ---------- estimated impact (home page): what changes if counties catch up ----------
+/** Cancers whose stage table has enough counties with a usable 95% range to set a benchmark. */
+export const IMPACT_CANCERS = (['breast', 'bowel', 'lung'] as const)
+export interface ImpactRow { k: typeof IMPACT_CANCERS[number]; label: string; bench: number; nat: number; counted: number; perYear: number }
+/**
+ * Cancers a year that would be found before spreading if every county above the benchmark reached it.
+ * Benchmark: the best quarter of counties (25th percentile of the spread share, among counties whose range is not wide).
+ * Base: cases with a recorded stage only (5-year total ÷ 5), so unknown-stage cases add nothing: a floor, not a ceiling.
+ */
+export function earlierFinds(): { rows: ImpactRow[]; total: number; byCounty: { c: County; n: number }[] } {
+  const per = new Map<string, number>()
+  const rows = IMPACT_CANCERS.map((k): ImpactRow => {
+    const ok = COUNTIES.filter((c) => !metricValue(c, k, 'late').wide).map((c) => figures(c, k).lateShare).sort((a, b) => a - b)
+    const bench = ok[Math.floor((ok.length - 1) * 0.25)]
+    let perYear = 0
+    for (const c of COUNTIES) {
+      const f = figures(c, k)
+      const n = (f.stageKnown / STAGE_YEARS) * Math.max(0, f.lateShare - bench)
+      perYear += n
+      per.set(c.id, (per.get(c.id) ?? 0) + n)
+    }
+    return { k, label: cancerLabel(k), bench, nat: national(k, 'late'), counted: ok.length, perYear }
+  })
+  const byCounty = COUNTIES.map((c) => ({ c, n: per.get(c.id) ?? 0 })).sort((a, b) => b.n - a.n)
+  return { rows, total: rows.reduce((s, r) => s + r.perYear, 0), byCounty }
+}
+
+/** Strategy target: 80% turnout in every county. Extra people screened per round, from the radar's age bands. */
+export const TURNOUT_TARGET = 0.8
+export function screeningGain() {
+  const rows = (['bowel', 'cervical', 'breast'] as const).map((p) => {
+    const rs = radar(p)
+    const band = rs.reduce((s, r) => s + r.bandPop, 0)
+    const extra = rs.reduce((s, r) => s + r.bandPop * Math.max(0, TURNOUT_TARGET - r.steps.screen.v!), 0)
+    return { p, label: cancerLabel(p), now: FINLAND[`${p}Turnout`] / 100, extra, below: rs.filter((r) => r.steps.screen.v! < TURNOUT_TARGET).length, band }
+  })
+  return { rows, total: rows.reduce((s, r) => s + r.extra, 0) }
+}

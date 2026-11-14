@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
 import { Actions, CheckIns, Clock, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
-import { WordsUp, useScrollProgress } from './home/reveal'
+import { WordsUp } from './home/reveal'
+import { ChapterRail, Impact, Summary, Transition } from './home/Story'
 import { Radar } from './home/Radar'
 import FinlandCanvas, { type Hover } from './home/FinlandCanvas'
 import { pct, spreadContrast } from './county/model'
@@ -41,35 +42,6 @@ function RotatingWord() {
     <span className="relative inline-block align-top py-[0.18em] -my-[0.18em] overflow-hidden whitespace-nowrap">
       <span key={i} className="block italic text-terra hero-word">{WORDS[i]}</span>
     </span>
-  )
-}
-
-const BRIDGE = 'Between the first symptom and the first treatment, time goes missing.'.split(' ')
-
-/** Scroll-scrubbed hand-off from the hero to the pitch: a line draws down, then the sentence fills in word by word. */
-function Bridge() {
-  const [ref, p] = useScrollProgress<HTMLElement>()
-  const line = Math.min(1, p / 0.25)
-  const words = Math.max(0, (p - 0.2) / 0.6) * BRIDGE.length
-  return (
-    <section ref={ref} className="relative h-[140svh]">
-      <div className="sticky top-0 h-[100svh] flex flex-col items-center justify-center px-5 overflow-hidden">
-        <div className="w-px h-[18svh] bg-terra origin-top" style={{ transform: `scaleY(${line})` }} />
-        <div className="mt-3 w-2 h-2 rounded-full bg-terra transition-opacity duration-300" style={{ opacity: line >= 1 ? 1 : 0 }} />
-        <p className="mt-10 max-w-5xl text-center font-serif font-light text-[11vw] sm:text-6xl lg:text-8xl leading-[1.02] tracking-tight">
-          {BRIDGE.map((w, i) => {
-            const t = Math.min(1, Math.max(0, words - i))
-            const hot = i >= BRIDGE.length - 3
-            return (
-              <span key={i} className={hot ? 'italic text-terra' : undefined}
-                style={{ opacity: 0.1 + 0.9 * t, display: 'inline-block', transform: `translateY(${(1 - t) * 0.25}em)` }}>
-                {w}&nbsp;
-              </span>
-            )
-          })}
-        </p>
-      </div>
-    </section>
   )
 }
 
@@ -155,7 +127,7 @@ export default function Home() {
                 Start
                 <span className="w-9 h-9 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-x-1 transition-transform">→</span>
               </Link>
-              <a href="#doors" className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-2 font-type uppercase text-xs tracking-widest hover:border-ink transition">Explore</a>
+              <a href="#story" className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-2 font-type uppercase text-xs tracking-widest hover:border-ink transition">Explore</a>
             </div>
           </div>
 
@@ -192,22 +164,46 @@ export default function Home() {
         </div>
 
         <Ecg />
-        <a href="#doors" className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
+        <a href="#story" className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
       </section>
 
+      <ChapterRail />
+      <Summary />
+
+      {/* 01 · the gap (insight): where it opens, and the wait nobody counts */}
+      <Transition chapter="ch-gap" text="Where you live in Finland changes how early your cancer is found." hot={5} />
       <TooLate />
-      <Bridge />
+      <Transition text="And between the first symptom and the first treatment, time goes missing." hot={3} />
       <Clock />
+
+      {/* 02 · what we built (execution): one record, three views */}
+      <Transition chapter="ch-built" text="So we built one tool that follows a person from first symptom to first treatment." hot={6} />
       <Radar />
       <Views />
+      <CheckIns />
+      <Privacy />
+
+      {/* 03 · what to do (actionability) */}
+      <Transition chapter="ch-do" text="Every gap it finds comes with a step to take on Monday." hot={4} />
       <ThreeDates />
       <Actions />
+
+      {/* 04 · the impact */}
+      <Transition chapter="ch-impact" text="What happens if every county catches up with the best?" hot={5} />
+      <Impact />
+
+      {/* 05 · how we know (data quality and transparency) */}
+      <Transition chapter="ch-know" text="Every number shows where it came from, and what it cannot tell." hot={4} />
       <Transparency />
 
       <section id="doors" className="relative px-5 lg:px-12 py-24 lg:py-32 flex flex-col items-center">
-        <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95] text-center mb-16 lg:mb-24">
+        <Label>Now try it live</Label>
+        <h2 className="mt-5 font-serif font-light text-6xl lg:text-8xl leading-[0.95] text-center">
           <WordsUp text="Choose" /><br /><WordsUp text="your door." className="italic" delay={150} />
         </h2>
+        <p className="mt-8 mb-16 lg:mb-20 max-w-xl text-center font-sans text-base lg:text-lg leading-relaxed opacity-75">
+          Everything in this story runs in the demo. Pick who you are: log a symptom as a patient, find overdue patients as a hospital, or open a county's brief.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 w-full max-w-5xl">
           {CARDS.map((c) => (
             <Link key={c.to} to={c.to} className="block">
@@ -228,9 +224,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* for patients: how the app behaves day to day */}
-      <CheckIns />
-      <Privacy />
     </div>
   )
 }

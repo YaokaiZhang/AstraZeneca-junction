@@ -151,7 +151,7 @@ export const DETECTION_FIXES: DetectionFix[] = [
     pts: (r) => Math.min(3, headroom(r)), how: () => 'Cautious default: +3 percentage points.',
   },
   {
-    id: 'multilingual', step: 'detection', name: 'Multilingual reminder', what: `The reminder in the person’s own language, aimed at other mother tongues (${OTHER_TONGUE.participationPct}% return the kit vs ${GROUPS.find((g) => g.group === 'Finnish/Swedish/Sami')!.participationPct}%). The cancer strategy roadmap already funds multilingual screening outreach (measure 1.3.1, €400,000).`,
+    id: 'multilingual', step: 'detection', name: 'Multilingual reminder', what: `The reminder in the person’s own language, aimed at other mother tongues (${OTHER_TONGUE.participationPct}% return the kit vs ${GROUPS.find((g) => g.group === 'Finnish/Swedish/Sami')!.participationPct}%). The cancer strategy roadmap plans multilingual screening outreach (measure 1.3.1, estimated €400,000).`,
     effect: 'RR 1.20 on the group', source: 'dougherty', caveat: 'Language share: residents aged 56–74, Statistics Finland 2025',
     pts: (r) => Math.min(otherTongueShare(r.id) * OTHER_TONGUE.participationPct * (DETECTION_RR - 1), headroom(r)),
     how: (r) => `${(otherTongueShare(r.id) * 100).toFixed(1)}% of people aged 56–74 × ${OTHER_TONGUE.participationPct}% × 0.20`,

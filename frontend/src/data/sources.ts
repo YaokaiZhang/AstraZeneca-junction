@@ -109,7 +109,7 @@ export const SOURCES: Record<string, Source> = {
   roadmap: {
     id: 'roadmap', name: 'Toimeenpanon tiekartta 2026–2031 (implementation roadmap, in Finnish)',
     url: 'https://files.hackjunction.app/resources/Kansallinen_syopastrategia_toimeenpanon_tiekartta_2026_2031.pdf',
-    note: 'Measure 1.3.1, p. 33: targeted multilingual communication to raise screening participation in language groups, €400,000, wellbeing services counties, Helsinki, HUS, NGOs, Cancer Registry and THL responsible. Measure 3.1.4, p. 58: national quality targets and indicators to follow care pathways. Measure 3.5.3, p. 73: digital tools and AI in cancer care.',
+    note: 'Measure 1.3.1, p. 33: targeted multilingual communication to raise screening participation in language groups, estimated €400,000, wellbeing services counties, Helsinki, HUS, NGOs, Cancer Registry and THL responsible. Measure 3.1.4, p. 58: national quality targets and indicators to follow care pathways. Measure 3.5.3, pp. 73–74: digital tools and AI in cancer care.',
     years: '2026–2031', retrieved: PULLED,
   },
   screeningRules: {

@@ -7,6 +7,46 @@ import { Tilt, WordsUp } from './home/reveal'
 import { ChapterRail, Ecg, Impact, Transition } from './home/Story'
 import { Radar } from './home/Radar'
 import FinlandCanvas, { type Hover } from './home/FinlandCanvas'
+import { SHOW_FULL_STORY } from '../config'
+import { ROUNDS, SCREENING_FI, screeningById } from './monitor/data'
+import { GROUP_FACTS, n0, n1 } from './monitor/model'
+
+/** Short intro shown when the full story is switched off: one line, three facts, a way in. Numbers from the monitor's data. */
+function ShortIntro() {
+  const hki = screeningById('helsinki')!
+  const hki2023 = ROUNDS.find((x) => x.id === 'helsinki' && x.year === 2023)!
+  const facts = [
+    { big: n0(hki.noColonoscopy), unit: 'people', text: <>in Helsinki tested positive in 2024 and had no colonoscopy. In 2023 it was {n0(hki2023.noColonoscopy)}.</> },
+    { big: n1(hki.medianMonths), unit: 'months', text: <>is about how long Helsinki waits from a positive test to colonoscopy, against {n1(SCREENING_FI.medianMonths)} nationally.</> },
+    { big: `${Math.round(GROUP_FACTS.skipped.pct)}%`, unit: '', text: <>of people who skip one screening round come back the next time.</> },
+  ]
+  return (
+    <section id="intro" className="relative px-5 lg:px-12 py-20 lg:py-28 max-w-6xl mx-auto">
+      <Label>Bowel cancer screening · every wellbeing county</Label>
+      <h2 className={'mt-5 ' + H2}>
+        <WordsUp text="A positive test" /><br /><WordsUp text="is not a diagnosis yet." className="italic" delay={150} />
+      </h2>
+      <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed opacity-75">
+        Ajoissa follows each county&apos;s screening chain, from kit returned to positive test to colonoscopy, shows where people drop out, and which proven fix closes the gap.
+      </p>
+      <div className="mt-12 grid md:grid-cols-3 gap-6">
+        {facts.map((f, i) => (
+          <Card key={i} tone={i === 0 ? 'terra' : 'paper'} tilt={[-1.5, 1, -0.5][i]} className="p-6 sm:p-7">
+            <p className="font-serif text-6xl leading-none">{f.big}{f.unit && <span className="font-type text-sm opacity-70 ml-2">{f.unit}</span>}</p>
+            <p className="mt-4 font-sans text-[16px] leading-snug opacity-90">{f.text}</p>
+          </Card>
+        ))}
+      </div>
+      <p className="mt-4 font-type text-[13px] uppercase tracking-wider opacity-60">Finnish Cancer Registry, bowel cancer screening 2023 and 2024 rounds</p>
+      <div className="mt-10">
+        <Link to="/monitor" className="group inline-flex items-center gap-3 bg-ink text-paper rounded-full pl-6 pr-2 py-2 font-type uppercase text-xs tracking-widest hover:bg-terra transition-colors">
+          Open the screening monitor
+          <span className="w-9 h-9 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-x-1 transition-transform">→</span>
+        </Link>
+      </div>
+    </section>
+  )
+}
 
 
 const CARDS = [
@@ -52,9 +92,9 @@ export default function Home() {
             <span className="font-serif text-2xl italic">Ajoissa</span>
           </Link>
           <nav className="flex gap-5 lg:gap-10">
-            {CARDS.map((c) => (
+            {SHOW_FULL_STORY ? CARDS.map((c) => (
               <Link key={c.to} to={c.to} className="font-type uppercase text-xs lg:text-xs tracking-widest opacity-60 hover:opacity-100 hover:text-terra transition">{c.b}</Link>
-            ))}
+            )) : <Link to="/monitor" className="font-type uppercase text-xs lg:text-xs tracking-widest opacity-60 hover:opacity-100 hover:text-terra transition">Screening</Link>}
           </nav>
         </header>
 
@@ -69,15 +109,15 @@ export default function Home() {
             </h1>
 
             <p className="mt-8 lg:mt-[5svh] max-w-md font-sans text-lg lg:text-xl leading-snug opacity-75 hero-in" style={{ animationDelay: '.5s' }}>
-              Ajoissa shows each county where people are lost, and what to do next.
+              {SHOW_FULL_STORY ? 'Ajoissa shows each county where people are lost, and what to do next.' : 'Ajoissa shows each county where its bowel cancer screening chain leaks, and what to do next.'}
             </p>
 
             <div className="mt-8 lg:mt-[4svh] flex flex-wrap gap-3 hero-in" style={{ animationDelay: '.65s' }}>
-              <Link to="/patient" className="group inline-flex items-center gap-3 bg-ink text-paper rounded-full pl-6 pr-2 py-2 font-type uppercase text-xs tracking-widest hover:bg-terra transition-colors">
+              <Link to={SHOW_FULL_STORY ? '/patient' : '/monitor'} className="group inline-flex items-center gap-3 bg-ink text-paper rounded-full pl-6 pr-2 py-2 font-type uppercase text-xs tracking-widest hover:bg-terra transition-colors">
                 Start
                 <span className="w-9 h-9 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-x-1 transition-transform">→</span>
               </Link>
-              <a href="#ch-gap" className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-2 font-type uppercase text-xs tracking-widest hover:border-ink transition">Explore</a>
+              <a href={SHOW_FULL_STORY ? '#ch-gap' : '#intro'} onClick={SHOW_FULL_STORY ? undefined : (e) => { e.preventDefault(); document.getElementById('intro')?.scrollIntoView({ behavior: 'smooth' }) }} className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-2 font-type uppercase text-xs tracking-widest hover:border-ink transition">Explore</a>
             </div>
           </div>
 
@@ -114,9 +154,12 @@ export default function Home() {
         </div>
 
         <Ecg />
-        <a href="#ch-gap" className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
+        <a href={SHOW_FULL_STORY ? '#ch-gap' : '#intro'} onClick={SHOW_FULL_STORY ? undefined : (e) => { e.preventDefault(); document.getElementById('intro')?.scrollIntoView({ behavior: 'smooth' }) }} className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
       </section>
 
+      {!SHOW_FULL_STORY && <ShortIntro />}
+
+      {SHOW_FULL_STORY && <>
       <ChapterRail />
 
       {/* 01 · the gap (insight): where it opens, and the wait nobody counts */}
@@ -177,6 +220,7 @@ export default function Home() {
           ))}
         </div>
       </section>
+      </>}
 
     </div>
   )

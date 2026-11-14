@@ -14,6 +14,7 @@ import { MixGap } from './MixGap'
 import { Fixes } from './Fixes'
 import { Bottleneck } from './Bottleneck'
 import { ActionSheet, type Briefing } from './ActionSheet'
+import { FollowUpList } from './FollowUpList'
 import { briefingLines, buildFacts, numbersMatch, stripCites, templateBriefing, type Facts } from './briefing'
 import type { BriefingResponse, EvidenceRef } from './evidence'
 import { LeakMap, Ranking } from './Compare'
@@ -86,6 +87,7 @@ export default function MonitorPage() {
   const r = screeningById(countyId)!
   const [plan, setPlan] = useState<Plan>(EMPTY_PLAN)
   const [sheet, setSheet] = useState(false)
+  const [list, setList] = useState(false)
   const [evidence, setEvidence] = useState(false)
   // a plan is sized for one county's volumes: start fresh when the county changes
   useEffect(() => { setPlan(EMPTY_PLAN) }, [countyId])
@@ -167,7 +169,7 @@ export default function MonitorPage() {
 
       {/* 3 · what to do */}
       <Block a="What" b="to do">
-        <Recommend r={r} plan={plan} setPlan={setPlan} res={res}
+        <Recommend r={r} plan={plan} setPlan={setPlan} res={res} onShowList={() => setList(true)}
           otherOptions={<button onClick={() => openEvidence('evidence-fixes')} className="font-sans text-[15px] underline underline-offset-4 opacity-75 hover:opacity-100 hover:text-terra">See other proven options</button>} />
         <SourceLine>Based on studies of real screening programmes (JAMA Internal Medicine 2026 and 2018), applied to {r.name}&apos;s 2024 numbers.</SourceLine>
       </Block>
@@ -223,6 +225,10 @@ export default function MonitorPage() {
 
       <SourcesFooter />
 
+      <Drawer open={list} onClose={() => setList(false)} label="Daily follow-up list (demo)" wide>
+        <div className="p-5 sm:p-8 pt-16"><FollowUpList key={countyId} r={r} /></div>
+      </Drawer>
+
       <Drawer open={sheet} onClose={() => setSheet(false)} label="County action sheet">
         <div className="p-6 pt-16">
           <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
@@ -240,7 +246,7 @@ export default function MonitorPage() {
           </div>
           {aiOn === false && <p className="font-sans text-[13px] opacity-60 mb-3">AI is off on this server, so the briefing comes from a template. The numbers are the same either way.</p>}
           <div className="border border-black/15 rounded-lg p-4 bg-paper shadow-inner sheet-preview">
-            <ActionSheet r={r} plan={plan} res={res} briefing={briefing} />
+            <ActionSheet r={r} plan={plan} res={res} briefing={briefing} onShowList={() => { setSheet(false); setList(true) }} />
           </div>
         </div>
       </Drawer>

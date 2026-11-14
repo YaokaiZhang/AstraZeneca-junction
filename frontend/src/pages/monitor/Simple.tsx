@@ -83,8 +83,8 @@ export function SimpleChain({ r }: { r: ScreeningRow }) {
 const DET = DETECTION_FIXES.find((d) => d.id === 'reminder')!
 
 /** The one recommended action for the weakest step, with a switch that applies it to the plan. */
-export function Recommend({ r, plan, setPlan, res, otherOptions }: {
-  r: ScreeningRow; plan: Plan; setPlan: (p: Plan) => void; res: Result; otherOptions: ReactNode
+export function Recommend({ r, plan, setPlan, res, otherOptions, onShowList }: {
+  r: ScreeningRow; plan: Plan; setPlan: (p: Plan) => void; res: Result; otherOptions: ReactNode; onShowList?: () => void
 }) {
   const w = weakestStep(r)
   const behind = flags(r)[w]
@@ -133,7 +133,10 @@ export function Recommend({ r, plan, setPlan, res, otherOptions }: {
       </dl>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <Toggle on={on} onChange={set} label={on ? 'Applied' : 'Apply this'} />
-        {otherOptions}
+        <span className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          {w === 'referral' && onShowList && <button onClick={onShowList} className="font-sans text-[15px] underline underline-offset-4 hover:text-terra">See what the nurse&apos;s list looks like</button>}
+          {otherOptions}
+        </span>
       </div>
     </Card>
   )

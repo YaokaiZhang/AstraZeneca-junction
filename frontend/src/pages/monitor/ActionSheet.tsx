@@ -56,7 +56,7 @@ function Block({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan: Plan; res: Result; briefing?: Briefing }) {
+export function ActionSheet({ r, plan, res, briefing, onShowList }: { r: ScreeningRow; plan: Plan; res: Result; briefing?: Briefing; onShowList?: () => void }) {
   const x = buildFacts(r, plan, res)
   const ids = String(x.action_ids ?? '').split(',').filter(Boolean)
   const own = ownership(ids)
@@ -107,6 +107,9 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
         <Block label={actionLabel}>
           <p>{x.action === 'no change' ? 'No action chosen yet.' : sentence(String(x.action))}</p>
           {own.map((o) => <p key={o.who} className="mt-1 opacity-80"><b className="font-medium">Who:</b> {o.who}</p>)}
+          {onShowList && ids.some((i) => REFERRAL_IDS.includes(i)) && (
+            <button onClick={onShowList} className="print:hidden mt-1 text-[12px] underline underline-offset-2 hover:text-terra">See what the nurse&apos;s list looks like</button>
+          )}
         </Block>
         <Block label="What it achieves (estimate)">
           {colsYear > 0

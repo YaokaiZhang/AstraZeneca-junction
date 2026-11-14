@@ -1,11 +1,13 @@
 // County action sheet: one printable page. Template text; every number comes from model.ts.
 import { SCREENING_FI, type ScreeningRow } from './data'
-import { DETECTION_FIXES, GROUP_FACTS, flags, losses, n0, n1, signed, type Plan, type Result, type Step, STEP_META } from './model'
+import { DETECTION_FIXES, GROUP_FACTS, flags, in2031, losses, n0, n1, signed, type Plan, type Result, type Step, STEP_META } from './model'
 
 const SOURCES = [
   ['Finnish Cancer Registry, bowel cancer screening statistics, 2024 round (published 20 May 2026)', 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html'],
   ['Interventions to raise colonoscopy after a positive test, meta-analysis. JAMA Intern Med 2026. PMID 42832233', 'https://pubmed.ncbi.nlm.nih.gov/42832233/'],
   ['Dougherty et al. Interventions to raise colorectal screening uptake. JAMA Intern Med 2018. PMID 30326005', 'https://pubmed.ncbi.nlm.nih.gov/30326005/'],
+  ['Finnish Cancer Registry, bowel cancer screening programme: everyone aged 56–74 invited from 2031', 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/'],
+  ['Statistics Finland, population by age and language (vaerak/11rz), 2025, rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/'],
 ]
 
 export function ActionSheet({ r, plan, res }: { r: ScreeningRow; plan: Plan; res: Result }) {
@@ -13,6 +15,7 @@ export function ActionSheet({ r, plan, res }: { r: ScreeningRow; plan: Plan; res
   const l = losses(r)
   const leaks = (Object.keys(f) as Step[]).filter((s) => f[s])
   const q = res.queue
+  const y = in2031(r, res)
   const det = DETECTION_FIXES.find((d) => d.id === plan.detectionFix)
   const fixes: string[] = []
   if (res.referral.fix) fixes.push(`${res.referral.fix.name} (${res.referral.fix.effect}): colonoscopy after a positive test ${n1(res.base.c * 100)}% → ${n1(res.referral.cNew * 100)}%, ${signed(res.referral.colonoscopies)} colonoscopies a year.`)
@@ -88,6 +91,11 @@ export function ActionSheet({ r, plan, res }: { r: ScreeningRow; plan: Plan; res
             ? <>The fixes raise demand to {n1(q.newArrivalsWeek)} a week: <b>add {n1(q.extraPerWeek)} colonoscopies a week</b>{plan.addCapacity ? ' (included in this plan).' : <>, or the median wait grows to about {n1(q.waitIn12m)} months within a year.</>}</>
             : <>No extra weekly demand in this plan.</>}{' '}
           {q.catchUp >= 0.5 && <>A one-off catch-up of {n0(q.catchUp)} colonoscopies brings the wait to {n1(plan.targetMonths)} months.</>}
+        </p>
+        <p className="text-[13px] leading-snug mt-1">
+          <b>2031 (estimate):</b> when everyone aged 56–74 is invited, invites grow {signed((y.growth - 1) * 100)}% ({n0(r.invited)} → {n0(y.invited2031)}).
+          At today&apos;s rates{y.hasFixes ? ', with the chosen fixes,' : ''} that needs <b>{signed(y.extraWithFixesWeek, n1)} colonoscopies a week</b> over today&apos;s {n1(y.todayWeek)}.
+          {' '}Ignores ageing to 2031 and lower positivity in younger people.
         </p>
       </section>
 

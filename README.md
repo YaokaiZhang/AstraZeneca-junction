@@ -30,6 +30,7 @@ node age_rates.cjs raw                                             # national ra
 cd ../../..                                                        # back to frontend/
 python3 scripts/fetch_statfin.py                                   # Statistics Finland population
 python3 scripts/build_cancer_data.py                               # writes src/data/registry.generated.ts
+python3 scripts/build_county_shapes.py                             # county outlines (Statistics Finland, CC BY 4.0)
 ```
 
 THL Sotkanet values in `src/data/counties.ts` and `src/pages/county/towns.ts` (turnout, risk factors, waiting lists) and the Statistics Finland projection and town figures were pulled once from the open APIs on 14 Nov 2026; there is no script for them.

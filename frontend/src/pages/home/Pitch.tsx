@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Card, EdgeText, KindLegend, KindDot, Label, Picker, SourceBadge, Stamp, TextRing, cx } from '../../components/ui'
+import { Card, EdgeText, KindLegend, KindDot, Label, SourceBadge, Stamp, TextRing, cx } from '../../components/ui'
 import { CANCERS, COUNTIES, type RadarCancerId } from '../../data/counties'
+import { FinlandMap } from '../../components/FinlandMap'
 import { buildBrief } from '../county/Brief'
 import { RADAR_CANCERS, pct, spreadContrast, stepInfo, unknownMajority } from '../county/model'
 import { REGISTRY_FI } from '../../data/registry.generated'
@@ -803,19 +804,26 @@ export function Actions() {
         <Reveal fx="up">
           <Tilt max={4}><Card tone="mustard" tilt={-1} className="relative p-6 pl-10 lg:p-8 lg:pl-12">
             <EdgeText>Try it</EdgeText>
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-              <Label className="!opacity-80">Pick a county</Label>
-              <Picker label="County" value={cid} onChange={setCid} options={COUNTIES} className="font-serif italic text-2xl lg:text-3xl" />
-            </div>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {RADAR_CANCERS.map((c) => (
-                <button key={c.id} type="button" onClick={() => setK(c.id)} aria-pressed={k === c.id}
-                  className={cx('font-type text-xs uppercase tracking-widest rounded-full px-3 py-1 border transition-colors', k === c.id ? 'bg-ink text-paper border-ink' : 'border-ink/30 hover:border-ink')}>{c.label}</button>
-              ))}
-            </div>
-            <div className="mt-6 tear pt-4">
-              <Label className="!opacity-80">Weakest step · {stepInfo(brief.gap.step).label}</Label>
-              <p className="mt-1 font-serif text-2xl leading-tight flex flex-wrap items-center gap-2">{brief.gap.why} {brief.gap.badge}</p>
+            <div className="grid grid-cols-[120px_minmax(0,1fr)] sm:grid-cols-[200px_minmax(0,1fr)] sm:grid-rows-[auto_1fr] gap-x-5 sm:gap-x-8 items-start">
+              <FinlandMap selected={cid} onSelect={setCid} label="Pick a county" className="sm:row-span-2"
+                style={(c) => ({ fill: c.id === cid ? '#C65D3B' : 'rgba(31,31,31,.2)' })}
+                tooltip={(c) => stepInfo(buildBrief(c, k).gap.step).label} />
+              <div className="min-w-0 self-center sm:self-start">
+                <Label className="!opacity-80">Pick a county on the map</Label>
+                <p className="mt-1 font-serif italic text-3xl lg:text-4xl leading-tight">{county.name}</p>
+              </div>
+              <div className="col-span-2 sm:col-span-1 min-w-0">
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {RADAR_CANCERS.map((c) => (
+                    <button key={c.id} type="button" onClick={() => setK(c.id)} aria-pressed={k === c.id}
+                      className={cx('font-type text-xs uppercase tracking-widest rounded-full px-3 py-1 border transition-colors', k === c.id ? 'bg-ink text-paper border-ink' : 'border-ink/30 hover:border-ink')}>{c.label}</button>
+                  ))}
+                </div>
+                <div className="mt-6 tear pt-4">
+                  <Label className="!opacity-80">Weakest step · {stepInfo(brief.gap.step).label}</Label>
+                  <p className="mt-1 font-serif text-2xl leading-tight flex flex-wrap items-center gap-2">{brief.gap.why} {brief.gap.badge}</p>
+                </div>
+              </div>
             </div>
             <ol className="mt-5 space-y-3">
               {brief.actions.map((a, i) => (

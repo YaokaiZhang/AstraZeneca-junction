@@ -122,6 +122,28 @@ export const SOURCES: Record<string, Source> = {
     years: 'published 2018 and 2026', retrieved: PULLED,
     links: [{ label: 'JAMA Intern Med 2026 · PMID 42832233', url: 'https://pubmed.ncbi.nlm.nih.gov/42832233/' }, { label: 'JAMA Intern Med 2018 · PMID 30326005', url: 'https://pubmed.ncbi.nlm.nih.gov/30326005/' }],
   },
+  breastScreening: {
+    id: 'breastScreening', name: 'Finnish Cancer Registry – breast cancer screening statistics', url: 'https://stats.cancerregistry.fi/joukkistilastot/rinta.html',
+    note: 'Mammography screening by wellbeing services county: invited, attended, recalled, referred, results (incl. no result reported). Time to follow-up exam only as a chart; we read the medians from it. Published 2 July 2026.',
+    years: '2024', retrieved: PULLED,
+  },
+  cervicalScreening: {
+    id: 'cervicalScreening', name: 'Finnish Cancer Registry – cervical cancer screening statistics', url: 'https://stats.cancerregistry.fi/joukkistilastot/kohtu.html',
+    note: 'Cervical screening (92% HPV test) by wellbeing services county: invited, tested, referred to colposcopy, colposcopy done, findings. Time to colposcopy only as a chart; we read the medians from it. Finland row includes Åland. Published 20 May 2026.',
+    years: '2024', retrieved: PULLED,
+  },
+  breastTrials: {
+    id: 'breastTrials', name: 'Text-message reminders for mammography (Br J Cancer 2015)', url: 'https://pubmed.ncbi.nlm.nih.gov/25668008/',
+    note: 'Kerrison RS et al. Randomised trial, 2,240 women invited for the first time in London: attendance 59.1% with no text vs 64.4% with a text 48 h before (+5.3 points).',
+    years: 'published 2015', retrieved: PULLED,
+    links: [{ label: 'Br J Cancer 2015 · PMID 25668008', url: 'https://pubmed.ncbi.nlm.nih.gov/25668008/' }, { label: 'Review of invitation methods · PMID 23663511', url: 'https://pubmed.ncbi.nlm.nih.gov/23663511/' }],
+  },
+  cervicalTrials: {
+    id: 'cervicalTrials', name: 'Self-sampling kits for women who did not come (Int J Cancer 2011)', url: 'https://pubmed.ncbi.nlm.nih.gov/20669228/',
+    note: 'Virtanen A et al. Randomised trial in Espoo, Finland, 4,160 women who had not attended: 29.8% took part after a mailed HPV self-sampling kit vs 26.2% after a reminder letter. Meta-analysis: mailed kits RR 2.33 vs invitation or reminder (Arbyn et al., BMJ 2018).',
+    years: 'published 2011 and 2018', retrieved: PULLED,
+    links: [{ label: 'Int J Cancer 2011 · PMID 20669228', url: 'https://pubmed.ncbi.nlm.nih.gov/20669228/' }, { label: 'BMJ 2018 · PMID 30518635', url: 'https://pubmed.ncbi.nlm.nih.gov/30518635/' }],
+  },
   ourModel: { id: 'ourModel', name: 'Our calculation', note: 'Method shown below. Inputs are the published sources named in it.' },
   waitGap: { id: 'waitGap', name: 'No public source', note: 'Finland publishes no referral-to-treatment waiting times for cancer.' },
   mentor: { id: 'mentor', name: 'AstraZeneca mentor interview' },

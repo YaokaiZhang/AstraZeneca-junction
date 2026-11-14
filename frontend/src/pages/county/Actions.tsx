@@ -1,15 +1,20 @@
 // Actions tab: the county's concrete next steps for bowel cancer screening.
 // Where the chain leaks, the one action to start with, and what it takes. The header's Print button prints the one-page plan.
 import { useMemo } from 'react'
+import { countyById } from '../../data/counties'
+import { Programme } from './Programme'
+import { programmeView, type ProgrammeId } from './programmes'
 import { Label, SourceBadge } from '../../components/ui'
 import { screeningById } from '../monitor/data'
 import { evaluate, type Plan } from '../monitor/model'
 import { startHere } from '../monitor/plain'
 import { Recommend, SimpleChain, Verdict, WhatItTakes } from '../monitor/Simple'
 
-export function Actions({ countyId, plan, setPlan }: { countyId: string; plan: Plan; setPlan: (p: Plan) => void }) {
+export function Actions({ countyId, plan, setPlan, programme }: { countyId: string; plan: Plan; setPlan: (p: Plan) => void; programme: ProgrammeId }) {
   const r = screeningById(countyId)!
   const res = useMemo(() => evaluate(r, plan), [r, plan])
+  const other = programme === 'bowel' ? null : programmeView(programme, countyId)
+  if (other) return <div className="max-w-6xl pt-2 lg:pt-4"><Programme v={other} name={countyById(countyId)!.name} /></div>
   return (
     <div className="max-w-6xl pt-2 lg:pt-4">
       <Label className="mb-4">Bowel cancer screening · 2024 round</Label>

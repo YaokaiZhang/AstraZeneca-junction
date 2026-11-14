@@ -10,6 +10,7 @@ import { RADAR_CANCERS, isCoreCancer } from './model'
 import { Radar } from './Radar'
 import { Brief, buildBrief } from './Brief'
 import { Actions } from './Actions'
+import { PROGRAMMES, type ProgrammeId } from './programmes'
 import { screeningById } from '../monitor/data'
 import { EMPTY_PLAN, evaluate, type Plan } from '../monitor/model'
 import { ActionSheet } from '../monitor/ActionSheet'
@@ -39,6 +40,7 @@ export default function CountyPage() {
   const tab = (TABS.some((t) => t.id === q.get('tab')) ? q.get('tab') : 'actions') as Tab
   const countyId = countyById(q.get('c') ?? '') ? q.get('c')! : 'pohjois-karjala'
   const cancer = (CANCER_IDS.includes(q.get('cancer') as CancerId) ? q.get('cancer') : 'lung') as CancerId
+  const programme = (PROGRAMMES.some((x) => x.id === q.get('sc')) ? q.get('sc') : 'bowel') as ProgrammeId
   const radarCancer = (RADAR_CANCERS.some((x) => x.id === q.get('rc')) ? q.get('rc') : cancer) as RadarCancerId
 
   const setParam = useCallback((patch: Record<string, string>) => {
@@ -89,24 +91,25 @@ export default function CountyPage() {
             <Picker label="County" value={countyId} onChange={(v) => tp.select(v)} options={COUNTIES}
               className="font-serif text-2xl sm:text-3xl italic py-0.5 max-w-[78vw] sm:max-w-none" />
           </div>
-          <button onClick={() => (tab === 'actions' ? setSheet(true) : window.print())}
+          {!(tab === 'actions' && programme !== 'bowel') && <button onClick={() => (tab === 'actions' ? setSheet(true) : window.print())}
             className="font-type text-[15px] uppercase tracking-widest flex items-center gap-2 rounded-full bg-ink text-paper pl-4 pr-1.5 py-1.5 hover:bg-terra transition-colors">
             {tab === 'actions' ? 'One-page plan' : 'Print brief'} <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">↓</span>
-          </button>
+          </button>}
         </div>
         <Tabs className="mt-3" tabs={TABS} value={tab} onChange={(t) => setParam({ tab: t })} />
+        {tab === 'actions' && <div className="mt-3"><Seg items={PROGRAMMES} value={programme} onChange={(p) => setParam({ sc: p })} /></div>}
         {tab === 'brief' && <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto"><Seg className="!flex-nowrap whitespace-nowrap" items={RADAR_CANCERS} value={radarCancer} onChange={tp.setRadarCancer} /></div>}
       </div>
 
       <div className="mt-8 min-w-0 relative z-10" key={tab}>
-        <div className="rise" key={tab === 'radar' ? tab : tab + countyId + radarCancer}>
-          {tab === 'actions' && <Actions countyId={countyId} plan={plan} setPlan={setPlan} />}
+        <div className="rise" key={tab === 'radar' ? tab : tab + countyId + radarCancer + programme}>
+          {tab === 'actions' && <Actions countyId={countyId} plan={plan} setPlan={setPlan} programme={programme} />}
           {tab === 'brief' && <Brief brief={brief} county={county} page />}
           {tab === 'radar' && <Radar {...tp} />}
         </div>
       </div>
 
-      <Drawer open={sheet && tab === 'actions'} onClose={() => setSheet(false)} label="One-page plan">
+      <Drawer open={sheet && tab === 'actions' && programme === 'bowel'} onClose={() => setSheet(false)} label="One-page plan">
         <div className="p-6 pt-16">
           <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
             <Label>Preview · one printable page</Label>

@@ -9,12 +9,23 @@ import { STEPS, flags, losses, n0, n1, weakCount, type Step, STEP_META } from '.
 const LEAK_FILL = ['#D1D1C9', '#FFC233', '#E0875F', '#C65D3B']
 const PLAIN: Record<Step, string> = { detection: 'kits', referral: 'follow-up', capacity: 'wait' }
 
-export function LeakMap({ selected, onSelect, className }: { selected: string; onSelect: (id: string) => void; className?: string }) {
+/**
+ * Map coloured by how many of the three steps are behind. Bowel by default; breast and cervical pass their own
+ * count and hover text (countOf / tipOf).
+ */
+export function LeakMap({ selected, onSelect, className, countOf, tipOf }: {
+  selected: string; onSelect: (id: string) => void; className?: string
+  countOf?: (id: string) => number | null; tipOf?: (id: string) => string | null
+}) {
   return (
     <div className={className}>
       <FinlandMap selected={selected} onSelect={onSelect} label="Finland by number of leaking steps"
-        style={(c) => { const r = screeningById(c.id); return { fill: r ? LEAK_FILL[weakCount(r)] : '#eee' } }}
+        style={(c) => {
+          if (countOf) { const n = countOf(c.id); return { fill: n == null ? '#eee' : LEAK_FILL[Math.min(3, n)] } }
+          const r = screeningById(c.id); return { fill: r ? LEAK_FILL[weakCount(r)] : '#eee' }
+        }}
         tooltip={(c) => {
+          if (tipOf) return tipOf(c.id)
           const r = screeningById(c.id)
           if (!r) return null
           const f = flags(r)

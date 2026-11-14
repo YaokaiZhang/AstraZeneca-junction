@@ -15,6 +15,9 @@ import { Fixes } from './Fixes'
 import { Bottleneck } from './Bottleneck'
 import { ActionSheet, type Briefing } from './ActionSheet'
 import { FollowUpList } from './FollowUpList'
+import { ProgrammeMonitor } from './ProgrammeMonitor'
+import { ProgrammeTabs } from './ProgrammeTabs'
+import { isProgramme, programmeView, templateFor, type ProgrammeId, type ProgrammeView } from './programmes'
 import { briefingLines, buildFacts, numbersMatch, stripCites, templateBriefing, type Facts } from './briefing'
 import type { BriefingResponse, EvidenceRef } from './evidence'
 import { LeakMap, Ranking } from './Compare'
@@ -81,7 +84,57 @@ function Block({ a, b, children }: { a: ReactNode; b?: ReactNode; children: Reac
   )
 }
 
+/** Bowel, breast or cervical, from ?p= (default bowel); the county stays in ?c=. */
 export default function MonitorPage() {
+  const [q, setQ] = useSearchParams()
+  const p: ProgrammeId = isProgramme(q.get('p')) ? (q.get('p') as ProgrammeId) : 'bowel'
+  const setProgramme = (next: ProgrammeId) => setQ((cur) => { const n = new URLSearchParams(cur); if (next === 'bowel') n.delete('p'); else n.set('p', next); return n }, { replace: true })
+  const tabs = <ProgrammeTabs value={p} onChange={setProgramme} />
+  if (p === 'bowel') return <BowelMonitor tabs={tabs} />
+  return <OtherProgramme p={p} setProgramme={setProgramme} />
+}
+
+/** Breast and cervical: page shell, county from the URL, and the AI briefing request (same checks as bowel). */
+function OtherProgramme({ p, setProgramme }: { p: Exclude<ProgrammeId, 'bowel'>; setProgramme: (p: ProgrammeId) => void }) {
+  const [q, setQ] = useSearchParams()
+  const countyId = programmeView(p, q.get('c') ?? '') ? q.get('c')! : DEFAULT_COUNTY
+  const select = (id: string) => setQ((cur) => { const n = new URLSearchParams(cur); n.set('c', id); return n }, { replace: true })
+  const [ai, setAi] = useState<{ key: string; briefing: Briefing } | null>(null)
+  const [aiNote, setAiNote] = useState<{ key: string; note: string } | null>(null)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiOn, setAiOn] = useState<boolean | null>(null)
+  useEffect(() => { fetch('/api/health').then((x) => x.json()).then((h) => setAiOn(!!h.ai)).catch(() => setAiOn(false)) }, [])
+  const keyOf = (v: ProgrammeView) => JSON.stringify(v.facts)
+  const briefingFor = (v: ProgrammeView): Briefing => {
+    const key = keyOf(v)
+    if (ai?.key === key) return ai.briefing
+    return { ...templateFor(v), note: aiNote?.key === key ? aiNote.note : undefined }
+  }
+  const writeBriefing = async (v: ProgrammeView) => {
+    const key = keyOf(v)
+    setAiBusy(true)
+    try {
+      const resp = await fetch('/api/briefing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ facts: v.facts }) })
+      const body = await resp.json().catch(() => ({}))
+      const b = resp.ok ? groundedBriefing(body, v.facts) : null
+      if (b) { setAi({ key, briefing: b }); setAiNote(null) }
+      else setAiNote({ key, note: !resp.ok ? briefingErrorNote(resp.status, body.error) : body.status === 'template_fallback' && body.reason ? briefingErrorNote(resp.status, body.reason) : 'AI text not used: it did not pass our checks.' })
+    } catch {
+      setAiNote({ key, note: 'The AI could not be reached.' })
+    } finally {
+      setAiBusy(false)
+    }
+  }
+  return (
+    <div className="monitor-root county-root px-4 sm:px-6 lg:px-10 pb-20 max-w-[2000px] mx-auto overflow-x-clip">
+      <MonitorStyles />
+      <ProgrammeMonitor p={p} countyId={countyId} select={select} setProgramme={setProgramme}
+        briefingFor={briefingFor} aiOn={aiOn} writeBriefing={writeBriefing} aiBusy={aiBusy} />
+    </div>
+  )
+}
+
+function BowelMonitor({ tabs }: { tabs: ReactNode }) {
   const [q, setQ] = useSearchParams()
   const countyId = screeningById(q.get('c') ?? '') ? q.get('c')! : DEFAULT_COUNTY
   const r = screeningById(countyId)!
@@ -139,9 +192,10 @@ export default function MonitorPage() {
 
       <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-10 px-4 sm:px-6 lg:px-10 pt-4 pb-3 bg-paper/95 backdrop-blur-sm border-b border-stone/60">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-          <div className="flex items-center gap-4 min-w-0">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 min-w-0">
             <Picker label="County" value={countyId} onChange={select} options={OPTIONS}
               className="font-serif text-xl sm:text-2xl italic py-0.5 max-w-[60vw] sm:max-w-none" />
+            {tabs}
           </div>
           <div className="flex items-center gap-3">
             {touched && <button onClick={() => setPlan(EMPTY_PLAN)} className="font-type text-sm uppercase tracking-widest opacity-70 hover:opacity-100 hover:text-terra">Reset fixes</button>}

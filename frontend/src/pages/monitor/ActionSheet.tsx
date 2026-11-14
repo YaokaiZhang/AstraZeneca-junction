@@ -6,6 +6,8 @@ const SOURCES = [
   ['Finnish Cancer Registry, bowel cancer screening statistics, 2024 round (published 20 May 2026)', 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html'],
   ['Interventions to raise colonoscopy after a positive test, meta-analysis. JAMA Intern Med 2026. PMID 42832233', 'https://pubmed.ncbi.nlm.nih.gov/42832233/'],
   ['Dougherty et al. Interventions to raise colorectal screening uptake. JAMA Intern Med 2018. PMID 30326005', 'https://pubmed.ncbi.nlm.nih.gov/30326005/'],
+  ['Kansallinen syöpästrategia 2026–2035 (National Cancer Strategy)', 'https://files.hackjunction.app/resources/Kansallinen_syopastrategia_2026_2035_FINAL.pdf'],
+  ['Toimeenpanon tiekartta 2026–2031 (implementation roadmap)', 'https://files.hackjunction.app/resources/Kansallinen_syopastrategia_toimeenpanon_tiekartta_2026_2031.pdf'],
   ['Finnish Cancer Registry, bowel cancer screening programme: everyone aged 56–74 invited from 2031', 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/'],
   ['Statistics Finland, population by age and language (vaerak/11rz), 2025, rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/'],
 ]
@@ -115,7 +117,7 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
 
       <section className="mt-4">
         <h2 className="font-type uppercase tracking-widest text-[12px] opacity-70 mb-1">Policy fit</h2>
-        <p className="text-[13px] leading-snug">National Cancer Strategy Goal 2 (80% screening participation) and Goal 3 (treatment within target times, smaller regional differences). Implementation roadmap measures 3.1.4 (pathway indicators) and 3.5.3 (AI in cancer care).</p>
+        <p className="text-[13px] leading-snug">National Cancer Strategy 2026–2035: Goal 2, 80% screening participation in every wellbeing services county; Goal 3, treatment within target times; other mother tongues to reach the participation of Finnish and Swedish speakers (strategy pp. 5, 20). Implementation roadmap 2026–2031: measure 1.3.1, multilingual screening outreach, €400,000 (p. 33); 3.1.4, pathway quality indicators (p. 58); 3.5.3, digital tools and AI (p. 73).</p>
       </section>
 
       <footer className="mt-4 pt-2 border-t border-black/20 text-[11px] leading-snug opacity-80">

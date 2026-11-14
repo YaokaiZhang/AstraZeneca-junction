@@ -100,6 +100,18 @@ export const SOURCES: Record<string, Source> = {
     years: '2026–2035 (published 2026)', retrieved: PULLED,
     links: [{ label: 'Ministry page', url: 'https://stm.fi/en/national-cancer-strategy' }, { label: 'English summary (PDF, ICCP mirror)', url: 'https://www.iccp-portal.org/sites/default/files/2026-02/National_Cancer_Strategy_2026-2035_Finland.pdf' }],
   },
+  strategyFi: {
+    id: 'strategyFi', name: 'Kansallinen syöpästrategia 2026–2035 (National Cancer Strategy, full text in Finnish)',
+    url: 'https://files.hackjunction.app/resources/Kansallinen_syopastrategia_2026_2035_FINAL.pdf',
+    note: 'Goal 2, p. 5: 80% participation in every screening programme in every wellbeing services county. Goal 3, p. 5: patients treated within target times. P. 20: participation of people whose mother tongue is not Finnish or Swedish should reach the level of Finnish and Swedish speakers. Equality (regional and socioeconomic differences) runs through all goals.',
+    years: '2026–2035', retrieved: PULLED,
+  },
+  roadmap: {
+    id: 'roadmap', name: 'Toimeenpanon tiekartta 2026–2031 (implementation roadmap, in Finnish)',
+    url: 'https://files.hackjunction.app/resources/Kansallinen_syopastrategia_toimeenpanon_tiekartta_2026_2031.pdf',
+    note: 'Measure 1.3.1, p. 33: targeted multilingual communication to raise screening participation in language groups, €400,000, wellbeing services counties, Helsinki, HUS, NGOs, Cancer Registry and THL responsible. Measure 3.1.4, p. 58: national quality targets and indicators to follow care pathways. Measure 3.5.3, p. 73: digital tools and AI in cancer care.',
+    years: '2026–2031', retrieved: PULLED,
+  },
   screeningRules: {
     id: 'screeningRules', name: 'National screening programme ages', url: 'https://cancerregistry.fi/screening/',
     note: 'Breast 50–69 every 2 years; cervical 30–65 every 5 years. Bowel: every 2 years, ages 60–72 today (60–70 in the 2024 round), widening to everyone aged 56–74 from 2031.',

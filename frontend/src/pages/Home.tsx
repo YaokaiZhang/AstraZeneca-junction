@@ -1,4 +1,4 @@
-import { PlugsIn, RiskInPractice, StageGap } from './home/Practical'
+import { PlugsIn, RiskInPractice } from './home/Practical'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, TextRing } from '../components/ui'
@@ -169,7 +169,6 @@ export default function Home() {
       {/* 02 · what we built (execution): one record, three views */}
       <Transition chapter="ch-built" text="So we built one tool that follows a person from first symptom to first treatment." hot={6} />
       <Radar />
-      <StageGap />
       <Views />
       <CheckIns />
       <RiskInPractice />

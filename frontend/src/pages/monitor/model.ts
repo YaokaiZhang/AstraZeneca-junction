@@ -151,7 +151,7 @@ export const DETECTION_FIXES: DetectionFix[] = [
     pts: (r) => Math.min(3, headroom(r)), how: () => 'Cautious default: +3 percentage points.',
   },
   {
-    id: 'multilingual', step: 'detection', name: 'Multilingual reminder', what: `The reminder in the person’s own language, aimed at other mother tongues (${OTHER_TONGUE.participationPct}% return the kit vs ${GROUPS.find((g) => g.group === 'Finnish/Swedish/Sami')!.participationPct}%). Multilingual outreach is already funded in the cancer plan (≈ €1.5m).`,
+    id: 'multilingual', step: 'detection', name: 'Multilingual reminder', what: `The reminder in the person’s own language, aimed at other mother tongues (${OTHER_TONGUE.participationPct}% return the kit vs ${GROUPS.find((g) => g.group === 'Finnish/Swedish/Sami')!.participationPct}%). The cancer strategy roadmap already funds multilingual screening outreach (measure 1.3.1, €400,000).`,
     effect: 'RR 1.20 on the group', source: 'dougherty', caveat: 'Language share: residents aged 56–74, Statistics Finland 2025',
     pts: (r) => Math.min(otherTongueShare(r.id) * OTHER_TONGUE.participationPct * (DETECTION_RR - 1), headroom(r)),
     how: (r) => `${(otherTongueShare(r.id) * 100).toFixed(1)}% of people aged 56–74 × ${OTHER_TONGUE.participationPct}% × 0.20`,
@@ -201,7 +201,8 @@ export function evaluate(r: ScreeningRow, plan: Plan) {
   const trajectory = Array.from({ length: 53 }, (_, w) => {
     let L = q.queueNow + (newArrivalsWeek - capacity) * w
     if (plan.catchUp) L -= Math.min(w, plan.catchUpWeeks) * catchUpPerWeek
-    L = Math.max(L, newArrivalsWeek * (plan.catchUp ? q.targetWeeks : 0))
+    // catch-up stops at the target wait; it never pushes a short wait up to the target
+    L = Math.max(L, plan.catchUp ? Math.min(q.queueNow, newArrivalsWeek * q.targetWeeks) : 0)
     return L / capacity / WEEKS_PER_MONTH
   })
 

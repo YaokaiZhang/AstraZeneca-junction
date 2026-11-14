@@ -1,6 +1,6 @@
 // Map of Finland's wellbeing services counties (real outlines, Statistics Finland). Click a county to pick it.
 // The capital region is too small to tap at map scale, so it is repeated, enlarged, in an inset over the sea.
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { COUNTIES, type County } from '../data/counties'
 import { COUNTY_SHAPES } from '../data/countyShapes.generated'
 import { FI_W, FI_H } from '../data/finland'
@@ -23,6 +23,8 @@ export function FinlandMap({ style, selected, onSelect, tooltip, label = 'Map of
   className?: string
 }) {
   const [hover, setHover] = useState<string | null>(null)
+  // one clip id per map: the page can show two maps, and a shared id clips against the hidden one
+  const clipId = 'fi-inset-' + useId().replace(/[^a-zA-Z0-9]/g, '')
   const hc = hover ? COUNTIES.find((c) => c.id === hover) : null
 
   const shape = (c: County, inset: boolean) => {
@@ -66,7 +68,7 @@ export function FinlandMap({ style, selected, onSelect, tooltip, label = 'Map of
     <div className={'relative ' + (className ?? '')}>
       <svg viewBox={`0 0 ${FI_W} ${FI_H}`} className="w-full h-auto block overflow-visible" role="group" aria-label={label}>
         <defs>
-          <clipPath id="fi-inset"><rect x={SRC.x} y={SRC.y} width={SRC.w} height={SRC.h} /></clipPath>
+          <clipPath id={clipId}><rect x={SRC.x} y={SRC.y} width={SRC.w} height={SRC.h} /></clipPath>
         </defs>
         <g>{order.map((c) => hit(c, false))}</g>
         {/* where the inset comes from */}
@@ -74,7 +76,7 @@ export function FinlandMap({ style, selected, onSelect, tooltip, label = 'Map of
         <path d={`M${SRC.x} ${SRC.y} L${BOX.x + BOX.w / 2} ${BOX.y + BOX.h}`} stroke="#1F1F1F" strokeOpacity={0.25} strokeDasharray="3 3" fill="none" pointerEvents="none" />
         <g>
           <rect x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h} rx={6} fill="none" stroke="#1F1F1F" strokeOpacity={0.35} />
-          <g transform={insetT} clipPath="url(#fi-inset)">
+          <g transform={insetT} clipPath={`url(#${clipId})`}>
             {order.map((c) => hit(c, true))}
           </g>
           <text x={BOX.x + 8} y={BOX.y - 8} className="font-type uppercase" style={{ fontSize: 15, letterSpacing: '.08em' }} fill="#1F1F1F" opacity={0.6}>Capital region</text>

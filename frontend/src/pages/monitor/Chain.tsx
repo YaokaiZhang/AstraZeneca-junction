@@ -1,10 +1,48 @@
 // Section 1: the chain and where it leaks. Three steps against the national figure; people lost at each.
 import type { ReactNode } from 'react'
 import { Card, Label, SourceBadge, cx } from '../../components/ui'
-import { SCREENING_FI, type ScreeningRow } from './data'
+import { SCREENING_FI, rankIn, trend, type ScreeningRow } from './data'
 import { STEP_META, THRESHOLDS, flags, losses, n0, n1, type Step } from './model'
 
 const SRC = <SourceBadge id="bowelScreening2024" kind="direct" demo={false} />
+const SRC_ROUNDS = <SourceBadge id="bowelScreeningRounds" kind="direct" demo={false} />
+
+/** Three rounds as a tiny line plus the three numbers. */
+function Trend({ id, k }: { id: string; k: 'participationPct' | 'colonoscopyOfPositivesPct' }) {
+  const t = trend(id)
+  if (t.length < 2) return null
+  const vs = t.map((p) => p[k])
+  const lo = Math.min(...vs) - 1, hi = Math.max(...vs) + 1
+  const W = 54, H = 18
+  const pts = vs.map((v, i) => `${(i / (vs.length - 1)) * W},${H - ((v - lo) / (hi - lo)) * H}`).join(' ')
+  return (
+    <div className="mt-3 flex items-center gap-3 font-type text-[13px] tracking-wider" aria-label={`Trend: ${t.map((p) => `${p.year} ${n1(p[k])}%`).join(', ')}`}>
+      <svg width={W} height={H} className="overflow-visible shrink-0" aria-hidden>
+        <polyline points={pts} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round" opacity={0.8} />
+        {vs.map((v, i) => <circle key={i} cx={(i / (vs.length - 1)) * W} cy={H - ((v - lo) / (hi - lo)) * H} r={i === vs.length - 1 ? 2.6 : 1.8} fill="currentColor" />)}
+      </svg>
+      <span className="flex flex-wrap gap-x-2.5 opacity-80">
+        {t.map((p) => <span key={p.year}><span className="opacity-60">{p.year}</span> {n1(p[k])}</span>)}
+      </span>
+      {SRC_ROUNDS}
+    </div>
+  )
+}
+
+const ord = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th'}`
+
+/** What the three rounds say about colonoscopy after a positive test. */
+function TrendNote({ r }: { r: ScreeningRow }) {
+  const fi = trend('finland')
+  const ranks = [2022, 2023, 2024].map((y) => rankIn(y, r.id, 'colonoscopyOfPositivesPct'))
+  const of = ranks[0].of
+  return (
+    <p className="mt-2 font-sans text-[15px] opacity-70 max-w-4xl">
+      Colonoscopy after a positive test, nationally: {fi.map((p, i) => <span key={p.year}>{i ? (i === fi.length - 1 ? ' and ' : ', ') : ''}{n1(p.colonoscopyOfPositivesPct)}% ({p.year})</span>)}.
+      {' '}So the 2024 figure is probably partly reports still to come in. {r.name} placed {ranks.map((x) => ord(x.rank)).join(', ').replace(/, ([^,]*)$/, ' and $1')} of {of} counties in 2022, 2023 and 2024 (1st = highest).
+    </p>
+  )
+}
 
 
 /** The one-sentence diagnosis at the top of the page. Built from the numbers only. */
@@ -68,6 +106,7 @@ function StepCard({ step, r }: { step: Step; r: ScreeningRow }) {
         {n1(val)}<span className="font-type text-sm opacity-70">{unit}</span>{SRC}
       </p>
       <p className="font-type text-sm uppercase tracking-wider opacity-75 mt-1">Finland {n1(nat)}{unit === '%' ? '%' : ' mo'}</p>
+      {step !== 'capacity' && <Trend id={r.id} k={step === 'detection' ? 'participationPct' : 'colonoscopyOfPositivesPct'} />}
       <Bar v={val} fi={nat} line={THRESHOLDS[step]} max={step === 'capacity' ? 4.5 : 100} invert={step === 'capacity'} />
       <div className={cx('mt-auto pt-3 border-t', weak ? 'border-paper/30' : 'border-black/10')}>
         <p className="font-serif text-3xl leading-none">{n0(l.lost)}</p>
@@ -101,6 +140,7 @@ export function Chain({ r }: { r: ScreeningRow }) {
       <p className="mt-2 font-sans text-[15px] opacity-70">
         Red when kit return &lt; {THRESHOLDS.detection}%, colonoscopy after a positive test &lt; {THRESHOLDS.referral}%, or median wait &gt; {THRESHOLDS.capacity} months. Dashed tick = that line.
       </p>
+      <TrendNote r={r} />
     </div>
   )
 }

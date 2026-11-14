@@ -1,13 +1,15 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { TextRing, Toaster, cx } from './ui'
 import { useStore } from '../lib/store'
+import { SHOW_FULL_STORY } from '../config'
 
-const NAV = [
+const ALL_NAV = [
   { to: '/patient', label: 'Patient', sub: 'Notice · track · ask' },
   { to: '/hospital', label: 'Hospital', sub: 'Who is falling behind' },
   { to: '/county', label: 'County', sub: 'Where people are lost' },
   { to: '/monitor', label: 'Screening', sub: 'Chain · fixes · capacity' },
 ]
+const NAV = SHOW_FULL_STORY ? ALL_NAV : ALL_NAV.filter((n) => n.to === '/monitor')
 
 export default function Layout() {
   const { pathname } = useLocation()

@@ -1,7 +1,6 @@
 // Screening Chain Monitor: every number on the page comes from these functions.
 // Inputs: data.ts (Cancer Registry, 2024 round). Effects: evidence.ts. No number is written by a model.
-import { TOWNS } from '../county/towns'
-import { GROUPS, SCREENING_FI, type ScreeningRow } from './data'
+import { DEMOGRAPHICS_FI, GROUPS, SCREENING_FI, demographicsById, type ScreeningRow } from './data'
 
 export const WEEKS_PER_MONTH = 4.345
 /** National Cancer Strategy Goal 2: 80% screening participation. */
@@ -114,10 +113,13 @@ export interface Fix {
   rr?: number
   source: 'navMeta' | 'dougherty' | 'ours'
   caveat?: string
+  /** how it would work in Finland */
+  local?: string
 }
 
 export const REFERRAL_FIXES: Fix[] = [
-  { id: 'navigation', step: 'referral', name: 'Patient navigation', what: 'A named nurse or coordinator calls, books the colonoscopy and explains it.', effect: 'RR 1.24', rr: 1.24, source: 'navMeta', caveat: 'Mostly US studies' },
+  { id: 'navigation', step: 'referral', name: 'Patient navigation', what: 'A named nurse or coordinator calls, books the colonoscopy and explains it.', effect: 'RR 1.24', rr: 1.24, source: 'navMeta', caveat: 'Mostly US studies',
+    local: 'In Finland: every county already has screening nurses (seulontahoitaja) who agree the follow-up with each person who tests positive. The fix is a daily list for the screening nurse of everyone who tested positive and has not booked yet. Each county organises colonoscopies its own way, so the list goes to whoever books them there.' },
   { id: 'patient-reminder', step: 'referral', name: 'Patient reminders', what: 'Letter, SMS or call to people with a positive test who have not booked.', effect: 'RR 1.32', rr: 1.32, source: 'navMeta', caveat: 'Mostly US studies' },
   { id: 'clinician-reminder', step: 'referral', name: 'Clinician reminders', what: 'The GP gets a prompt when a positive result has no colonoscopy.', effect: 'RR 1.36', rr: 1.36, source: 'navMeta', caveat: 'Mostly US studies' },
   { id: 'auto-referral', step: 'referral', name: 'Automated referral', what: 'A colonoscopy is booked automatically on a positive result.', effect: 'RR 1.68', rr: 1.68, source: 'navMeta', caveat: 'Mostly US studies' },
@@ -125,23 +127,15 @@ export const REFERRAL_FIXES: Fix[] = [
 
 // ----- detection -----
 
-/** Share of the screening-age invited population with a mother tongue other than Finnish/Swedish/Sami, nationally. */
+/** National 2024 group row: invited people with a mother tongue other than Finnish/Swedish/Sami (or missing). */
 const OTHER_TONGUE = GROUPS.find((g) => g.dimension === 'mother_tongue' && g.group === 'Other or missing')!
-const OTHER_SHARE_FI = OTHER_TONGUE.invited / SCREENING_FI.invited
-
-/** Foreign-language share of all residents (Statistics Finland 11ra, 2024), county and Finland, population-weighted over towns. */
-function foreignShare(countyId?: string) {
-  const ts = countyId ? TOWNS.filter((t) => t.county === countyId) : TOWNS
-  const pop = ts.reduce((s, t) => s + t.population, 0)
-  return ts.reduce((s, t) => s + t.population * t.foreign, 0) / pop
-}
 
 /**
- * Estimated share of a county's invited people with another mother tongue: the national screening-age share
- * scaled by the county's foreign-language share relative to Finland's.
+ * Share of a county's screening-age residents (56–74) with a mother tongue other than Finnish, Swedish or Sami.
+ * Statistics Finland 2025 (vaerak/11rz), municipalities rolled up to counties. Used as the share of invited people.
  */
 export function otherTongueShare(countyId: string) {
-  return OTHER_SHARE_FI * (foreignShare(countyId) / foreignShare())
+  return (demographicsById(countyId)?.foreignLangPct ?? DEMOGRAPHICS_FI.foreignLangPct) / 100
 }
 
 export const DETECTION_RR = 1.2
@@ -158,9 +152,9 @@ export const DETECTION_FIXES: DetectionFix[] = [
   },
   {
     id: 'multilingual', step: 'detection', name: 'Multilingual reminder', what: `The reminder in the person’s own language, aimed at other mother tongues (${OTHER_TONGUE.participationPct}% return the kit vs ${GROUPS.find((g) => g.group === 'Finnish/Swedish/Sami')!.participationPct}%). Multilingual outreach is already funded in the cancer plan (≈ €1.5m).`,
-    effect: 'RR 1.20 on the group', source: 'dougherty', caveat: 'Group share per county is our estimate',
+    effect: 'RR 1.20 on the group', source: 'dougherty', caveat: 'Language share: residents aged 56–74, Statistics Finland 2025',
     pts: (r) => Math.min(otherTongueShare(r.id) * OTHER_TONGUE.participationPct * (DETECTION_RR - 1), headroom(r)),
-    how: (r) => `${(otherTongueShare(r.id) * 100).toFixed(1)}% of invited (est.) × ${OTHER_TONGUE.participationPct}% × 0.20`,
+    how: (r) => `${(otherTongueShare(r.id) * 100).toFixed(1)}% of people aged 56–74 × ${OTHER_TONGUE.participationPct}% × 0.20`,
   },
   {
     id: 'clinician', step: 'detection', name: 'Clinician reminders', what: 'The GP or nurse is prompted to raise screening at any visit.',
@@ -233,6 +227,40 @@ export function evaluate(r: ScreeningRow, plan: Plan) {
   }
 }
 export type Result = ReturnType<typeof evaluate>
+
+// ----- 2031: the target group widens to everyone aged 56–74 -----
+
+/** Ages 56–74 are 19 single years; even ages are invited every two years, so 10 of the 19 are invited in a round. */
+export const INVITED_SHARE_2031 = 10 / 19
+
+/**
+ * Colonoscopy demand in 2031 at today's rates: invites grow from today's to pop 56–74 × 10/19,
+ * and colonoscopies (today's, plus what the chosen fixes add) grow by the same factor.
+ * Ignores ageing to 2031 and lower positivity in younger people: an estimate.
+ */
+export function in2031(r: ScreeningRow | typeof SCREENING_FI, res?: Result) {
+  const d = demographicsById(r.id)
+  const invited2031 = (d?.pop5674 ?? 0) * INVITED_SHARE_2031
+  const growth = d ? invited2031 / r.invited : 1
+  const fixExtra = res?.total.colonoscopies ?? 0
+  const todayWeek = r.colonoscopyDone / 52
+  const demandWeek = (r.colonoscopyDone * growth) / 52
+  const withFixesWeek = ((r.colonoscopyDone + fixExtra) * growth) / 52
+  return {
+    pop5674: d?.pop5674 ?? 0,
+    invited2031,
+    growth,
+    todayWeek,
+    /** at today's rates, no fixes */
+    demandWeek,
+    withFixesWeek,
+    /** extra a week over today's capacity, no fixes */
+    extraWeek: demandWeek - todayWeek,
+    /** extra a week over today's capacity, with the chosen fixes */
+    extraWithFixesWeek: withFixesWeek - todayWeek,
+    hasFixes: fixExtra > 0.5,
+  }
+}
 
 // ----- formatting -----
 export const n0 = (v: number) => Math.round(v).toLocaleString('en-GB')

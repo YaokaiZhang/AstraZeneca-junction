@@ -4,15 +4,17 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
-import { Btn, Display, Drawer, KindLegend, Label, Picker, cx } from '../../components/ui'
-import { SCREENING, SCREENING_FI, screeningById, MISSED_CANCERS_2022 } from './data'
-import { EMPTY_PLAN, evaluate, flags, type Plan } from './model'
+import { Btn, Display, Drawer, KindLegend, Label, Picker, SourceBadge, cx } from '../../components/ui'
+import { GROUPS, SCREENING, SCREENING_FI, screeningById, MISSED_CANCERS_2022 } from './data'
+import { EMPTY_PLAN, GROUP_FACTS, evaluate, flags, n1, type Plan } from './model'
 import { Chain, headline } from './Chain'
 import { Missed } from './Missed'
+import { MixGap } from './MixGap'
 import { Fixes } from './Fixes'
 import { Bottleneck } from './Bottleneck'
 import { ActionSheet } from './ActionSheet'
 import { LeakMap, Ranking } from './Compare'
+import { SHOW_FULL_STORY } from '../../config'
 
 const OPTIONS = SCREENING.map((r) => ({ id: r.id, name: r.name })).sort((a, b) => a.name.localeCompare(b.name, 'fi'))
 
@@ -67,20 +69,21 @@ export default function MonitorPage() {
 
       {/* 01 · the chain */}
       <section className="mt-8">
-        <Label className="mb-3">Bowel cancer screening · 2024 round · Screening chain monitor</Label>
-        <div className="grid xl:grid-cols-[minmax(0,1fr)_300px] gap-8 items-start">
+        <Label className="mb-3">Bowel cancer screening · 2024 round, ages 60–70 · Screening chain monitor</Label>
+        <div className={cx('grid gap-8 items-start', SHOW_FULL_STORY && 'xl:grid-cols-[minmax(0,1fr)_300px]')}>
           <div className="min-w-0 rise" key={countyId}>
             <p className="font-serif text-3xl sm:text-[2.6rem] leading-[1.1] max-w-4xl">{headline(r)}</p>
             <div className="mt-8"><Chain r={r} /></div>
           </div>
-          <div className="hidden xl:block">
+          {SHOW_FULL_STORY && <div className="hidden xl:block">
             <LeakMap selected={countyId} onSelect={select} />
-          </div>
+          </div>}
         </div>
       </section>
 
       <Section n="02" a="Who is" b="being missed">
         <Missed />
+        <div key={countyId} className="rise"><MixGap r={r} /></div>
       </Section>
 
       <Section n="03" a="Proven fixes," b={`in ${r.name}`}
@@ -95,13 +98,13 @@ export default function MonitorPage() {
         </div>
       </Section>
 
-      <Section n="05" a="Every county," b="same tool">
+      {SHOW_FULL_STORY ? <Section n="05" a="Every county," b="same tool">
         <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-8 items-start">
           <Ranking selected={countyId} onSelect={(id) => { select(id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
           <div className="xl:hidden"><LeakMap selected={countyId} onSelect={select} className="max-w-md mx-auto" /></div>
           <About />
         </div>
-      </Section>
+      </Section> : <SourcesFooter />}
 
       <Drawer open={sheet} onClose={() => setSheet(false)} label="County action sheet">
         <div className="p-6 pt-16">
@@ -120,6 +123,39 @@ export default function MonitorPage() {
   )
 }
 
+const FOOTER_SOURCES: [string, string][] = [
+  ['Finnish Cancer Registry, bowel cancer screening statistics, 2024 round (published 20 May 2026), and the 2022 and 2023 rounds', 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html'],
+  ['Finnish Cancer Registry, bowel cancer screening programme: everyone aged 56–74 from 2031', 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/'],
+  ['Statistics Finland, population by age and language, 2025 (vaerak/11rz), municipalities rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/'],
+  ['Statistics Finland, education by age, 2025 (vkour/12bq), municipalities rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vkour/statfin_vkour_pxt_12bq.px/'],
+  ['Interventions to raise colonoscopy after a positive stool test, meta-analysis. JAMA Intern Med 2026. PMID 42832233', 'https://pubmed.ncbi.nlm.nih.gov/42832233/'],
+  ['Dougherty et al. Interventions to raise colorectal screening uptake. JAMA Intern Med 2018. PMID 30326005', 'https://pubmed.ncbi.nlm.nih.gov/30326005/'],
+]
+
+/** Small sources footer, shown instead of section 05 while the full story is switched off. */
+function SourcesFooter() {
+  return (
+    <footer className="mt-20 pt-5 border-t border-black/15 font-sans text-[13px] leading-snug opacity-75">
+      <Label className="mb-2">Sources</Label>
+      <ul className="space-y-1">
+        {FOOTER_SOURCES.map(([t, u]) => (
+          <li key={u + t}>{t}. <a className="underline underline-offset-2 break-all hover:text-terra" href={u} target="_blank" rel="noreferrer">{u.replace(/^https:\/\//, '')}</a></li>
+        ))}
+      </ul>
+      <p className="mt-3">
+        <b>Caveats.</b> Waits read from a chart (± 0.1 month). Group figures are national only. &quot;No colonoscopy&quot; may include private colonoscopies not reported to the register.
+        Effects come from mostly US studies. The queue model and the 2031 estimate are our calculations (badge E); 2031 ignores ageing and lower positivity in younger people.
+        No number here is written by a language model.
+      </p>
+    </footer>
+  )
+}
+
+const groupRate = (dimension: string, group: string) => GROUPS.find((g) => g.dimension === dimension && g.group === group)!.participationPct
+const nativeRate = groupRate('mother_tongue', 'Finnish/Swedish/Sami')
+const upperRate = groupRate('education', 'Upper secondary')
+const higherRate = groupRate('education', 'Higher')
+
 function About() {
   return (
     <div className="min-w-0">
@@ -130,10 +166,20 @@ function About() {
         <li><b>&quot;No colonoscopy&quot;</b> may partly be private colonoscopies not reported to the register. Still: in the 2022 round, {MISSED_CANCERS_2022} people who tested positive and skipped colonoscopy were later diagnosed with bowel cancer.</li>
         <li><b>Effects</b> come from two meta-analyses, mostly of US programmes. They are estimates, not promises. Referral effects are not stacked: only the strongest chosen fix counts, and follow-through is capped at 95%.</li>
         <li><b>The queue model</b> (Little&apos;s law) treats today&apos;s throughput as today&apos;s capacity and the median wait as if it were the mean. It shows direction and size, not an exact forecast.</li>
-        <li><b>The multilingual card</b> estimates each county&apos;s share of other mother tongues from Statistics Finland&apos;s foreign-language share (2024), scaled to the national screening-age share.</li>
+        <li><b>Population mix.</b> Statistics Finland PxWeb tables vaerak/11rz (population by age and language, 2025) and vkour/12bq (education by age, 2025), rolled up from municipalities to wellbeing counties. The multilingual card uses each county&apos;s share of residents aged 56–74 with another mother tongue.</li>
+        <li><b>Expected participation</b> = national 2024 group rates weighted by the county&apos;s mix: other mother tongue {n1(GROUP_FACTS.otherTongue)}% vs {n1(nativeRate)}%; basic education {n1(GROUP_FACTS.basicEducation)}%, upper secondary {n1(upperRate)}%, higher {n1(higherRate)}%.</li>
+        <li><b>2031.</b> Screening widens to everyone aged 56–74, invited every two years by even age (<a className="underline underline-offset-2" href="https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/" target="_blank" rel="noreferrer">Cancer Registry programme page</a>). Invites in 2031 = people aged 56–74 × 10/19; colonoscopies grow by the same factor at today&apos;s rates. It ignores ageing to 2031 and lower positivity in younger people.</li>
+        <li><b>Earlier rounds.</b> 2022 and 2023 county figures from the same <a className="underline underline-offset-2" href="https://stats.cancerregistry.fi/joukkistilastot/suolisto.html" target="_blank" rel="noreferrer">Cancer Registry screening statistics</a>. National colonoscopy follow-through fell from 78.6% (2023) to 72.7% (2024), probably partly reports still to come in.</li>
         <li><b>No number</b> on this page or the action sheet is written by a language model; all come from the calculations in the badges.</li>
       </ul>
       <KindLegend kinds={['direct', 'estimate']} long className="mt-5" />
+      <ul className="mt-4 font-type text-[13px] uppercase tracking-wider opacity-70 flex flex-wrap gap-2 items-center">
+        <li className="flex items-center gap-1">2024 round <SourceBadge id="bowelScreening2024" kind="direct" demo={false} /></li>
+        <li className="flex items-center gap-1">2022–2023 <SourceBadge id="bowelScreeningRounds" kind="direct" demo={false} /></li>
+        <li className="flex items-center gap-1">Language <SourceBadge id="statfinLang" kind="direct" demo={false} /></li>
+        <li className="flex items-center gap-1">Education <SourceBadge id="statfinEdu" kind="direct" demo={false} /></li>
+        <li className="flex items-center gap-1">2031 <SourceBadge id="bowelExpansion" kind="direct" demo={false} /></li>
+      </ul>
     </div>
   )
 }

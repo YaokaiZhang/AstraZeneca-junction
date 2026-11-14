@@ -1,8 +1,9 @@
 // Section 4: the bottleneck warning. Little's law on colonoscopy demand; wait projected 12 months ahead.
+import { useState } from 'react'
 import { Card, Label, SourceBadge, Toggle, cx } from '../../components/ui'
 import { useWidth } from '../county/bits'
 import { SCREENING_FI, type ScreeningRow } from './data'
-import { WEEKS_PER_MONTH, n0, n1, signed, type Plan, type Result } from './model'
+import { INVITED_SHARE_2031, WEEKS_PER_MONTH, in2031, n0, n1, signed, type Plan, type Result } from './model'
 
 function WaitChart({ res, plan, today }: { res: Result; plan: Plan; today: number }) {
   const [ref, W] = useWidth<HTMLDivElement>(520)
@@ -41,6 +42,64 @@ function WaitChart({ res, plan, today }: { res: Result; plan: Plan; today: numbe
   )
 }
 
+/** 2031: the target group widens to everyone aged 56–74. Demand at today's rates, plus the chosen fixes scaled the same way. */
+function Year2031({ r, res }: { r: ScreeningRow; res: Result }) {
+  const [on, setOn] = useState(false)
+  const y = in2031(r, res)
+  const fi = in2031(SCREENING_FI)
+  const pct = (y.growth - 1) * 100
+  const need = y.extraWithFixesWeek
+  const how = (
+    <>invites in 2031 = people aged 56–74 × 10/19 (even ages, every two years)<br />
+      = {n0(y.pop5674)} × {INVITED_SHARE_2031.toFixed(3)} = {n0(y.invited2031)}<br />
+      growth = {n0(y.invited2031)} ÷ {n0(r.invited)} invited in 2024 = × {y.growth.toFixed(2)}<br />
+      demand = ({n0(r.colonoscopyDone)} colonoscopies{y.hasFixes ? <> + {n0(res.total.colonoscopies)} from the fixes</> : null}) × {y.growth.toFixed(2)} ÷ 52 = {n1(y.withFixesWeek)}/wk<br />
+      extra = {n1(y.withFixesWeek)} − {n1(y.todayWeek)} today = {signed(need, n1)}/wk<br />
+      Finland: {signed((fi.growth - 1) * 100)}% invites, {signed(fi.extraWeek, n1)} colonoscopies a week.<br />
+      Ignores ageing to 2031 and lower positivity in younger people.</>
+  )
+  return (
+    <Card tone={on ? 'mustard' : 'paper'} className="mt-6 p-5 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <Label className="!opacity-80 flex items-center gap-2">2031: everyone aged 56–74 is invited <SourceBadge id="bowelExpansion" kind="direct" demo={false} /></Label>
+        <Toggle on={on} onChange={setOn} label={on ? 'Showing 2031' : 'Show 2031'} />
+      </div>
+      {on ? (
+        <div className="mt-4 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 items-start rise">
+          <div>
+            <p className="font-serif text-4xl sm:text-5xl leading-[1.02] flex items-baseline gap-2 flex-wrap">
+              <span>By 2031, needs <span className="italic">{signed(need, n1)}</span> colonoscopies a week</span>
+              <SourceBadge id="ourModel" kind="estimate" demo={false} how={how} />
+            </p>
+            <p className="font-sans text-[16px] leading-snug mt-3 opacity-90">
+              Over today&apos;s {n1(y.todayWeek)} a week{y.hasFixes ? <>, with the chosen fixes scaled the same way</> : <>, at today&apos;s rates and before any fix</>}.
+              {y.hasFixes && <> Without the fixes: {signed(y.extraWeek, n1)} a week.</>}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              [`${signed(pct)}%`, 'invites vs 2024'],
+              [`${n0(r.invited)} → ${n0(y.invited2031)}`, 'people invited a round'],
+              [`${n1(y.todayWeek)} → ${n1(y.withFixesWeek)}`, 'colonoscopies a week'],
+              [`${signed((fi.growth - 1) * 100)}% · ${signed(fi.extraWeek, n1)}`, 'Finland: invites · a week'],
+            ].map(([v, t]) => (
+              <div key={t} className="border-b border-black/15 pb-2 min-w-0">
+                <p className="font-serif text-2xl sm:text-3xl leading-none">{v}</p>
+                <p className="font-type text-[13px] uppercase tracking-wider opacity-70 mt-1">{t}</p>
+              </div>
+            ))}
+          </div>
+          <p className="lg:col-span-2 font-sans text-[13px] italic opacity-70">
+            Estimate. It ignores the population ageing between now and 2031, and that younger people test positive less often.
+          </p>
+        </div>
+      ) : (
+        <p className="mt-2 font-sans text-[15px] opacity-70">Screening invites ages 60–72 today, and everyone aged 56–74 from 2031. Turn on to see the colonoscopies a week {r.name} will need.</p>
+      )}
+    </Card>
+  )
+}
+
 export function Bottleneck({ r, plan, setPlan, res }: { r: ScreeningRow; plan: Plan; setPlan: (p: Plan) => void; res: Result }) {
   const q = res.queue
   const need = q.extraPerWeek
@@ -55,6 +114,7 @@ export function Bottleneck({ r, plan, setPlan, res }: { r: ScreeningRow; plan: P
       Uses the median wait as if it were the mean: an estimate.</>
   )
   return (
+    <>
     <div className="grid lg:grid-cols-[minmax(0,400px)_1fr] gap-6 items-stretch">
       <Card tone={warn ? 'terra' : quiet ? 'paper' : 'mustard'} className="p-6 sm:p-7 flex flex-col">
         <Label className="!opacity-80 flex items-center gap-2">{warn ? 'Bottleneck ahead' : quiet ? 'No extra demand yet' : 'Capacity added'} <SourceBadge id="ourModel" kind="estimate" demo={false} how={how} /></Label>
@@ -102,5 +162,7 @@ export function Bottleneck({ r, plan, setPlan, res }: { r: ScreeningRow; plan: P
         <p className="font-sans text-[13px] opacity-60 mt-2">Estimate: queue grows by (demand − capacity) each week; wait ≈ queue ÷ capacity. Dotted line = today&apos;s wait.</p>
       </Card>
     </div>
+    <Year2031 r={r} res={res} />
+    </>
   )
 }

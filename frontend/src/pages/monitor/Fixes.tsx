@@ -28,6 +28,7 @@ function FixCard({ fix, on, onClick, impact, sub, disabled }: {
         </span>
       </div>
       <p className="font-sans text-[14px] leading-snug opacity-80 mt-1">{fix.what}</p>
+      {fix.local && <p className={cx('font-sans text-[14px] leading-snug mt-2 pl-3 border-l-2', on ? 'border-mustard' : 'border-terra/60')}>{fix.local}</p>}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className={cx('font-type text-[13px] uppercase tracking-wider px-2 py-0.5 rounded-full', on ? 'bg-mustard text-ink' : 'bg-black/[.07]')}>{fix.effect}</span>
         <span onClick={(e) => e.stopPropagation()}>{srcBadge(fix)}</span>
@@ -86,7 +87,8 @@ export function Fixes({ r, plan, setPlan, res }: { r: ScreeningRow; plan: Plan; 
               <FixCard key={fx.id} fix={fx} on={on} disabled={room <= 0}
                 onClick={() => setPlan(on ? { ...plan, detectionFix: null, detectionPts: 0 } : { ...plan, detectionFix: fx.id, detectionPts: pts })}
                 impact={<>{signed(pts, n1)} <span className="font-type text-sm opacity-70">pts kit return</span></>}
-                sub={`${fx.how(r)} · ≈ ${n0(r.invited * pts / 100)} more kits`} />
+                sub={<>{fx.how(r)} · ≈ {n0(r.invited * pts / 100)} more kits
+                  {fx.id === 'multilingual' && <span className="ml-1.5 normal-case" onClick={(e) => e.stopPropagation()}><SourceBadge id="statfinLang" kind="direct" demo={false} /></span>}</>} />
             )
           })}
           <Card className="p-4">

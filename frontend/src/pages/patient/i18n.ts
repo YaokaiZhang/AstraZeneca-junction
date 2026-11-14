@@ -92,6 +92,8 @@ const D = {
   'd.delete': ['Delete', 'Poista', 'Ta bort'],
   'd.checkin': ['Check-in', 'Kuulumiset', 'Uppföljning'],
   'd.pickDate': ['Pick a date', 'Valitse päivä', 'Välj datum'],
+  'd.daysN': ['{n} days', '{n} päivää', '{n} dagar'],
+  'd.packYearsUnit': ['pack-years', 'askivuotta', 'paketår'],
   'd.notes': ['In your words', 'Omin sanoin', 'Med egna ord'],
   'd.send2': ['Send to health centre', 'Lähetä terveysasemalle', 'Skicka till vårdcentralen'],
   'd.sendAgain': ['Send updated summary', 'Lähetä päivitetty yhteenveto', 'Skicka uppdaterad sammanfattning'],

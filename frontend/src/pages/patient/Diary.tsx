@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Btn, Card, Chip, Display, Label, RoundBtn, Stamp, Tabs, cx, toast } from '../../components/ui'
+import { Btn, Card, Chip, Display, Label, RoundBtn, Tabs, cx, toast } from '../../components/ui'
 import { PATHWAY, daysBetween, pathwayStatus, today } from '../../data/pathway'
 import { useStore } from '../../lib/store'
 import { aiActive, checkAi, msgText, send, useAi, useChat, type Msg } from './chat'
@@ -220,6 +220,7 @@ function Summary() {
   const py = risk ? packYears(risk.inputs.cigsPerDay, risk.inputs.yearsSmoked) : packYears(smoke.cpd, smoke.years)
   const h = split2(t('h.summary'))
   const symptoms = Object.keys(first).filter((k) => k !== 'smoking').sort((a, b) => first[a].localeCompare(first[b]))
+  const maxDays = Math.max(1, ...symptoms.map((k) => daysBetween(first[k], now)))
   const sharing = useStore((s) => s.sharing)
   const set = useStore((s) => s.set)
   const ps = pathwayStatus(pathway.dates, now)
@@ -260,76 +261,99 @@ function Summary() {
       <style>{PRINT_CSS}</style>
       <Card tone="paper" className="p-6 sm:p-10">
         <div id="patient-summary" lang={lang}>
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <Label>{t('d.prepared')} · {d(now, { day: 'numeric', month: 'long', year: 'numeric' })}{profile.age ? ` · ${t('r.age')} ${profile.age}` : ''}</Label>
-              <Display a={h.a} b={h.b} className="mt-3 !text-4xl sm:!text-5xl" />
-            </div>
-            <Stamp tone={flag ? 'terra' : 'ink'} rotate={-8}>{flag ? t('d.flag') : t('d.noflag')}</Stamp>
+          <Label>{t('d.prepared')} · {d(now, { day: 'numeric', month: 'long', year: 'numeric' })}{profile.age ? ` · ${t('r.age')} ${profile.age}` : ''}</Label>
+          <Display a={h.a} b={h.b} className="mt-3 !text-4xl sm:!text-5xl" />
+
+          {/* the verdict first, with the symptoms behind it */}
+          <div className={cx('mt-6 rounded-xl border-l-4 px-5 py-4', flag ? 'border-terra bg-terra/10' : 'border-ink/40 bg-black/[0.04]')}>
+            <p className={cx('font-serif text-2xl sm:text-3xl leading-tight', flag && 'text-terra')}>{flag ? t('d.flag') : symptoms.length ? t('d.noflag') : t('d.empty')}</p>
+            {reasons.length > 0 && (
+              <p className="mt-1.5 font-sans text-base opacity-80">{reasons.map((r) => t(`sym.${r.tag}`)).join(' · ')}</p>
+            )}
           </div>
 
-          <div className="tear mt-6 pt-5 grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div className="sm:col-span-2">
-              <Label className="mb-2">{t('d.symptoms')}</Label>
-              {symptoms.length ? (
-                <table className="w-full text-left">
-                  <tbody>
-                    {symptoms.map((s) => (
-                      <tr key={s} className="border-b border-black/10">
-                        <td className="py-1.5 font-serif text-lg pr-2">
-                          {reasons.some((r) => r.tag === s) && <span className="inline-block w-2 h-2 rounded-full bg-terra mr-2 align-middle" />}
-                          {t(`sym.${s}`)}{s === 'weight-loss' && kg ? ` · −${kg} kg` : ''}
-                        </td>
-                        <td className="py-1.5 font-type text-sm whitespace-nowrap">{t('d.since')} {d(first[s])}</td>
-                        <td className="py-1.5 font-type text-sm text-right whitespace-nowrap">{daysBetween(first[s], now)} d</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : <p className="font-serif italic opacity-60">{t('d.empty')}</p>}
+          <div className="mt-8">
+            <Label className="mb-3">{t('d.symptoms')}</Label>
+            {symptoms.length ? (
+              <ul className="space-y-4">
+                {symptoms.map((s) => {
+                  const days = daysBetween(first[s], now)
+                  const hot = reasons.some((r) => r.tag === s)
+                  return (
+                    <li key={s}>
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="font-serif text-xl">{t(`sym.${s}`)}{s === 'weight-loss' && kg ? <span className="opacity-70"> · −{kg} kg</span> : null}</span>
+                        <span className="font-sans text-base tabular-nums whitespace-nowrap"><b className="font-semibold">{t('d.daysN', { n: days })}</b></span>
+                      </div>
+                      <div className="mt-1.5 h-1.5 rounded-full bg-black/10 overflow-hidden">
+                        <div className={cx('h-full rounded-full', hot ? 'bg-terra' : 'bg-ink/50')} style={{ width: `${Math.max(4, (days / maxDays) * 100)}%` }} />
+                      </div>
+                      <p className="mt-1 font-sans text-sm opacity-60">{t('d.since')} {d(first[s], { day: 'numeric', month: 'long' })}</p>
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : <p className="font-serif italic opacity-60">{t('d.empty')}</p>}
+          </div>
+
+          {/* facts: one row each, label left, so nothing wraps into a narrow column */}
+          <dl className="mt-8 border-t border-black/10">
+            <div className="py-4 border-b border-black/10 sm:grid sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4 sm:items-baseline">
+              <dt><Label>{t('r.smoke')}</Label></dt>
+              <dd className="mt-1 sm:mt-0">
+                {py ? <span className="font-serif text-2xl leading-none">{py} <span className="font-sans text-base opacity-70">{t('d.packYearsUnit')}</span></span> : <span className="opacity-60">—</span>}
+              </dd>
             </div>
-            <div className="space-y-4">
-              <div className="border-b border-black/10 pb-3">
-                <Label>{t('r.packYears')}</Label>
-                <p className="font-serif text-3xl leading-none mt-1">{py || '—'}</p>
-              </div>
-              <div className="border-b border-black/10 pb-3">
-                <Label>{t('tab.check')}</Label>
-                <ul className="mt-1 space-y-0.5">
-                  {steps.map((st) => (
-                    <li key={st.id} className={cx('font-type text-sm flex justify-between gap-2', st.level === 'doctor' && 'text-terra')}><span>{t(`prog.${st.id}`)}</span><span className="text-right">{t(st.short)}</span></li>
-                  ))}
-                  {!steps.length && <li className="font-type text-sm opacity-70">—</li>}
-                </ul>
-              </div>
-              <div>
-                <Label>{t('tab.pathway')}</Label>
-                <ul className="mt-1 space-y-0.5">
+            <div className="py-4 border-b border-black/10 sm:grid sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4 sm:items-baseline">
+              <dt><Label>{t('tab.check')}</Label></dt>
+              <dd className="mt-1 sm:mt-0 space-y-1">
+                {steps.map((st) => (
+                  <p key={st.id} className="flex flex-wrap items-baseline gap-x-3">
+                    <span className="font-serif text-lg w-20">{t(`prog.${st.id}`)}</span>
+                    <span className={cx('font-sans text-base', st.level === 'doctor' ? 'text-terra font-semibold' : 'opacity-75')}>{t(st.short)}</span>
+                  </p>
+                ))}
+                {!steps.length && <span className="opacity-60">—</span>}
+              </dd>
+            </div>
+            <div className="py-4 sm:grid sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4 sm:items-baseline">
+              <dt><Label>{t('tab.pathway')}</Label></dt>
+              <dd className="mt-2 sm:mt-0">
+                <ol className="relative space-y-1.5 pl-5 before:absolute before:left-[5px] before:top-2 before:bottom-2 before:w-px before:bg-black/20">
                   {pathLines.map((s) => (
-                    <li key={s.id} className="font-type text-sm flex justify-between gap-2"><span>{t(`step.${s.id}`)}</span><span>{d(pathway.dates[s.id])}</span></li>
+                    <li key={s.id} className="relative flex flex-wrap items-baseline gap-x-3">
+                      <span className="absolute -left-5 top-[0.55em] w-[11px] h-[11px] rounded-full bg-ink" />
+                      <span className="font-serif text-lg">{t(`step.${s.id}`)}</span>
+                      <span className="font-sans text-sm opacity-70">{d(pathway.dates[s.id], { day: 'numeric', month: 'long' })}</span>
+                    </li>
                   ))}
                   {waitingFor && (
-                    <li className={cx('font-type text-sm flex justify-between gap-2 pt-1', ps.overdueBy > 0 && 'text-terra')}>
-                      <span>→ {t(`step.${waitingFor.id}`)}</span><span className="text-right">{ps.overdueBy > 0 ? t('p.overdue', { n: ps.overdueBy }) : t('p.ontime')}</span>
+                    <li className="relative flex flex-wrap items-baseline gap-x-3">
+                      <span className={cx('absolute -left-5 top-[0.55em] w-[11px] h-[11px] rounded-full border-2 bg-paper', ps.overdueBy > 0 ? 'border-terra' : 'border-ink')} />
+                      <span className="font-serif text-lg">{t(`step.${waitingFor.id}`)}</span>
+                      <span className={cx('font-sans text-sm', ps.overdueBy > 0 ? 'text-terra font-semibold' : 'opacity-70')}>{ps.overdueBy > 0 ? t('p.overdue', { n: ps.overdueBy }) : t('p.ontime')}</span>
                     </li>
                   )}
-                  {!Object.values(pathway.dates).some(Boolean) && <li className="font-type text-sm opacity-70">—</li>}
-                </ul>
-              </div>
+                </ol>
+                {!Object.values(pathway.dates).some(Boolean) && <span className="opacity-60">—</span>}
+              </dd>
             </div>
-          </div>
+          </dl>
 
           {diary.length > 0 && (
-            <div className="tear mt-6 pt-5">
-              <Label className="mb-2">{t('d.notes')}</Label>
-              <ul className="space-y-1 columns-1 sm:columns-2 gap-8">
+            <div className="mt-4 border-t border-black/10 pt-6">
+              <Label className="mb-3">{t('d.notes')}</Label>
+              <ul className="space-y-2">
                 {[...diary].sort((a, b) => a.date.localeCompare(b.date)).map((e) => (
-                  <li key={e.id} className="break-inside-avoid font-serif text-[15px] leading-snug"><span className="font-type text-sm opacity-60 mr-2">{d(e.date)}</span>{e.text}</li>
+                  <li key={e.id} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 items-baseline">
+                    <span className="font-sans text-sm opacity-60 tabular-nums">{d(e.date)}</span>
+                    <span className="font-serif text-lg leading-snug">{e.text}</span>
+                  </li>
                 ))}
               </ul>
             </div>
           )}
-          <p className="mt-6 font-type text-sm uppercase tracking-widest opacity-70">{t('d.notDiagnosis')}</p>
+          <p className="mt-8 font-type text-xs uppercase tracking-widest opacity-60">{t('d.notDiagnosis')}</p>
         </div>
       </Card>
       <div className="no-print grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-5 items-start">

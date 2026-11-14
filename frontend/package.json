@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "rag:index": "node --experimental-strip-types scripts/build-rag-index.ts",
-    "test:rag": "node --test --experimental-strip-types server/rag/*.test.ts"
+    "test:rag": "node --test --experimental-strip-types server/rag/*.test.ts",
+    "test:screening": "esbuild tests/screening.test.ts --bundle --platform=node --format=esm --loader:.csv=text --log-level=error --outfile=node_modules/.cache/screening.test.mjs && node node_modules/.cache/screening.test.mjs",
+    "test": "npm run test:screening && npm run test:rag"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

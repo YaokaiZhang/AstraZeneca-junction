@@ -476,19 +476,38 @@ const CI_ROWS = [
 ]
 
 /** Scroll-scrubbed: the days tick by after a cough is logged; the app reaches out on schedule, the reply lands in the diary. */
+/** Plays itself while on screen: 21 days tick by in ~7 s, it holds on the result, then starts again. */
+const CI_PLAY_MS = 7000, CI_HOLD_MS = 3000
+function useLoopDay(on: boolean) {
+  const [day, setDay] = useState(0)
+  useEffect(() => {
+    if (!on) return
+    let raf = 0
+    const t0 = performance.now()
+    const step = (now: number) => {
+      const t = (now - t0) % (CI_PLAY_MS + CI_HOLD_MS)
+      setDay(Math.min(CI_DAYS, (t / CI_PLAY_MS) * CI_DAYS))
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [on])
+  return day
+}
+
 export function CheckIns() {
-  const [ref, p] = useScrollProgress<HTMLElement>()
-  const day = Math.min(CI_DAYS, Math.max(0, ((p - 0.12) / 0.7) * CI_DAYS))
+  const [ref, on] = useInView<HTMLElement>(0.4, false)
+  const day = useLoopDay(on)
   const ping = day >= 7, two = day >= 14, reply = day >= 16, saved = day >= 18
   return (
-    <section ref={ref} className="relative lg:h-[260svh]">
-      <div className="lg:sticky top-0 min-h-[100svh] px-5 lg:px-24 py-16 lg:py-10 flex flex-col justify-center overflow-hidden">
+    <section ref={ref} className="relative">
+      <div className="min-h-[100svh] px-5 lg:px-24 py-16 lg:py-10 flex flex-col justify-center overflow-hidden">
         <div className="lg:grid lg:grid-cols-[1.4fr_1fr] lg:gap-20 lg:items-end">
         <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
           <WordsUp text="We don't wait." /><br /><WordsUp text="We ask." className="italic text-terra" delay={180} />
         </h2>
         <Lede className="mt-8 lg:mt-0">
-          A symptom is easy to put off. If you log one and switch check-ins on, Ajoissa asks how it is going: every week for a worrying symptom, every two weeks otherwise. If it has not gone away, it tells you to see a doctor.
+          Log a symptom and Ajoissa checks in: every week if it is worrying, every two weeks otherwise. Still there? It tells you to see a doctor.
         </Lede>
         </div>
         <div className="mt-12 lg:mt-10 grid lg:grid-cols-[1.4fr_1fr] gap-12 lg:gap-20 items-center">

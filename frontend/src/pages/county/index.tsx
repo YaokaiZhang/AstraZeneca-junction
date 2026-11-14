@@ -1,6 +1,6 @@
 // Page 3: County — where people are lost. Tabs share the selected county + cancer through the URL query.
-// Brief (the landing tab) · Radar.
-import { useCallback, useMemo } from 'react'
+// Actions (the landing tab) · Brief · Radar.
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Navigate, useLocation, useSearchParams } from 'react-router-dom'
 import { Picker, Tabs } from '../../components/ui'
@@ -9,9 +9,15 @@ import { CountyStyles, Seg } from './bits'
 import { RADAR_CANCERS, isCoreCancer } from './model'
 import { Radar } from './Radar'
 import { Brief, buildBrief } from './Brief'
+import { Actions } from './Actions'
+import { screeningById } from '../monitor/data'
+import { EMPTY_PLAN, evaluate, type Plan } from '../monitor/model'
+import { ActionSheet } from '../monitor/ActionSheet'
+import { buildFacts, templateBriefing } from '../monitor/briefing'
 
-type Tab = 'brief' | 'radar'
+type Tab = 'actions' | 'brief' | 'radar'
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'actions', label: 'Actions' },
   { id: 'brief', label: 'Brief' },
   { id: 'radar', label: 'Radar' },
 ]
@@ -30,7 +36,7 @@ export interface TabProps {
 
 export default function CountyPage() {
   const [q, setQ] = useSearchParams()
-  const tab = (TABS.some((t) => t.id === q.get('tab')) ? q.get('tab') : 'brief') as Tab
+  const tab = (TABS.some((t) => t.id === q.get('tab')) ? q.get('tab') : 'actions') as Tab
   const countyId = countyById(q.get('c') ?? '') ? q.get('c')! : 'pohjois-karjala'
   const cancer = (CANCER_IDS.includes(q.get('cancer') as CancerId) ? q.get('cancer') : 'lung') as CancerId
   const radarCancer = (RADAR_CANCERS.some((x) => x.id === q.get('rc')) ? q.get('rc') : cancer) as RadarCancerId
@@ -51,6 +57,13 @@ export default function CountyPage() {
   }
   const county = countyById(countyId)!
   const brief = useMemo(() => buildBrief(county, radarCancer), [county, radarCancer])
+
+  // the actions plan is sized for one county's volumes: start fresh when the county changes
+  const [plan, setPlan] = useState<Plan>(EMPTY_PLAN)
+  useEffect(() => { setPlan(EMPTY_PLAN) }, [countyId])
+  const sr = screeningById(countyId)!
+  const res = useMemo(() => evaluate(sr, plan), [sr, plan])
+  const briefing = useMemo(() => ({ text: templateBriefing(buildFacts(sr, plan, res)), source: 'template' as const }), [sr, plan, res])
 
   const tp: TabProps = {
     countyId,
@@ -77,7 +90,7 @@ export default function CountyPage() {
           </div>
           <button onClick={() => window.print()}
             className="font-type text-[15px] uppercase tracking-widest flex items-center gap-2 rounded-full bg-ink text-paper pl-4 pr-1.5 py-1.5 hover:bg-terra transition-colors">
-            Print brief <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">↓</span>
+            {tab === 'actions' ? 'Print plan' : 'Print brief'} <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">↓</span>
           </button>
         </div>
         <Tabs className="mt-3" tabs={TABS} value={tab} onChange={(t) => setParam({ tab: t })} />
@@ -85,14 +98,15 @@ export default function CountyPage() {
       </div>
 
       <div className="mt-8 min-w-0 relative z-10" key={tab}>
-        <div className="rise" key={tab === 'brief' ? countyId + radarCancer : tab}>
+        <div className="rise" key={tab === 'radar' ? tab : tab + countyId + radarCancer}>
+          {tab === 'actions' && <Actions countyId={countyId} plan={plan} setPlan={setPlan} />}
           {tab === 'brief' && <Brief brief={brief} county={county} page />}
           {tab === 'radar' && <Radar {...tp} />}
         </div>
       </div>
 
       {createPortal(
-        <div id="county-print"><Brief brief={brief} county={county} print /></div>,
+        <div id="county-print">{tab === 'actions' ? <ActionSheet r={sr} plan={plan} res={res} briefing={briefing} /> : <Brief brief={brief} county={county} print />}</div>,
         document.body,
       )}
     </div>

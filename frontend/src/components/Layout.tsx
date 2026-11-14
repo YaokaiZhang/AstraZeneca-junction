@@ -45,9 +45,10 @@ export default function Layout() {
       </aside>
 
       <main className="flex-1 min-w-0 relative overflow-x-clip">
-        <div className="absolute top-0 right-0 p-10 opacity-[0.07] pointer-events-none hidden xl:block">
+        {/* decorative ring; left off the county page, where it sat behind the headline */}
+        {!pathname.startsWith('/county') && <div className="absolute top-0 right-0 p-10 opacity-[0.07] pointer-events-none hidden xl:block">
           <TextRing size={340} text="ajoissa • cancer on time • finland • strategy 2026–2035 • " />
-        </div>
+        </div>}
         <div className="relative">
           <Outlet />
         </div>

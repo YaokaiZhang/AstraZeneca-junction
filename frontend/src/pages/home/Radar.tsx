@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import { Card, EdgeText, Label, SourceBadge, Stamp, cx } from '../../components/ui'
 import { useScrollProgress } from './reveal'
+import { tr } from '../patient/i18n'
 
 /* ───────────── detection radar (sticky, scroll-driven) ─────────────
    01 a person answers a few questions → 02 the sweep picks out high risk →
@@ -14,7 +15,7 @@ const PHASES: { a: string; b: string; lede: ReactNode }[] = [
   },
   {
     a: 'The radar', b: 'picks out risk.',
-    lede: <>Lung risk comes from PLCOm2012, a published model <SourceBadge id="plco" kind="direct" demo={false} />. Bowel, breast and cervical combine Cancer Registry rates with published risk ratios, labelled Estimate <SourceBadge id="cancerRegistry" kind="estimate" />.</>,
+    lede: <>Lung risk comes from PLCOm2012, a published model <SourceBadge id="plco" kind="direct" demo={false} />. Bowel, breast and cervical combine Cancer Registry rates with published risk ratios, labelled Estimate <SourceBadge id="ourModel" kind="estimate" demo={false} how={tr('en', 'how.estimate')} />.</>,
   },
   {
     a: 'A next step.', b: 'Never a score.',
@@ -61,11 +62,12 @@ const QUESTIONS: [string, string][] = [
   ['Age', '63'], ['Smoked', '30 years'], ['A day', '20 cigarettes'], ['Family history', 'no'], ['Diary', 'cough, 3 weeks'],
 ]
 
+/* illustrative shape only; the county tab computes each step from Sotkanet, Statistics Finland and Cancer Registry data */
 const FUNNEL = [
-  { k: 'At risk', v: 100, drop: '', src: 'sotkanetRisk', kind: 'estimate' as const },
-  { k: 'Screened', v: 71, drop: '−29 not screened', src: 'sotkanetScreening', kind: 'direct' as const },
-  { k: 'Found late', v: 38, drop: '−33 found too late', src: 'cancerRegistry', kind: 'estimate' as const, leak: true },
-  { k: 'Survival', v: 31, drop: '−7 deaths', src: 'cancerRegistry', kind: 'estimate' as const },
+  { k: 'At risk', v: 100, drop: '' },
+  { k: 'Screened', v: 71, drop: '−29 not screened' },
+  { k: 'Found late', v: 38, drop: '−33 found too late', leak: true },
+  { k: 'Survival', v: 31, drop: '−7 deaths' },
 ]
 
 const TURNOUT = [
@@ -209,7 +211,7 @@ export function Radar() {
               <EdgeText>County</EdgeText>
               <div className="flex items-center justify-between gap-2">
                 <span className="font-type text-xs uppercase tracking-widest opacity-70">Out of 100 at risk · example county</span>
-                <SourceBadge id="ourModel" kind="estimate" />
+                <SourceBadge id="illustration" kind="example" how="Made-up numbers that show the shape of the funnel. The county tab computes each step from real data." />
               </div>
               <div className="mt-4 space-y-3 lg:space-y-4">
                 {FUNNEL.map((f, i) => (
@@ -218,7 +220,6 @@ export function Radar() {
                       <span className={cx('font-serif text-xl lg:text-2xl leading-none', f.leak && 'italic text-terra')}>{f.k}</span>
                       <span className="flex items-center gap-2">
                         {f.drop && <span className={cx('font-type text-xs uppercase tracking-wider', f.leak ? 'text-terra' : 'opacity-60')}>{f.drop}</span>}
-                        <SourceBadge id={f.src} kind={f.kind} />
                       </span>
                     </div>
                     <div className="mt-1.5 h-5 lg:h-6 rounded-sm bg-ink/[0.06] overflow-hidden flex">

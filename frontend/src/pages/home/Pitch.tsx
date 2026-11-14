@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Card, EdgeText, Label, SourceBadge, Stamp, cx } from '../../components/ui'
+import { Card, EdgeText, KindLegend, KindDot, Label, SourceBadge, Stamp, cx } from '../../components/ui'
 import { CANCERS, COUNTIES } from '../../data/counties'
+import { REGISTRY_FI } from '../../data/registry.generated'
+import { SOURCES } from '../../data/sources'
+import { PATHWAY } from '../../data/pathway'
+import { tr } from '../patient/i18n'
 import { Reveal, WordsUp, useCount, useInView, useScrollProgress } from './reveal'
 
 /* short plain-language explainer under each headline */
@@ -36,10 +40,7 @@ export function Marquee({ words, reverse }: { words: string[]; reverse?: boolean
 }
 
 /* ───────────── 1 · the clock (sticky, scroll-driven) ───────────── */
-const STEPS = [
-  { id: 'GP', d: 0 }, { id: 'Referral', d: 7 }, { id: 'Scan', d: 14 },
-  { id: 'Diagnosis', d: 14 }, { id: 'Team meeting', d: 7 }, { id: 'Treatment', d: 14 },
-]
+const STEPS = PATHWAY.map((s) => ({ id: s.id === 'gp' ? 'GP' : s.id === 'mdt' ? 'Team meeting' : s.short, d: s.targetDays ?? 0 }))
 const CUM = STEPS.reduce<number[]>((a, s) => [...a, (a[a.length - 1] ?? 0) + s.d], [])
 const TOTAL = CUM[CUM.length - 1]
 
@@ -88,7 +89,7 @@ export function Clock() {
         </div>
         <div className="relative mt-6 max-w-xl h-[5.5em] lg:h-[4.5em] font-sans text-base lg:text-lg leading-relaxed">
           <p className={cx('absolute inset-0 transition-opacity duration-700', real ? 'opacity-0' : 'opacity-75')}>
-            Finnish guidance sets a target time for each step, from the first GP visit to the start of treatment. Keep scrolling to add them up.
+            Finnish guidance allows 6 weeks from referral to the first treatment. Split into steps, from the first GP visit on. Keep scrolling to add them up.
           </p>
           <p className={cx('absolute inset-0 transition-opacity duration-700', real ? 'opacity-75' : 'opacity-0')}>
             But nobody publishes how long patients actually wait between those steps. Ajoissa records the dates, so the real number can finally be counted.
@@ -97,7 +98,7 @@ export function Clock() {
 
         <div className="mt-10 lg:mt-14 relative max-w-6xl lg:w-[calc(100%-46vh-4vw)]">
           {/* target track */}
-          <div className="flex items-center gap-3 mb-3"><span className="label">Target</span><SourceBadge id="thlTargets" kind="estimate" /></div>
+          <div className="flex items-center gap-3 mb-3"><span className="label">Target</span><SourceBadge id="thlTargets" kind="estimate" demo={false} how={tr('en', 'how.targets')} /></div>
           <div className="relative h-24">
             <div className="absolute left-0 right-0 top-3 h-px bg-ink/20" />
             <div className="absolute left-0 top-3 h-[3px] -mt-px bg-ink origin-left" style={{ width: `${fill * 100}%` }} />
@@ -392,7 +393,7 @@ export function ThreeDates() {
         <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
           <WordsUp text="Three dates." /><br /><WordsUp text="Enough to count." className="italic text-terra" delay={180} />
         </h2>
-        <Reveal fx="blur" delay={300} className="flex items-center gap-2"><Label>Starter dataset</Label><SourceBadge id="ourModel" kind="estimate" /></Reveal>
+        <Reveal fx="blur" delay={300} className="flex items-center gap-2"><Label>Starter dataset</Label><SourceBadge id="illustration" kind="example" how="Example dates for one patient: 3 Nov → 1 Dec = 28 days." /></Reveal>
       </div>
       <Lede className="mt-8">
         No new IT system is needed to start. Three dates per patient — referral, diagnosis and start of treatment — already show where time is lost.
@@ -495,6 +496,84 @@ export function CheckIns() {
             </div>
           </div>
         </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────── 6 · what is real, what is not ───────────── */
+const REAL_SRC: [string, string][] = [
+  ['cancerRegistry', 'Cases, deaths, stage'],
+  ['statfinProjection', 'Population by age'],
+  ['statfinIncome', 'Income by town'],
+  ['sotkanetScreening', 'Screening turnout'],
+  ['sotkanetRisk', 'Smoking, drinking, obesity'],
+  ['sotkanetQueue', 'Specialist waiting lists'],
+  ['strategy', 'Targets for 2035'],
+  ['plco', 'Lung risk model'],
+]
+const unk = Object.values(REGISTRY_FI).map((r) => r.unknownStage)
+const pc = (v: number) => `${Math.round(v * 100)}%`
+const OURS = [
+  'Survival stand-in: deaths ÷ new cases per county.',
+  'People at high risk: residents × county risk-factor prevalence.',
+  'Bowel, breast and cervical check: Registry incidence × published relative risks. Not a clinical score.',
+  'Step targets: the 6-week rule, split into steps by us.',
+]
+const LIMITS = [
+  'No waiting times for cancer are published, so the real pathway length is unknown.',
+  `Stage is unknown for ${Math.round(Math.min(...unk) * 100)}–${pc(Math.max(...unk))} of cases, so “found late” counts only cases with a known stage.`,
+  'Small counties have wide 95% ranges; the Registry hides counts of 1–4.',
+  'The lung model was built on US trial data and is not validated in Finland.',
+  'Hospital patients in the demo are synthetic, scaled from real county case numbers.',
+]
+
+export function Transparency() {
+  return (
+    <section className="relative px-5 lg:px-24 py-28 lg:py-40" aria-label="Data and limitations">
+      <div className="flex flex-wrap items-end justify-between gap-6">
+        <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
+          <WordsUp text="What is measured." /><br /><WordsUp text="What is not." className="italic text-terra" delay={180} />
+        </h2>
+        <Reveal fx="blur" delay={300}><KindLegend /></Reveal>
+      </div>
+      <Lede className="mt-8">Every number in Ajoissa carries a badge. Hover it to see the source, the years and how it was worked out.</Lede>
+      <div className="mt-16 lg:mt-24 grid md:grid-cols-3 gap-8 lg:gap-10 items-start">
+        <Reveal delay={0}>
+          <Card tone="paper" tilt={-1.5} className="relative p-6 pl-10 border border-ink/10">
+            <EdgeText>Published</EdgeText>
+            <div className="flex items-center gap-2"><KindDot kind="direct" /><Label>Official data</Label></div>
+            <ul className="mt-4 space-y-2.5">
+              {REAL_SRC.map(([id, what]) => (
+                <li key={id} className="flex items-baseline justify-between gap-3 border-b border-dashed border-ink/15 pb-2">
+                  <span className="font-serif text-lg leading-tight">{what}</span>
+                  <span className="flex items-center gap-2 shrink-0">
+                    {SOURCES[id].years && <span className="font-type text-xs tabular-nums opacity-60">{SOURCES[id].years!.replace(/^cases and deaths /, '').replace(' · stage ', ' / ').replace(' and ', ', ')}</span>}
+                    <SourceBadge id={id} kind="direct" demo={false} />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </Reveal>
+        <Reveal delay={150}>
+          <Card tone="mustard" tilt={1} className="relative p-6 pl-10">
+            <EdgeText>Worked out</EdgeText>
+            <div className="flex items-center gap-2"><KindDot kind="estimate" /><Label className="!opacity-80">Our calculations</Label></div>
+            <ul className="mt-4 space-y-3 font-sans text-[15px] leading-snug">
+              {OURS.map((t) => <li key={t} className="border-b border-dashed border-ink/20 pb-3">{t}</li>)}
+            </ul>
+          </Card>
+        </Reveal>
+        <Reveal delay={300}>
+          <Card tone="ink" tilt={-1} className="relative p-6 pl-10">
+            <EdgeText>Limits</EdgeText>
+            <div className="flex items-center gap-2"><KindDot kind="gap" /><Label className="!opacity-70">What we cannot say</Label></div>
+            <ul className="mt-4 space-y-3 font-sans text-[15px] leading-snug">
+              {LIMITS.map((t) => <li key={t} className="border-b border-dashed border-paper/20 pb-3">{t}</li>)}
+            </ul>
+          </Card>
+        </Reveal>
       </div>
     </section>
   )

@@ -184,7 +184,7 @@ export function SourceBadge({ id, kind, how, demo = true, className }: { id: key
     clearTimeout(timer.current)
     timer.current = setTimeout(() => setOpen(false), 200)
   }
-  const meta = [src?.years && `Data ${src.years}`, src?.retrieved && `retrieved ${src.retrieved}`].filter(Boolean).join(' · ')
+  const meta = [src?.years && `Data: ${src.years}`, src?.retrieved && `retrieved ${src.retrieved}`].filter(Boolean).join(' · ')
   return (
     <span ref={ref} className={cx('relative inline-flex align-middle', className)}>
       <button ref={btn} type="button" aria-label={`${k.label}: ${src?.name ?? id}`} aria-expanded={open}
@@ -207,7 +207,7 @@ export function SourceBadge({ id, kind, how, demo = true, className }: { id: key
           {src?.note && <span className="block opacity-70 mb-1">{src.note}</span>}
           {meta && <span className="block font-type text-[13px] uppercase tracking-wider opacity-60 mb-1">{meta}</span>}
           {how && <span className="block font-type text-[15px] bg-black/5 rounded p-2 my-2">{how}</span>}
-          {demo && kind !== 'gap' && kind !== 'example' && <span className="block font-type text-sm text-terra uppercase tracking-wider">Demo value · placeholder, not the published figure</span>}
+          {demo && kind !== 'gap' && kind !== 'example' && <span className="block font-type text-sm text-terra uppercase tracking-wider">Demo value · computed from synthetic patients</span>}
           {src?.links ? src.links.map((l) => <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="block mt-1 underline underline-offset-2 hover:text-terra">{l.label} ↗</a>)
             : src?.url && <a href={src.url} target="_blank" rel="noreferrer" className="block mt-2 underline underline-offset-2 hover:text-terra">Open source ↗</a>}
         </span>, document.body,

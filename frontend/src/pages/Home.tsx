@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
-import { CheckIns, Clock, Marquee, Privacy, ThreeDates, TooLate, Views } from './home/Pitch'
+import { CheckIns, Clock, Marquee, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
 import { WordsUp, useScrollProgress } from './home/reveal'
 import { Radar } from './home/Radar'
 import FinlandCanvas, { HOSPITALS, type Hover, type Tally } from './home/FinlandCanvas'
@@ -89,7 +89,7 @@ export default function Home() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [scroll, setScroll] = useState(0)
   const stage = useRef<HTMLDivElement>(null)
-  const cases = useCountUp(37000)
+  const cases = useCountUp(38000)
   const gap = useCountUp(466, 1800, 900)
 
   useEffect(() => {
@@ -132,8 +132,8 @@ export default function Home() {
 
             <div className="mt-8 lg:mt-[5svh] flex flex-wrap gap-x-8 lg:gap-x-12 gap-y-6 hero-in" style={{ animationDelay: '.5s' }}>
               <div>
-                <div className="font-serif text-4xl lg:text-6xl lining-nums tabular-nums leading-none">{cases.toLocaleString('fi-FI')}</div>
-                <div className="mt-2 flex items-center gap-2"><Label>new cancers a year</Label><SourceBadge id="cancerRegistry" kind="estimate" /></div>
+                <div className="font-serif text-4xl lg:text-6xl lining-nums tabular-nums leading-none"><span className="text-3xl align-top">≈ </span>{cases.toLocaleString('fi-FI')}</div>
+                <div className="mt-2 flex items-center gap-2"><Label>new cancers a year</Label><SourceBadge id="strategy" kind="direct" demo={false} how="“Slightly under 38,000” new cancers a year, all sites (National Cancer Strategy 2026–2035)." /></div>
               </div>
               <div>
                 <div className="font-serif text-4xl lg:text-6xl lining-nums tabular-nums leading-none">{(gap / 10).toFixed(1).replace('.', ',')}<span className="text-3xl"> pts</span></div>
@@ -170,7 +170,7 @@ export default function Home() {
             {/* live tally */}
             <div className="hidden lg:block absolute left-0 bottom-28 z-10 pointer-events-none hero-in" style={{ animationDelay: '1.4s' }}>
               <Card tone="paper" tilt={-3} className="p-4 pr-6 w-52 border border-ink/10 bg-paper/90 backdrop-blur-sm">
-                <Label>Live · {HOSPITALS.length} hospitals</Label>
+                <Label>Simulated · {HOSPITALS.length} hospitals</Label>
                 <div className="mt-3 flex items-end justify-between font-serif">
                   <div><div className="text-3xl leading-none lining-nums tabular-nums">{tally.onTime}</div><div className="label mt-1 !opacity-80 flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-mustard inline-block" />on time</div></div>
                   <div className="text-right"><div className="text-3xl leading-none lining-nums tabular-nums text-terra">{tally.late}</div><div className="label mt-1 !opacity-80 flex items-center gap-1 justify-end"><i className="w-2 h-2 rounded-full bg-terra inline-block" />late</div></div>
@@ -209,6 +209,7 @@ export default function Home() {
       <CheckIns />
       <Privacy />
       <ThreeDates />
+      <Transparency />
 
       <section id="doors" className="relative px-5 lg:px-12 py-24 lg:py-32 flex flex-col items-center">
         <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95] text-center mb-16 lg:mb-24">

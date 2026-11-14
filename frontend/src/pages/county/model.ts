@@ -168,7 +168,7 @@ export const REAL_RANGE: Record<Programme, [number, number]> = { bowel: [59.5, 8
 
 /**
  * Who counts as high risk, per cancer: an age band (share of residents), a sex share and a risk-factor
- * prevalence (% of that band). All placeholder recipes; the badge shows the formula.
+ * prevalence (% of that band). Rough recipes of our own; the badge shows the formula.
  */
 export const RISK: Record<RadarCancerId, { ages: string; who: string; band: (c: County) => number; sex: number; prev: (c: County) => number; factor: string }> = {
   lung: { ages: '50–74', who: 'people 50–74', band: (c) => c.share50to74, sex: 1, prev: (c) => c.smoking * 1.5, factor: 'smoking now or quit < 15 yrs (smoking % × 1.5)' },

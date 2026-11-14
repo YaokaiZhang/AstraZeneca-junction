@@ -72,7 +72,7 @@ export function PatientDrawerBody({ row, coords, onAct, onReassign, onReopen }: 
       <div className="tear mt-8 pt-5">
         <div className="flex items-center justify-between mb-3">
           <Label>Pathway</Label>
-          <SourceBadge id="thlTargets" kind="estimate" how="Days between steps compared with the target for each step." />
+          <SourceBadge id="thlTargets" kind="estimate" demo={false} how="Days between steps compared with the target for each step." />
         </div>
         <Timeline row={row} />
       </div>

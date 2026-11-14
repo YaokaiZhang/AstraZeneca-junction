@@ -48,12 +48,14 @@ function Bar({ label, v, badge, strong }: { label: ReactNode; v: number; badge: 
   const lo = 60, hi = 80
   const pc = (x: number) => `${Math.max(0, Math.min(100, ((x - lo) / (hi - lo)) * 100))}%`
   return (
-    <div className="grid grid-cols-[minmax(0,9.5rem)_1fr_4.5rem] sm:grid-cols-[minmax(0,13rem)_1fr_5rem] items-center gap-3 py-2">
-      <span className="font-sans text-[15px] leading-tight">{label}</span>
-      <span className="relative h-3 rounded-full bg-black/[.07]">
+    <div className="py-2">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="font-sans text-[15px] leading-tight">{label}</span>
+        <span className={cx('font-serif text-xl flex items-center gap-1.5 shrink-0', strong && 'text-terra')}>{n1(v)}%{badge}</span>
+      </div>
+      <span className="block relative h-3 mt-1.5 rounded-full bg-black/[.07]">
         <span className={cx('absolute inset-y-0 left-0 rounded-full', strong ? 'bg-terra' : 'bg-ink/70')} style={{ width: pc(v) }} />
       </span>
-      <span className={cx('font-serif text-xl text-right flex items-center justify-end gap-1.5', strong && 'text-terra')}>{n1(v)}%{badge}</span>
     </div>
   )
 }

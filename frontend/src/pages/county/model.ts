@@ -151,11 +151,11 @@ export function baseRecords(c: County) {
 
 // ---------- 3.1 detection radar: follow people along four steps ----------
 export type StepId = 'risk' | 'screen' | 'late' | 'survival'
-export const STEPS: { id: StepId; n: number; label: string; short: string; stamp: string; worse: string }[] = [
-  { id: 'risk', n: 1, label: 'At risk', short: 'Risk', stamp: 'Many at risk', worse: 'more people at higher risk' },
-  { id: 'screen', n: 2, label: 'Screened', short: 'Screen', stamp: 'Low turnout', worse: 'fewer take part' },
-  { id: 'late', n: 3, label: 'Found late', short: 'Late', stamp: 'Found late', worse: 'more found after spread' },
-  { id: 'survival', n: 4, label: 'Survival', short: 'Survival', stamp: 'Few survive', worse: 'more deaths per new case' },
+export const STEPS: { id: StepId; label: string; short: string; stamp: string; worse: string }[] = [
+  { id: 'risk', label: 'At risk', short: 'Risk', stamp: 'Many at risk', worse: 'more people at higher risk' },
+  { id: 'screen', label: 'Screened', short: 'Screen', stamp: 'Low turnout', worse: 'fewer take part' },
+  { id: 'late', label: 'Found late', short: 'Late', stamp: 'Found late', worse: 'more found after spread' },
+  { id: 'survival', label: 'Survival', short: 'Survival', stamp: 'Few survive', worse: 'more deaths per new case' },
 ]
 export const stepInfo = (s: StepId) => STEPS.find((x) => x.id === s)!
 

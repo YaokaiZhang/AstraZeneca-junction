@@ -133,7 +133,7 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
     stamp: weak.stamp,
     gap: {
       cancer: k, step: rad.weakest, stages: STEP_STAGES[rad.weakest],
-      text: `${cancerLabel(k)}: biggest gap at step ${weak.n}, ${weak.label.toLowerCase()}`,
+      text: `${cancerLabel(k)}: biggest gap: ${weak.label.toLowerCase()}`,
       why: weakestSentence(rad, k),
       badge: stepBadge(rad.weakest, k, rad),
     },

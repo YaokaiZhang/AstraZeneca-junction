@@ -672,7 +672,7 @@ const PLAYBOOK: { step: string; icon: Icon; finding: string; action: string; who
   {
     step: 'Doctor visit', icon: 'scan', finding: 'Found after spread', action: 'Scan straight away for warning signs',
     who: 'Health centre doctor', effort: 2, goal: 0.7, target: 'Found early',
-    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 70% of cancers found at stage I–II. Uses the urgent referral in the regional care pathway. Warning signs, for example: weight loss with new diabetes, or jaundice (pancreas and liver). Tracked on the radar as the Registry's spread share (step 3)." />,
+    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 70% of cancers found at stage I–II. Uses the urgent referral in the regional care pathway. Warning signs, for example: weight loss with new diabetes, or jaundice (pancreas and liver). Tracked on the radar as the Registry's spread share (Found late)." />,
   },
   {
     step: 'Treatment', icon: 'clock', finding: 'Waiting time unknown', action: 'Record three dates; call anyone running late',

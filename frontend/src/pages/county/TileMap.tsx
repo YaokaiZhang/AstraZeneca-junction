@@ -54,7 +54,9 @@ export function TileMap({ style, selected, onSelect, tooltip, className }: {
                 {ABBR[c.id]}
               </text>
               {st.label && (
-                <text x={r.x + 6} y={r.y + r.h - 8} className="font-serif" style={{ fontSize: big ? 26 : 17 }} fill="#1F1F1F">
+                // numbers in serif; word labels (e.g. the weakest step) small and uppercase so they fit a tile
+                <text x={r.x + 6} y={r.y + r.h - 8} className={/\d/.test(st.label) ? 'font-serif' : 'font-type uppercase'}
+                  style={/\d/.test(st.label) ? { fontSize: big ? 26 : 17 } : { fontSize: big ? 14 : 8.5, letterSpacing: '.02em' }} fill="#1F1F1F">
                   {st.label}
                 </text>
               )}

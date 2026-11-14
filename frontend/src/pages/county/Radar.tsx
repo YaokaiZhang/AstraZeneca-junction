@@ -69,7 +69,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
       <Funnel row={me} k={k} />
 
       <div className="mt-12 flex flex-wrap items-center gap-2">
-        <Seg items={[{ id: 'weakest' as ColorBy, label: 'Weakest step' }, ...STEPS.filter((s) => hasProg || s.id !== 'screen').map((s) => ({ id: s.id as ColorBy, label: `${s.n} ${s.short}` }))]}
+        <Seg items={[{ id: 'weakest' as ColorBy, label: 'Weakest step' }, ...STEPS.filter((s) => hasProg || s.id !== 'screen').map((s) => ({ id: s.id as ColorBy, label: s.label }))]}
           value={by} onChange={setColorBy} />
       </div>
 
@@ -81,7 +81,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
             onSelect={openBrief}
             style={(c) => {
               const r = byId.get(c.id)!
-              if (by === 'weakest') return { fill: scaleColor(zt(r.weakZ)), label: String(stepInfo(r.weakest).n) }
+              if (by === 'weakest') return { fill: scaleColor(zt(r.weakZ)), label: stepInfo(r.weakest).short }
               const s = r.steps[by]
               return { fill: scaleColor(zt(s.z)), label: tileLabel(by, s.v), faded: s.wide }
             }}
@@ -89,7 +89,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
               const r = byId.get(c.id)!
               return (
                 <>
-                  <span className="block text-mustard text-sm">Weakest: {stepInfo(r.weakest).n} · {stepInfo(r.weakest).label}</span>
+                  <span className="block text-mustard text-sm">Weakest: {stepInfo(r.weakest).label}</span>
                   {by !== 'weakest' && <span className="block">{stepInfo(by).label}: {formatStep(by, r.steps[by].v)}{rangeText(by, r.steps[by]) ? ` (${rangeText(by, r.steps[by])})` : ''}</span>}
                   <span className="block">{fmt(r.highRisk)} at higher risk (rough)</span>
                   <span className="block">{fmt(figures(r.c, k).cases * POOL_YEARS[k])} cases {pooled ? '(5 yrs)' : '/ yr'}</span>
@@ -98,13 +98,6 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
             }}
           />
           <div className="mt-4 space-y-3">
-            {by === 'weakest' && (
-              <div className="flex flex-wrap gap-x-3 gap-y-1 font-type text-sm uppercase tracking-wider">
-                {STEPS.filter((s) => hasProg || s.id !== 'screen').map((s) => (
-                  <span key={s.id} className="flex items-baseline gap-1"><span className="font-serif text-base leading-none">{s.n}</span>{s.short}</span>
-                ))}
-              </div>
-            )}
             <Legend lo={by === 'weakest' ? 'mild' : 'better'} hi={by === 'weakest' ? 'sharp' : 'worse'} wide={by !== 'weakest' && rows.some((r) => r.steps[by].wide)} />
           </div>
         </Card>
@@ -190,7 +183,6 @@ function Funnel({ row, k }: { row: RadarRow; k: RadarCancerId }) {
               className={cx('relative rounded-lg p-3 sm:p-4 min-w-0 flex flex-col',
                 isWeak ? 'col-span-6 order-first lg:order-none lg:col-span-1 bg-terra text-paper shadow-lg -rotate-1' : 'col-span-2 lg:col-span-1 bg-black/[.04]', none && 'hatch-soft')}>
               <span className="font-type text-sm uppercase tracking-wider flex items-center gap-1.5 min-w-0">
-                <span className={cx('w-5 h-5 rounded-full flex items-center justify-center font-serif text-sm shrink-0', isWeak ? 'bg-paper text-terra' : 'border border-current opacity-60')}>{s.n}</span>
                 <span className={cx('truncate', !isWeak && 'opacity-60')}><span className="sm:hidden">{isWeak ? s.label : s.short}</span><span className="hidden sm:inline">{s.label}</span></span>
               </span>
               {i < STEPS.length - 1 && <span aria-hidden className="hidden lg:block absolute -right-[11px] top-4 z-10 font-type text-sm opacity-60">→</span>}

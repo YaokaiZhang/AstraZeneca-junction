@@ -42,7 +42,7 @@ export function Marquee({ words, reverse }: { words: string[]; reverse?: boolean
 }
 
 /* ───────────── 1 · the clock (sticky, scroll-driven) ───────────── */
-const STEPS = PATHWAY.map((s) => ({ id: s.id === 'gp' ? 'Doctor visit' : s.short, d: s.targetDays ?? 0 }))
+const STEPS = PATHWAY.map((s) => ({ id: s.id === 'gp' ? 'Doctor visit' : s.id === 'mdt' ? 'Plan' : s.short, d: s.targetDays ?? 0 }))
 const CUM = STEPS.reduce<number[]>((a, s) => [...a, (a[a.length - 1] ?? 0) + s.d], [])
 const TOTAL = CUM[CUM.length - 1]
 
@@ -51,6 +51,8 @@ export function Clock() {
   const fill = Math.min(1, Math.max(0, (p - 0.05) / 0.5))
   const real = p > 0.68
   const days = Math.round(TOTAL * fill)
+  /* steps sit evenly spaced so their labels never collide; each lights up once the clock passes its day */
+  const lit = (i: number) => fill >= CUM[i] / TOTAL - 0.001
   return (
     <section ref={ref} className="relative h-[150vh]">
       <div className="sticky top-0 h-[100svh] flex flex-col justify-center px-5 lg:px-24 overflow-hidden">
@@ -72,47 +74,33 @@ export function Clock() {
         <Label>The pathway clock</Label>
         <div className="relative mt-4 h-[2.1em] text-[13vw] sm:text-7xl xl:text-8xl font-serif font-light leading-[0.95]">
           <h2 className={cx('absolute inset-0 transition-all duration-700', real ? 'opacity-0 -translate-y-8 blur-sm' : 'opacity-100')}>
-            <span className="tabular-nums lining-nums">{days}</span> days,<br /><span className="italic pl-[0.6em]">on paper.</span>
+            <span className="tabular-nums lining-nums">{TOTAL}</span> days,<br /><span className="italic pl-[0.6em]">on paper.</span>
           </h2>
           <h2 className={cx('absolute inset-0 transition-all duration-700', real ? 'opacity-100' : 'opacity-0 translate-y-8 blur-sm')}>
             The real number?<br /><span className="italic text-terra pl-[0.6em]">Nobody counts it.</span>
           </h2>
         </div>
-        <div className="relative mt-6 max-w-xl h-[5.5em] lg:h-[4.5em] font-sans text-base lg:text-lg leading-relaxed">
+        <div className="relative mt-6 max-w-xl h-[8.5em] sm:h-[7em] lg:h-[5.5em] font-sans text-base lg:text-lg leading-relaxed">
           <p className={cx('absolute inset-0 transition-opacity duration-700', real ? 'opacity-0' : 'opacity-75')}>
-            Treatment within 6 weeks of referral, plus a week to get referred.
+            The official rule: treatment starts within 6 weeks of the referral reaching the hospital. Add about a week for the health centre to send it, and the whole journey should take 7 weeks.
           </p>
           <p className={cx('absolute inset-0 transition-opacity duration-700', real ? 'opacity-75' : 'opacity-0')}>
-            Nobody publishes how long patients actually wait. Ajoissa records the dates, so it can be counted.
+            Hospitals publish waiting lists, but not how long each cancer patient waited from first visit to treatment. Ajoissa records those dates, so the real length can be counted.
           </p>
         </div>
 
         <div className="mt-10 lg:mt-14 relative max-w-6xl lg:w-[calc(100%-46vh-4vw)]">
           {/* target track */}
           <div className="flex items-center gap-3 mb-3"><span className="label">Target</span><SourceBadge id="thlTargets" kind="estimate" demo={false} how={`${tr('en', 'how.targets')} The split into steps is ours, not official.`} /></div>
-          <div className="relative h-8 sm:h-24">
-            <div className="absolute left-0 right-0 top-3 h-px bg-ink/20" />
-            <div className="absolute left-0 top-3 h-[3px] -mt-px bg-ink origin-left" style={{ width: `${fill * 100}%` }} />
-            {STEPS.map((s, i) => {
-              const at = CUM[i] / TOTAL
-              const lit = fill >= at - 0.001
-              return (
-                <div key={s.id} className={cx('absolute top-0 flex flex-col', i === 0 ? 'items-start' : '-translate-x-1/2 items-center')} style={{ left: `${at * 100}%` }}>
-                  {/* the first label starts at the margin instead of hanging past it */}
-                  <span className={cx('w-6 h-6 rounded-full border-2 border-ink transition-all duration-300', i === 0 && '-ml-3', lit ? 'bg-mustard scale-110' : 'bg-paper')} />
-                  <span className={cx('hidden sm:block mt-3 font-type text-[13px] uppercase tracking-widest whitespace-nowrap transition-opacity', lit ? 'opacity-90' : 'opacity-30')}>{s.id}</span>
-                  {i > 0 && <span className={cx('hidden sm:block font-serif italic text-xl transition-opacity', lit ? 'opacity-100' : 'opacity-20')}>+{s.d}</span>}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* phones: the same steps as a list, so the labels never collide */}
-          <ol className="sm:hidden mt-2 grid grid-cols-3 gap-x-3 gap-y-2">
+          <ol className="relative grid grid-cols-3 sm:grid-cols-6 gap-y-6">
+            {/* the line runs through the dot centres (first to last column middle) */}
+            <div className="hidden sm:block absolute top-3 h-px bg-ink/20" style={{ left: `${100 / 12}%`, right: `${100 / 12}%` }} />
+            <div className="hidden sm:block absolute top-3 h-[3px] -mt-px bg-ink" style={{ left: `${100 / 12}%`, width: `${(Math.max(0, STEPS.filter((_, i) => lit(i)).length - 1) / 6) * 100}%` }} />
             {STEPS.map((s, i) => (
-              <li key={s.id} className={cx('transition-opacity', fill >= CUM[i] / TOTAL - 0.001 ? 'opacity-100' : 'opacity-30')}>
-                <span className="block font-type text-[11px] uppercase tracking-widest leading-tight">{s.id}</span>
-                <span className="font-serif italic text-lg leading-none">{i > 0 ? `+${s.d}` : 'day 0'}</span>
+              <li key={s.id} className="relative flex flex-col items-center text-center">
+                <span className={cx('w-6 h-6 rounded-full border-2 border-ink transition-all duration-300', lit(i) ? 'bg-mustard scale-110' : 'bg-paper')} />
+                <span className={cx('mt-3 font-type text-[12px] uppercase tracking-wider leading-tight transition-opacity', lit(i) ? 'opacity-90' : 'opacity-30')}>{s.id}</span>
+                <span className={cx('mt-1 font-serif italic text-lg leading-none transition-opacity', lit(i) ? 'opacity-100' : 'opacity-25')}>day {CUM[i]}</span>
               </li>
             ))}
           </ol>
@@ -193,6 +181,10 @@ export function TooLate() {
         <WordsUp text="Found" /><br /><WordsUp text="too late." className="italic text-terra" delay={140} />
       </h2>
 
+      <Lede className="mt-8">
+        A cancer found after it has spread is much harder to treat. In {worst.c.name}, {Math.round(worst.v * 100)} of every 100 breast cancers had already spread when they were found. In {best.c.name}, {Math.round(best.v * 100)}. Same country, same national screening programme.
+      </Lede>
+
       <div ref={ref} className="mt-14 lg:mt-20 grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-12 lg:gap-24 items-center">
         <div>
         <div className="flex items-center gap-2">
@@ -219,6 +211,9 @@ export function TooLate() {
           <Label>Whole country · found after spread</Label>
           <SourceBadge id="cancerRegistry" kind="direct" demo={false} how="Whole country, 2021–25 preliminary statistics. Share of cases with known stage that had spread beyond the organ (non-localized). This includes spread to nearby lymph nodes, so it is not the same as stage III–IV. Cases with unknown stage are left out; the share unknown is shown under each ring." />
         </div>
+        <p className="mt-4 max-w-xl font-sans text-base lg:text-lg leading-relaxed opacity-75">
+          Across Finland, most lung, bowel, pancreas and liver cancers with a known stage are found after they have spread. The small number under each ring is how often the stage was not recorded at all.
+        </p>
         <div className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-y-12">
           {CANCERS.map((c, i) => <Ring key={c.id} label={c.label} value={c.lateShare} unknown={c.unknownStage} delay={i * 150} />)}
         </div>
@@ -487,17 +482,22 @@ export function CheckIns() {
   const ping = day >= 7, two = day >= 14, reply = day >= 16, saved = day >= 18
   return (
     <section ref={ref} className="relative lg:h-[260svh]">
-      <div className="lg:sticky top-0 min-h-[100svh] px-5 lg:px-24 py-16 flex flex-col justify-center overflow-hidden">
+      <div className="lg:sticky top-0 min-h-[100svh] px-5 lg:px-24 py-16 lg:py-10 flex flex-col justify-center overflow-hidden">
+        <div className="lg:grid lg:grid-cols-[1.4fr_1fr] lg:gap-20 lg:items-end">
         <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
           <WordsUp text="We don't wait." /><br /><WordsUp text="We ask." className="italic text-terra" delay={180} />
         </h2>
-        <div className="mt-12 lg:mt-16 grid lg:grid-cols-[1.4fr_1fr] gap-12 lg:gap-20 items-center">
+        <Lede className="mt-8 lg:mt-0">
+          A symptom is easy to put off. If you log one and switch check-ins on, Ajoissa asks how it is going: every week for a worrying symptom, every two weeks otherwise. If it has not gone away, it tells you to see a doctor.
+        </Lede>
+        </div>
+        <div className="mt-12 lg:mt-10 grid lg:grid-cols-[1.4fr_1fr] gap-12 lg:gap-20 items-center">
           <div>
             <div className="flex items-baseline gap-4">
               <span className="font-serif text-7xl lg:text-8xl leading-none tabular-nums lining-nums w-[2.2ch]">{Math.floor(day)}</span>
               <span className="label">days since<br />“cough”</span>
             </div>
-            <div className="mt-10 space-y-8">
+            <div className="mt-8 space-y-6">
               {CI_ROWS.map((r) => (
                 <div key={r.who}>
                   <div className={cx('font-type text-sm uppercase tracking-widest mb-3', r.hot && 'text-terra')}>{r.who}</div>
@@ -521,14 +521,14 @@ export function CheckIns() {
                 ))}
               </div>
             </div>
-            <div className="mt-10 flex flex-wrap gap-x-10 gap-y-3 font-type text-sm uppercase tracking-widest">
+            <div className="mt-8 flex flex-wrap gap-x-10 gap-y-3 font-type text-sm uppercase tracking-widest">
               <span className="flex items-center gap-2"><span className="w-7 h-4 rounded-full bg-mustard relative"><span className="absolute right-0.5 top-0.5 w-3 h-3 rounded-full bg-paper" /></span>You switch it on</span>
               <span className="opacity-70">Only what you told us</span>
             </div>
           </div>
 
           <div className="flex justify-center">
-            <div className="relative w-[280px] h-[480px] lg:w-[290px] lg:h-[520px] rounded-[2.75rem] bg-ink p-3 shadow-2xl rotate-[3deg]">
+            <div className="relative w-[280px] h-[480px] lg:w-[270px] lg:h-[470px] rounded-[2.75rem] bg-ink p-3 shadow-2xl rotate-[3deg]">
               <div className="absolute top-5 left-1/2 -translate-x-1/2 w-20 h-5 rounded-full bg-ink z-10" />
               <div className="relative h-full w-full rounded-[2.2rem] bg-paper paper-texture p-5 pt-12 flex flex-col gap-3">
                 <div className="text-center font-serif text-5xl lining-nums tabular-nums opacity-80">9:41</div>
@@ -694,7 +694,7 @@ export function Actions() {
       <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
         <WordsUp text="A gap found." /><br /><WordsUp text="A step to take." className="italic text-terra" delay={180} />
       </h2>
-      <Lede className="mt-8">Each finding comes with an action, an owner and a target.</Lede>
+      <Lede className="mt-8">Every gap in the data comes with a concrete next step: what to do, who does it, which existing programme or rule it builds on, and the target it moves.</Lede>
 
       {/* playbook */}
       <div className="mt-16 lg:mt-20">

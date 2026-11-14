@@ -13,11 +13,11 @@ import { REAL_RANGE, fmt, rangeTowns, topExcess } from '../county/model'
 const PHASES: { a: string; b: string; lede: ReactNode }[] = [
   {
     a: 'A few questions.', b: 'Typed in by you.',
-    lede: <>Age, smoking, alcohol, weight, family history and any symptoms from the diary. The person types them in; nothing is pulled from a register.</>,
+    lede: <>It starts with the patient: a short self-check in the app. Age, smoking, alcohol, weight, family history and any symptoms from the diary. The person types these in; nothing is pulled from a register.</>,
   },
   {
     a: 'The radar', b: 'picks out risk.',
-    lede: <>Lung risk comes from a published lung-risk model <SourceBadge id="plco" kind="estimate" demo={false} how="PLCOm2012 (Tammemägi et al. 2013), applied to the answers the person typed in. Built on US trial data; not validated in Finland." />. Bowel, breast and cervical combine Cancer Registry rates with published risk ratios <SourceBadge id="ourModel" kind="estimate" demo={false} how={tr('en', 'how.estimate')} />.</>,
+    lede: <>The answers are weighed against published risk data. Lung risk comes from a published lung-risk model <SourceBadge id="plco" kind="estimate" demo={false} how="PLCOm2012 (Tammemägi et al. 2013), applied to the answers the person typed in. Built on US trial data; not validated in Finland." />. Bowel, breast and cervical combine Cancer Registry rates with published risk ratios <SourceBadge id="ourModel" kind="estimate" demo={false} how={tr('en', 'how.estimate')} />.</>,
   },
   {
     a: 'A next step.', b: 'Never a score.',
@@ -29,7 +29,7 @@ const PHASES: { a: string; b: string; lede: ReactNode }[] = [
   },
   {
     a: 'Same test,', b: 'very uneven turnout.',
-    lede: <>In 2024, the share of invited people who took part varied widely from town to town.</>,
+    lede: <>In 2024, the share of invited people who took part varied widely from town to town. For cervical screening it ranged from under half to nine in ten.</>,
   },
 ]
 

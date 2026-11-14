@@ -299,11 +299,16 @@ export function cervicalView(id: string): ProgrammeView | null {
   } else if (w === 1) {
     const missing = r.referredColposcopy - r.colposcopyDone
     const toNational = Math.max(0, r.referredColposcopy * fi.colposcopyOfReferredPct / 100 - r.colposcopyDone)
+    // when many of the missing women have no follow-up information at all, say it may be reporting (same rule as breast)
+    const unknownShare = r.referredColposcopy ? r.noFollowupInfo / r.referredColposcopy * 100 : 0
+    const maybeReporting = unknownShare >= 20
+      ? ` For ${n0(r.noFollowupInfo)} of them the register has no follow-up information at all, so part of this is possibly a reporting gap: check the data reaches the register too.`
+      : ''
     start = {
       kind: 'followup',
       title: 'Follow up every referral',
       text: 'Give the screening nurse a daily list of every woman referred for colposcopy who hasn’t had one booked, and call them.',
-      result: `${n0(missing)} referred women have no colposcopy on record. Reaching the national rate means about ${about(toNational)} more colposcopies a year.`,
+      result: `${n0(missing)} referred women have no colposcopy on record. Reaching the national rate means about ${about(toNational)} more colposcopies a year.${maybeReporting}`,
       estimate: false,
       basis: `More colposcopies = ${n0(r.referredColposcopy)} referrals × national ${n1(fi.colposcopyOfReferredPct)}% − ${n0(r.colposcopyDone)} done (Cancer Registry, ${CERVICAL_YEAR}). A target, not a study result.`,
       who: 'The screening nurse or coordinator, every working day.',
@@ -311,7 +316,7 @@ export function cervicalView(id: string): ProgrammeView | null {
       takes: `About ${about(toNational)} more colposcopies a year at the clinics.`,
     }
     list = listWording
-    verdict = `${r.name}'s problem is follow-up: ${n0(missing)} of ${n0(r.referredColposcopy)} women referred for colposcopy have none on record (${n1(r.colposcopyOfReferredPct)}%, against ${n1(fi.colposcopyOfReferredPct)}% in Finland).`
+    verdict = `${r.name}'s problem is follow-up: ${n0(missing)} of ${n0(r.referredColposcopy)} women referred for colposcopy have none on record (${n1(r.colposcopyOfReferredPct)}%, against ${n1(fi.colposcopyOfReferredPct)}% in Finland).${maybeReporting}`
   } else {
     start = {
       kind: 'wait',

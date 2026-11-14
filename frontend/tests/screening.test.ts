@@ -137,3 +137,10 @@ test('no programme view quotes a number with more than one decimal or a NaN', ()
     assert.ok(!/NaN|undefined|\d\.\d\d/.test(text), `${r.id}: ${text}`)
   }
 })
+
+test('cervical: Pohjois-Pohjanmaa follow-up gap mentions a possible reporting gap (39 of 146 with no follow-up info)', () => {
+  const v = cervicalView('pohjois-pohjanmaa')!
+  assert.equal(v.startStep, 1)
+  assert.match(v.verdict, /39 of them the register has no follow-up information/)
+  assert.match(v.start.result, /possibly a reporting gap/)
+})

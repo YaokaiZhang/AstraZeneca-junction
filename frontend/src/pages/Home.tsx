@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, TextRing } from '../components/ui'
-import { Actions, CheckIns, Clock, CostOfLate, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
+import { Actions, CheckIns, Clock, CostOfLate, Privacy, ThreeDates, TooLate, Transparency, TryActions, Views, H2 } from './home/Pitch'
 import { Tilt, WordsUp } from './home/reveal'
 import { ChapterRail, Ecg, Impact, Transition } from './home/Story'
 import { Radar } from './home/Radar'
@@ -136,6 +136,7 @@ export default function Home() {
       <Transition chapter="ch-do" text="Every gap it finds comes with a step to take on Monday." hot={4} />
       <ThreeDates />
       <Actions />
+      <TryActions />
 
       {/* 04 · the impact */}
       <Transition chapter="ch-impact" text="What happens if every county catches up with the best?" hot={5} />
@@ -145,18 +146,18 @@ export default function Home() {
       <Transition chapter="ch-know" text="Every number shows where it came from, and what it cannot tell." hot={4} />
       <Transparency />
 
-      <section id="doors" className="relative px-5 lg:px-12 py-24 lg:py-32 flex flex-col items-center">
+      <section id="doors" className="relative min-h-[100svh] px-5 lg:px-12 py-16 lg:py-10 flex flex-col items-center justify-center">
         <Label>Now try it live</Label>
-        <h2 className="mt-5 font-serif font-light text-6xl lg:text-8xl leading-[0.95] text-center">
+        <h2 className={'mt-5 text-center ' + H2}>
           <WordsUp text="Choose" /><br /><WordsUp text="your door." className="italic" delay={150} />
         </h2>
-        <p className="mt-8 mb-16 lg:mb-20 max-w-xl text-center font-sans text-base lg:text-lg leading-relaxed opacity-75">
+        <p className="mt-6 mb-10 lg:mb-[5svh] max-w-xl text-center font-sans text-base lg:text-lg leading-relaxed opacity-75">
           Everything in this story runs in the demo. Pick who you are: log a symptom as a patient, find overdue patients as a hospital, or open a county's brief.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 w-full max-w-5xl">
           {CARDS.map((c) => (
             <Link key={c.to} to={c.to} className="block">
-              <Tilt max={10}><Card tone={c.tone} tilt={c.tilt} className="h-[360px] lg:h-[460px] p-8 pl-12 flex flex-col hover:!rotate-0 hover:-translate-y-2">
+              <Tilt max={10}><Card tone={c.tone} tilt={c.tilt} className="h-[360px] lg:h-[min(460px,42svh)] p-8 pl-12 flex flex-col hover:!rotate-0 hover:-translate-y-2">
                 <EdgeText>Ajoissa · {c.k}</EdgeText>
                 <Label>{c.k}</Label>
                 <div className="mt-auto">

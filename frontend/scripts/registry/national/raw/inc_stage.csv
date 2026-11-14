@@ -1,0 +1,28 @@
+Sex;Cancer site;ICD-10;Cancer stage;Diagnosed cancer cases;Rate per 100,000;Rate per 100,000, age-standardised (Finland 2014);Rate per 100,000, age-standardised (world standard population)
+Male;Lung, trachea;C33-34;Unknown;4809;34,94;33,69;12,31
+Male;Lung, trachea;C33-34;Localized;408;2,96;2,8;1,1
+Male;Lung, trachea;C33-34;Non-localized;3684;26,77;25,6;10,87
+Male;Breast;C50;Unknown;50;0,36;0,37;0,17
+Male;Breast;C50;Localized;30;0,22;0,22;0,1
+Male;Breast;C50;Non-localized;69;0,5;0,48;0,21
+Male;Colon and rectum;C18-20;Unknown;6051;43,96;43,62;17,97
+Male;Colon and rectum;C18-20;Localized;495;3,6;3,57;1,5
+Male;Colon and rectum;C18-20;Non-localized;4560;33,13;32,3;14,35
+Male;Anus;C21;Unknown;119;0,86;0,85;0,38
+Male;Anus;C21;Localized;6;0,04;0,04;0,02
+Male;Anus;C21;Non-localized;22;0,16;0,15;0,07
+Female;Lung, trachea;C33-34;Unknown;3298;23,45;18,59;7,38
+Female;Lung, trachea;C33-34;Localized;407;2,89;2,42;1,1
+Female;Lung, trachea;C33-34;Non-localized;2366;16,82;14,18;6,35
+Female;Breast;C50;Unknown;9303;66,13;60,13;32,15
+Female;Breast;C50;Localized;7200;51,18;47,62;26,09
+Female;Breast;C50;Non-localized;8807;62,61;57,41;32,52
+Female;Cervix uteri;C53;Unknown;553;3,93;3,77;2,81
+Female;Cervix uteri;C53;Localized;326;2,32;2,35;2,07
+Female;Cervix uteri;C53;Non-localized;121;0,86;0,83;0,61
+Female;Colon and rectum;C18-20;Unknown;5064;36;29,4;12,84
+Female;Colon and rectum;C18-20;Localized;429;3,05;2,57;1,13
+Female;Colon and rectum;C18-20;Non-localized;3822;27,17;22,79;10,39
+Female;Anus;C21;Unknown;188;1,34;1,16;0,56
+Female;Anus;C21;Localized;7;0,05;0,04;0,02
+Female;Anus;C21;Non-localized;41;0,29;0,26;0,14

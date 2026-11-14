@@ -1,36 +1,61 @@
 // 21 wellbeing services counties + City of Helsinki.
 // REAL (see REAL below): population, age mix and the 2025 → 2035 ageing forecast (Statistics Finland 14wx),
 // screening turnout 2024, risk factors 2024 and specialist waiting lists 2022–25 (THL Sotkanet).
-// DEMO VALUES: cancer cases, deaths and stage per county are placeholders generated below until the
-// Cancer Registry CSV pull is wired in (its statistics app is not scriptable from here).
-import { mulberry32 } from '../lib/random'
+// Cancer cases, deaths and stage per county: Finnish Cancer Registry, with expected cases from national age × sex
+// rates (registry.generated.ts, built by scripts/build_cancer_data.py).
+import { REGISTRY, REGISTRY_FI } from './registry.generated'
 
 export type CancerId = 'lung' | 'bowel' | 'pancreas' | 'liver'
-export const CANCERS: { id: CancerId; label: string; ratePer100k: number; fatality: number; lateShare: number }[] = [
-  { id: 'lung', label: 'Lung', ratePer100k: 50, fatality: 0.82, lateShare: 0.62 },
-  { id: 'bowel', label: 'Bowel', ratePer100k: 64, fatality: 0.36, lateShare: 0.45 },
-  { id: 'pancreas', label: 'Pancreas', ratePer100k: 26, fatality: 0.9, lateShare: 0.78 },
-  { id: 'liver', label: 'Liver', ratePer100k: 11, fatality: 0.85, lateShare: 0.66 },
-]
-
 /** Cancers with a national screening programme that are not in CANCERS. Used by the detection radar (3.1). */
 export type ScreenCancerId = 'breast' | 'cervical'
 export type RadarCancerId = CancerId | ScreenCancerId
-export const SCREEN_CANCERS: { id: ScreenCancerId; label: string; ratePer100k: number; fatality: number; lateShare: number }[] = [
-  // rates per 100k of the whole population (women only get them): ~5 000 and ~180 cases a year in Finland
-  { id: 'breast', label: 'Breast', ratePer100k: 90, fatality: 0.17, lateShare: 0.2 },
-  { id: 'cervical', label: 'Cervical', ratePer100k: 3.3, fatality: 0.34, lateShare: 0.4 },
-]
 
-export interface CancerFigures {
-  /** new cases per year, mean of last 5 years */
+/** One row of registry.generated.ts. */
+export interface RegistryFigures {
   cases: number
-  /** deaths per year, mean of last 5 years */
   deaths: number
-  /** share found at stage III–IV */
   lateShare: number
-  /** cases expected from the county's age and risk-factor mix */
+  stageKnown: number
+  unknownStage: number
   expected: number
+  exp75: number
+  stageHidden?: boolean
+  deathsFromRate?: boolean
+}
+/** Whole-country figures, Finnish Cancer Registry. */
+export interface RegistryNational { ratePer100k: number; fatality: number; lateShare: number; unknownStage: number; cases: number }
+
+interface CancerMeta { label: string; ratePer100k: number; fatality: number; lateShare: number; unknownStage: number }
+const meta = <K extends RadarCancerId>(id: K, label: string) => ({ id, label, ...REGISTRY_FI[id] } as CancerMeta & { id: K })
+/** Whole-country values: cases per 100 000 of everyone, deaths ÷ cases, spread share of known stage. */
+export const CANCERS = [meta('lung', 'Lung'), meta('bowel', 'Bowel'), meta('pancreas', 'Pancreas'), meta('liver', 'Liver')]
+/** Breast and cervix: women only in the Registry's figures; ratePer100k is still per 100 000 of everyone. */
+export const SCREEN_CANCERS = [meta('breast', 'Breast'), meta('cervical', 'Cervical')]
+
+/**
+ * Finnish Cancer Registry statistics app (tilastot.syoparekisteri.fi), retrieved 14 Nov 2026.
+ * Lung C33–34, bowel C18–20, pancreas C25, liver C22, breast C50 and cervix C53 (women).
+ */
+export interface CancerFigures {
+  /** new cases per year, mean 2020–2024 */
+  cases: number
+  /** cancer deaths per year, mean 2020–2024, by residence at death */
+  deaths: number
+  /**
+   * Share that had spread beyond the organ at diagnosis ("non-localized"), of cases with known stage.
+   * Preliminary 2021–2025 statistics, the only stage table by county. Not TNM III–IV.
+   */
+  lateShare: number
+  /** cases with known stage over 2021–2025 (5-year total): the base of the lateShare interval */
+  stageKnown: number
+  /** share of cases with unknown stage. High where clinical notifications are missing. */
+  unknownStage: number
+  /** a stage count of 1–4 was hidden by the Registry and taken as 2.5 */
+  stageHidden?: boolean
+  /** cases expected at national age × sex rates (indirect standardisation, 2023 population) */
+  expected: number
+  /** share of the expected cases in people 75+ */
+  exp75: number
 }
 
 export interface County {
@@ -63,29 +88,30 @@ export interface County {
   screenCancers: Record<ScreenCancerId, CancerFigures>
 }
 
-const RAW: [string, string, number, number, number][] = [
-  ['lappi', 'Lappi', 2, 0, 176_000],
-  ['pohjois-pohjanmaa', 'Pohjois-Pohjanmaa', 1, 1, 416_000],
-  ['kainuu', 'Kainuu', 2, 1, 70_000],
-  ['pohjanmaa', 'Pohjanmaa', 0, 2, 176_000],
-  ['keski-pohjanmaa', 'Keski-Pohjanmaa', 1, 2, 78_000],
-  ['pohjois-savo', 'Pohjois-Savo', 2, 2, 248_000],
-  ['pohjois-karjala', 'Pohjois-Karjala', 3, 2, 163_000],
-  ['etela-pohjanmaa', 'Etelä-Pohjanmaa', 0, 3, 190_000],
-  ['keski-suomi', 'Keski-Suomi', 1, 3, 275_000],
-  ['etela-savo', 'Etelä-Savo', 2, 3, 130_000],
-  ['satakunta', 'Satakunta', 0, 4, 214_000],
-  ['pirkanmaa', 'Pirkanmaa', 1, 4, 535_000],
-  ['paijat-hame', 'Päijät-Häme', 2, 4, 205_000],
-  ['etela-karjala', 'Etelä-Karjala', 3, 4, 125_000],
-  ['varsinais-suomi', 'Varsinais-Suomi', 0, 5, 490_000],
-  ['kanta-hame', 'Kanta-Häme', 1, 5, 170_000],
-  ['keski-uusimaa', 'Keski-Uusimaa', 2, 5, 202_000],
-  ['kymenlaakso', 'Kymenlaakso', 3, 5, 160_000],
-  ['lansi-uusimaa', 'Länsi-Uusimaa', 1, 6, 485_000],
-  ['vantaa-kerava', 'Vantaa-Kerava', 2, 6, 285_000],
-  ['ita-uusimaa', 'Itä-Uusimaa', 3, 6, 99_000],
-  ['helsinki', 'Helsinki', 2, 7, 675_000],
+/** id, name, tile-map column and row */
+const RAW: [string, string, number, number][] = [
+  ['lappi', 'Lappi', 2, 0],
+  ['pohjois-pohjanmaa', 'Pohjois-Pohjanmaa', 1, 1],
+  ['kainuu', 'Kainuu', 2, 1],
+  ['pohjanmaa', 'Pohjanmaa', 0, 2],
+  ['keski-pohjanmaa', 'Keski-Pohjanmaa', 1, 2],
+  ['pohjois-savo', 'Pohjois-Savo', 2, 2],
+  ['pohjois-karjala', 'Pohjois-Karjala', 3, 2],
+  ['etela-pohjanmaa', 'Etelä-Pohjanmaa', 0, 3],
+  ['keski-suomi', 'Keski-Suomi', 1, 3],
+  ['etela-savo', 'Etelä-Savo', 2, 3],
+  ['satakunta', 'Satakunta', 0, 4],
+  ['pirkanmaa', 'Pirkanmaa', 1, 4],
+  ['paijat-hame', 'Päijät-Häme', 2, 4],
+  ['etela-karjala', 'Etelä-Karjala', 3, 4],
+  ['varsinais-suomi', 'Varsinais-Suomi', 0, 5],
+  ['kanta-hame', 'Kanta-Häme', 1, 5],
+  ['keski-uusimaa', 'Keski-Uusimaa', 2, 5],
+  ['kymenlaakso', 'Kymenlaakso', 3, 5],
+  ['lansi-uusimaa', 'Länsi-Uusimaa', 1, 6],
+  ['vantaa-kerava', 'Vantaa-Kerava', 2, 6],
+  ['ita-uusimaa', 'Itä-Uusimaa', 3, 6],
+  ['helsinki', 'Helsinki', 2, 7],
 ]
 
 
@@ -135,68 +161,17 @@ export const FINLAND = {
   population: 5_637_917,
 }
 
-// rural/east-north counties older and smoke more in this placeholder model
-const RURAL = new Set(['lappi', 'kainuu', 'pohjois-karjala', 'etela-savo', 'kymenlaakso', 'satakunta', 'etela-karjala', 'pohjois-savo'])
-
 function build(): County[] {
-  return RAW.map(([id, name, col, row, population], i) => {
-    const r = mulberry32(1000 + i * 97)
-    const rural = RURAL.has(id)
-    const share75plus = +(rural ? 0.13 + r() * 0.04 : 0.08 + r() * 0.04).toFixed(3)
-    const share50to74 = +(rural ? 0.36 + r() * 0.04 : 0.3 + r() * 0.05).toFixed(3)
-    const smoking = +(rural ? 11 + r() * 5 : 7 + r() * 4).toFixed(1)
-    const alcohol = +(10 + r() * 6).toFixed(1)
-    const obesity = +(rural ? 25 + r() * 6 : 19 + r() * 5).toFixed(1)
-    const inactivity = +(14 + r() * 8).toFixed(1)
-    const bowelTurnout = +(rural ? 62 + r() * 10 : 58 + r() * 14).toFixed(1)
-    const breastTurnout = +(78 + r() * 12).toFixed(1)
-    const cervicalTurnout = +(62 + r() * 14).toFixed(1)
-    const base = 8 + r() * 10
-    const slope = (r() - 0.35) * 3
-    const queueTrend = [0, 1, 2, 3].map((q) => +(base + slope * q + r()).toFixed(1))
-    const ageingIndex = +(1.25 + r() * 0.3 + (rural ? 0.05 : 0.1)).toFixed(2)
-
-    const cancers = {} as Record<CancerId, CancerFigures>
-    for (const c of CANCERS) {
-      const ageFactor = (share75plus / 0.11) * 0.6 + (share50to74 / 0.33) * 0.4
-      const riskFactor =
-        c.id === 'lung' ? smoking / 10 : c.id === 'liver' ? alcohol / 13 : c.id === 'pancreas' ? (smoking / 10) * 0.4 + 0.6 : obesity / 22
-      const expected = (population / 100_000) * c.ratePer100k * ageFactor * (0.5 + 0.5 * riskFactor)
-      const cases = Math.max(1, Math.round(expected * (0.85 + r() * 0.3)))
-      const lateShare = Math.min(0.92, +(c.lateShare + (rural ? 0.04 : -0.02) + (r() - 0.5) * 0.12).toFixed(2))
-      const deaths = Math.round(cases * Math.min(0.98, c.fatality + (lateShare - c.lateShare) * 0.6 + (r() - 0.5) * 0.08))
-      cancers[c.id] = { cases, deaths, lateShare, expected: Math.round(expected) }
+  return RAW.map(([id, name, col, row]) => {
+    const pick = <K extends RadarCancerId>(ks: readonly K[]) =>
+      Object.fromEntries(ks.map((k) => [k, REGISTRY[id][k]])) as Record<K, CancerFigures>
+    return {
+      id, name, col, row, ...REAL[id],
+      cancers: pick(['lung', 'bowel', 'pancreas', 'liver'] as const),
+      screenCancers: pick(['breast', 'cervical'] as const),
     }
-    // placeholders above keep the random sequence (and so the demo cancer figures) stable; real values replace them
-    void [population, share50to74, share75plus, smoking, alcohol, obesity, inactivity, bowelTurnout, breastTurnout, cervicalTurnout, queueTrend, ageingIndex]
-    return { id, name, col, row, ...REAL[id], cancers, screenCancers: {} as Record<ScreenCancerId, CancerFigures> }
   })
 }
 
-/**
- * Breast + cervical figures. Separate generator (own seed) so the four original cancers keep their values.
- * Late stage leans on screening turnout: counties where fewer women take part find more cancers late.
- */
-function addScreenCancers(list: County[]) {
-  const mean = (f: (c: County) => number) => list.reduce((s, c) => s + f(c), 0) / list.length
-  const avg = { breast: mean((c) => c.breastTurnout), cervical: mean((c) => c.cervicalTurnout) }
-  list.forEach((c, i) => {
-    const r = mulberry32(7000 + i * 53)
-    const rural = RURAL.has(c.id)
-    for (const k of SCREEN_CANCERS) {
-      const turnout = k.id === 'breast' ? c.breastTurnout : c.cervicalTurnout
-      const ageFactor = k.id === 'breast' ? c.share50to74 / 0.33 : (0.47 - c.share75plus * 0.8) / 0.38
-      const riskFactor = k.id === 'breast' ? (c.alcohol / 30) * 0.5 + (c.obesity / 25) * 0.5 : (c.smoking / 9) * 0.5 + 0.5
-      const expected = (c.population / 100_000) * k.ratePer100k * ageFactor * (0.6 + 0.4 * riskFactor)
-      const cases = Math.max(1, Math.round(expected * (0.88 + r() * 0.24)))
-      const lateShare = Math.min(0.9, Math.max(0.05,
-        +(k.lateShare + (avg[k.id] - turnout) * 0.006 + (rural ? 0.02 : -0.01) + (r() - 0.5) * 0.06).toFixed(2)))
-      const deaths = Math.round(cases * Math.min(0.95, k.fatality + (lateShare - k.lateShare) * 0.7 + (r() - 0.5) * 0.05))
-      c.screenCancers[k.id] = { cases, deaths, lateShare, expected: Math.round(expected) }
-    }
-  })
-  return list
-}
-
-export const COUNTIES: County[] = addScreenCancers(build())
+export const COUNTIES: County[] = build()
 export const countyById = (id: string) => COUNTIES.find((c) => c.id === id)

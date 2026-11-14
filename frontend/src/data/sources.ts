@@ -24,7 +24,8 @@ const PULLED = '14 Nov 2026'
 export const SOURCES: Record<string, Source> = {
   cancerRegistry: {
     id: 'cancerRegistry', name: 'Finnish Cancer Registry statistics', url: 'https://cancerregistry.fi/statistics/',
-    note: 'New cancer cases and stage at diagnosis by wellbeing services county (statistics app, CSV download).',
+    note: 'Statistics app (CC BY 4.0). New cases and deaths by wellbeing services county; stage at diagnosis (localized / non-localized / unknown) by county, preliminary statistics; national rates by age and sex. Counts of 1–4 are hidden by the Registry.',
+    years: 'cases and deaths 2020–24 · stage 2021–25', retrieved: PULLED,
     links: [{ label: 'Cancer Registry statistics', url: 'https://cancerregistry.fi/statistics/' }, { label: 'Statistics app (fi)', url: 'https://tilastot.syoparekisteri.fi/syovat' }],
   },
   cancerRegistryScreening: {
@@ -100,5 +101,5 @@ export const SOURCES: Record<string, Source> = {
   illustration: { id: 'illustration', name: 'Illustration', note: 'Made-up numbers that show how a feature works. Not data.' },
 }
 
-/** County cancer cases, deaths and stage are placeholders until the Cancer Registry CSV pull is wired in. */
-export const DEMO_DATA = true
+/** County cancer cases, deaths and stage now come from the Cancer Registry. */
+export const DEMO_DATA = false

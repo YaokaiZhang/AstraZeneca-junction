@@ -1,0 +1,109 @@
+Cancer site;ICD-10;Age group (5y.);Diagnosed cancer cases;Rate per 100,000
+Liver;C22;0-4;;0,65
+Liver;C22;5-9;;0,27
+Liver;C22;10-14;0;0
+Liver;C22;15-19;;0,13
+Liver;C22;20-24;;0,13
+Liver;C22;25-29;;0,45
+Liver;C22;30-34;6;0,63
+Liver;C22;35-39;9;0,95
+Liver;C22;40-44;15;1,64
+Liver;C22;45-49;28;3,3
+Liver;C22;50-54;48;5,72
+Liver;C22;55-59;124;13,65
+Liver;C22;60-64;219;24,97
+Liver;C22;65-69;341;40,47
+Liver;C22;70-74;451;55,82
+Liver;C22;75-79;421;71,84
+Liver;C22;80-84;231;67,13
+Liver;C22;85+;152;58,42
+Pancreas;C25;0-4;0;0
+Pancreas;C25;5-9;0;0
+Pancreas;C25;10-14;0;0
+Pancreas;C25;15-19;;0,13
+Pancreas;C25;20-24;0;0
+Pancreas;C25;25-29;;0,33
+Pancreas;C25;30-34;7;0,74
+Pancreas;C25;35-39;;0,42
+Pancreas;C25;40-44;33;3,6
+Pancreas;C25;45-49;38;4,48
+Pancreas;C25;50-54;108;12,87
+Pancreas;C25;55-59;208;22,91
+Pancreas;C25;60-64;375;42,76
+Pancreas;C25;65-69;519;61,6
+Pancreas;C25;70-74;752;93,07
+Pancreas;C25;75-79;695;118,6
+Pancreas;C25;80-84;459;133,39
+Pancreas;C25;85+;360;138,36
+Lung, trachea;C33-34;0-4;;0,16
+Lung, trachea;C33-34;5-9;0;0
+Lung, trachea;C33-34;10-14;0;0
+Lung, trachea;C33-34;15-19;;0,13
+Lung, trachea;C33-34;20-24;;0,5
+Lung, trachea;C33-34;25-29;;0,11
+Lung, trachea;C33-34;30-34;;0,11
+Lung, trachea;C33-34;35-39;22;2,33
+Lung, trachea;C33-34;40-44;26;2,83
+Lung, trachea;C33-34;45-49;74;8,71
+Lung, trachea;C33-34;50-54;164;19,54
+Lung, trachea;C33-34;55-59;431;47,46
+Lung, trachea;C33-34;60-64;849;96,81
+Lung, trachea;C33-34;65-69;1403;166,52
+Lung, trachea;C33-34;70-74;2130;263,62
+Lung, trachea;C33-34;75-79;1913;326,45
+Lung, trachea;C33-34;80-84;1145;332,75
+Lung, trachea;C33-34;85+;736;282,87
+Breast;C50;0-4;0;0
+Breast;C50;5-9;0;0
+Breast;C50;10-14;0;0
+Breast;C50;15-19;0;0
+Breast;C50;20-24;0;0
+Breast;C50;25-29;;0,11
+Breast;C50;30-34;;0,11
+Breast;C50;35-39;;0,21
+Breast;C50;40-44;;0,22
+Breast;C50;45-49;;0,47
+Breast;C50;50-54;8;0,95
+Breast;C50;55-59;10;1,1
+Breast;C50;60-64;21;2,39
+Breast;C50;65-69;20;2,37
+Breast;C50;70-74;29;3,59
+Breast;C50;75-79;23;3,92
+Breast;C50;80-84;15;4,36
+Breast;C50;85+;13;5
+Colon and rectum;C18-20;0-4;0;0
+Colon and rectum;C18-20;5-9;0;0
+Colon and rectum;C18-20;10-14;7;0,87
+Colon and rectum;C18-20;15-19;8;1,02
+Colon and rectum;C18-20;20-24;14;1,76
+Colon and rectum;C18-20;25-29;32;3,57
+Colon and rectum;C18-20;30-34;54;5,7
+Colon and rectum;C18-20;35-39;75;7,93
+Colon and rectum;C18-20;40-44;129;14,06
+Colon and rectum;C18-20;45-49;211;24,85
+Colon and rectum;C18-20;50-54;365;43,49
+Colon and rectum;C18-20;55-59;650;71,58
+Colon and rectum;C18-20;60-64;1367;155,88
+Colon and rectum;C18-20;65-69;1809;214,71
+Colon and rectum;C18-20;70-74;2079;257,3
+Colon and rectum;C18-20;75-79;1945;331,92
+Colon and rectum;C18-20;80-84;1383;401,91
+Colon and rectum;C18-20;85+;978;375,88
+Anus;C21;0-4;0;0
+Anus;C21;5-9;0;0
+Anus;C21;10-14;0;0
+Anus;C21;15-19;0;0
+Anus;C21;20-24;0;0
+Anus;C21;25-29;0;0
+Anus;C21;30-34;0;0
+Anus;C21;35-39;6;0,63
+Anus;C21;40-44;;0,11
+Anus;C21;45-49;;0,47
+Anus;C21;50-54;8;0,95
+Anus;C21;55-59;8;0,88
+Anus;C21;60-64;19;2,17
+Anus;C21;65-69;18;2,14
+Anus;C21;70-74;28;3,47
+Anus;C21;75-79;30;5,12
+Anus;C21;80-84;14;4,07
+Anus;C21;85+;11;4,23

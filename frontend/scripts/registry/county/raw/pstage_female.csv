@@ -1,0 +1,139 @@
+Area;Cancer site;ICD-10;Cancer stage;Diagnosed cancer cases, preliminary;Rate per 100,000, preliminary;Rate per 100,000, age-standardised (Finland 2014), preliminary;Rate per 100,000, age-standardised (world standard population), preliminary
+Whole country;Breast;C50;Unknown;10385;73,56;67,28;36,41
+Whole country;Breast;C50;Localized;6594;46,71;43,37;23,76
+Whole country;Breast;C50;Non-localized;8726;61,81;56,2;31,75
+Whole country;Cervix uteri;C53;Unknown;588;4,17;4,02;3,07
+Whole country;Cervix uteri;C53;Localized;334;2,37;2,39;2,07
+Whole country;Cervix uteri;C53;Non-localized;109;0,77;0,74;0,55
+East Uusimaa wellbeing services county;Breast;C50;Unknown;167;67,04;59,8;33,65
+East Uusimaa wellbeing services county;Breast;C50;Localized;118;47,37;41,4;22,88
+East Uusimaa wellbeing services county;Breast;C50;Non-localized;159;63,83;55,58;32,12
+East Uusimaa wellbeing services county;Cervix uteri;C53;Unknown;8;3,21;2,98;2,19
+East Uusimaa wellbeing services county;Cervix uteri;C53;Localized;5;2,01;2,21;2,05
+East Uusimaa wellbeing services county;Cervix uteri;C53;Non-localized;;0,4;0,42;0,4
+Central Uusimaa wellbeing services county;Breast;C50;Unknown;427;82,99;78,85;43,19
+Central Uusimaa wellbeing services county;Breast;C50;Localized;205;39,84;37,88;20,2
+Central Uusimaa wellbeing services county;Breast;C50;Non-localized;335;65,11;59,9;34,15
+Central Uusimaa wellbeing services county;Cervix uteri;C53;Unknown;15;2,92;2,83;2,18
+Central Uusimaa wellbeing services county;Cervix uteri;C53;Localized;16;3,11;3,18;2,9
+Central Uusimaa wellbeing services county;Cervix uteri;C53;Non-localized;;0,19;0,14;0,04
+West Uusimaa wellbeing services county;Breast;C50;Unknown;767;62,25;62,44;33,12
+West Uusimaa wellbeing services county;Breast;C50;Localized;683;55,43;56,83;30,61
+West Uusimaa wellbeing services county;Breast;C50;Non-localized;744;60,38;60,06;34,4
+West Uusimaa wellbeing services county;Cervix uteri;C53;Unknown;41;3,33;3,25;2,34
+West Uusimaa wellbeing services county;Cervix uteri;C53;Localized;27;2,19;1,96;1,8
+West Uusimaa wellbeing services county;Cervix uteri;C53;Non-localized;;0,32;0,33;0,24
+Vantaa and Kerava wellbeing services county;Breast;C50;Unknown;378;53,73;57,4;30,67
+Vantaa and Kerava wellbeing services county;Breast;C50;Localized;374;53,16;56,81;31,93
+Vantaa and Kerava wellbeing services county;Breast;C50;Non-localized;422;59,98;63,15;35,76
+Vantaa and Kerava wellbeing services county;Cervix uteri;C53;Unknown;31;4,41;4,18;2,97
+Vantaa and Kerava wellbeing services county;Cervix uteri;C53;Localized;28;3,98;3,62;3,37
+Vantaa and Kerava wellbeing services county;Cervix uteri;C53;Non-localized;6;0,85;0,77;0,84
+Päijät-Häme wellbeing services county;Breast;C50;Unknown;505;96,5;77,56;42,22
+Päijät-Häme wellbeing services county;Breast;C50;Localized;194;37,07;29,92;16,67
+Päijät-Häme wellbeing services county;Breast;C50;Non-localized;351;67,08;53,59;30,04
+Päijät-Häme wellbeing services county;Cervix uteri;C53;Unknown;30;5,73;5,4;4,15
+Päijät-Häme wellbeing services county;Cervix uteri;C53;Localized;15;2,87;3,12;2,81
+Päijät-Häme wellbeing services county;Cervix uteri;C53;Non-localized;;0,38;0,41;0,41
+Kymenlaakso wellbeing services county;Breast;C50;Unknown;365;90,8;70,43;38,87
+Kymenlaakso wellbeing services county;Breast;C50;Localized;208;51,74;40,87;22,33
+Kymenlaakso wellbeing services county;Breast;C50;Non-localized;317;78,86;61,23;33,92
+Kymenlaakso wellbeing services county;Cervix uteri;C53;Unknown;34;8,46;8,25;6,69
+Kymenlaakso wellbeing services county;Cervix uteri;C53;Localized;13;3,23;3,37;3,21
+Kymenlaakso wellbeing services county;Cervix uteri;C53;Non-localized;;0,5;0,67;0,62
+South Karelia wellbeing services county;Breast;C50;Unknown;356;113,5;92,4;52,54
+South Karelia wellbeing services county;Breast;C50;Localized;53;16,9;13,01;6,69
+South Karelia wellbeing services county;Breast;C50;Non-localized;193;61,53;51,04;30,64
+South Karelia wellbeing services county;Cervix uteri;C53;Unknown;17;5,42;5,31;3,98
+South Karelia wellbeing services county;Cervix uteri;C53;Localized;5;1,59;1,65;1,5
+South Karelia wellbeing services county;Cervix uteri;C53;Non-localized;;0,64;0,82;0,91
+City of Helsinki;Breast;C50;Unknown;1027;58,5;61,37;32
+City of Helsinki;Breast;C50;Localized;993;56,56;61,4;33,47
+City of Helsinki;Breast;C50;Non-localized;933;53,14;55,05;30,79
+City of Helsinki;Cervix uteri;C53;Unknown;79;4,5;4,34;3,11
+City of Helsinki;Cervix uteri;C53;Localized;38;2,16;1,95;1,74
+City of Helsinki;Cervix uteri;C53;Non-localized;13;0,74;0,77;0,67
+South Savo wellbeing services county;Breast;C50;Unknown;325;98,46;73,96;41,34
+South Savo wellbeing services county;Breast;C50;Localized;75;22,72;15,22;7,51
+South Savo wellbeing services county;Breast;C50;Non-localized;261;79,07;58,33;32,81
+South Savo wellbeing services county;Cervix uteri;C53;Unknown;20;6,06;5,68;4,13
+South Savo wellbeing services county;Cervix uteri;C53;Localized;7;2,12;2,01;1,42
+South Savo wellbeing services county;Cervix uteri;C53;Non-localized;;0,91;0,97;0,85
+North Savo wellbeing services county;Breast;C50;Unknown;510;81,29;68,42;36,04
+North Savo wellbeing services county;Breast;C50;Localized;266;42,4;37,72;21,88
+North Savo wellbeing services county;Breast;C50;Non-localized;408;65,03;56,49;32,78
+North Savo wellbeing services county;Cervix uteri;C53;Unknown;28;4,46;4,45;3,4
+North Savo wellbeing services county;Cervix uteri;C53;Localized;14;2,23;2,26;1,9
+North Savo wellbeing services county;Cervix uteri;C53;Non-localized;;0,16;0,1;0,03
+North Karelia wellbeing services county;Breast;C50;Unknown;434;106,44;88,51;48,63
+North Karelia wellbeing services county;Breast;C50;Localized;97;23,79;18,93;9,61
+North Karelia wellbeing services county;Breast;C50;Non-localized;200;49,05;40,68;23,1
+North Karelia wellbeing services county;Cervix uteri;C53;Unknown;14;3,43;3,53;2,7
+North Karelia wellbeing services county;Cervix uteri;C53;Localized;8;1,96;1,89;1,44
+North Karelia wellbeing services county;Cervix uteri;C53;Non-localized;6;1,47;1,48;1,23
+Central Finland wellbeing services county;Breast;C50;Unknown;690;100,68;92,82;50,98
+Central Finland wellbeing services county;Breast;C50;Localized;131;19,11;16,83;8,9
+Central Finland wellbeing services county;Breast;C50;Non-localized;398;58,07;51,69;28,77
+Central Finland wellbeing services county;Cervix uteri;C53;Unknown;18;2,63;2,49;2
+Central Finland wellbeing services county;Cervix uteri;C53;Localized;7;1,02;1,18;0,93
+Central Finland wellbeing services county;Cervix uteri;C53;Non-localized;7;1,02;0,91;0,52
+Kanta-Häme wellbeing services county;Breast;C50;Unknown;199;46,44;38,92;22,99
+Kanta-Häme wellbeing services county;Breast;C50;Localized;358;83,54;68,27;35,89
+Kanta-Häme wellbeing services county;Breast;C50;Non-localized;306;71,41;57,99;32,1
+Kanta-Häme wellbeing services county;Cervix uteri;C53;Unknown;13;3,03;2,92;2,3
+Kanta-Häme wellbeing services county;Cervix uteri;C53;Localized;21;4,9;5,06;4,47
+Kanta-Häme wellbeing services county;Cervix uteri;C53;Non-localized;;0,23;0,23;0,13
+Pirkanmaa wellbeing services county;Breast;C50;Unknown;354;26,03;23,96;12,73
+Pirkanmaa wellbeing services county;Breast;C50;Localized;1286;94,58;92,2;50,27
+Pirkanmaa wellbeing services county;Breast;C50;Non-localized;933;68,62;64,18;35,3
+Pirkanmaa wellbeing services county;Cervix uteri;C53;Unknown;35;2,57;2,42;1,96
+Pirkanmaa wellbeing services county;Cervix uteri;C53;Localized;38;2,79;2,84;2,29
+Pirkanmaa wellbeing services county;Cervix uteri;C53;Non-localized;16;1,18;1,2;0,74
+South Ostrobothnia wellbeing services county;Breast;C50;Unknown;194;40,68;33,22;17,4
+South Ostrobothnia wellbeing services county;Breast;C50;Localized;383;80,32;69,51;37,03
+South Ostrobothnia wellbeing services county;Breast;C50;Non-localized;331;69,41;60,62;34,98
+South Ostrobothnia wellbeing services county;Cervix uteri;C53;Unknown;14;2,94;2,69;1,8
+South Ostrobothnia wellbeing services county;Cervix uteri;C53;Localized;25;5,24;5,84;5,69
+South Ostrobothnia wellbeing services county;Cervix uteri;C53;Non-localized;7;1,47;1,11;0,62
+Southwest Finland wellbeing services county;Breast;C50;Unknown;1184;95,17;85,69;45,56
+Southwest Finland wellbeing services county;Breast;C50;Localized;483;38,82;35,85;19,71
+Southwest Finland wellbeing services county;Breast;C50;Non-localized;868;69,77;63,03;35,32
+Southwest Finland wellbeing services county;Cervix uteri;C53;Unknown;69;5,55;5,55;4,6
+Southwest Finland wellbeing services county;Cervix uteri;C53;Localized;18;1,45;1,55;1,28
+Southwest Finland wellbeing services county;Cervix uteri;C53;Non-localized;5;0,4;0,35;0,22
+Satakunta wellbeing services county;Breast;C50;Unknown;674;125,9;106,6;59,2
+Satakunta wellbeing services county;Breast;C50;Localized;47;8,78;7,37;4,18
+Satakunta wellbeing services county;Breast;C50;Non-localized;367;68,55;57,04;32,85
+Satakunta wellbeing services county;Cervix uteri;C53;Unknown;35;6,54;6,35;5,34
+Satakunta wellbeing services county;Cervix uteri;C53;Localized;9;1,68;1,75;1,48
+Satakunta wellbeing services county;Cervix uteri;C53;Non-localized;;0,56;0,38;0,16
+Ostrobothnia wellbeing services county;Breast;C50;Unknown;218;49,89;46,93;24,8
+Ostrobothnia wellbeing services county;Breast;C50;Localized;256;58,59;56,85;30,88
+Ostrobothnia wellbeing services county;Breast;C50;Non-localized;235;53,78;48,7;27,29
+Ostrobothnia wellbeing services county;Cervix uteri;C53;Unknown;18;4,12;4,18;2,99
+Ostrobothnia wellbeing services county;Cervix uteri;C53;Localized;5;1,14;1,14;0,91
+Ostrobothnia wellbeing services county;Cervix uteri;C53;Non-localized;6;1,37;1,08;0,6
+Central Ostrobothnia wellbeing services county;Breast;C50;Unknown;105;61,96;54,77;28,82
+Central Ostrobothnia wellbeing services county;Breast;C50;Localized;74;43,67;40,96;21,49
+Central Ostrobothnia wellbeing services county;Breast;C50;Non-localized;87;51,34;43,05;22,48
+Central Ostrobothnia wellbeing services county;Cervix uteri;C53;Unknown;13;7,67;8,25;6,93
+Central Ostrobothnia wellbeing services county;Cervix uteri;C53;Localized;;1,18;1,54;1,12
+Central Ostrobothnia wellbeing services county;Cervix uteri;C53;Non-localized;;1,18;1,07;0,74
+North Ostrobothnia wellbeing services county;Breast;C50;Unknown;887;85,98;86,86;47,96
+North Ostrobothnia wellbeing services county;Breast;C50;Localized;105;10,18;10,2;5,57
+North Ostrobothnia wellbeing services county;Breast;C50;Non-localized;494;47,88;47,87;27,15
+North Ostrobothnia wellbeing services county;Cervix uteri;C53;Unknown;30;2,91;3,02;2,37
+North Ostrobothnia wellbeing services county;Cervix uteri;C53;Localized;21;2,04;2,18;1,69
+North Ostrobothnia wellbeing services county;Cervix uteri;C53;Non-localized;13;1,26;1,35;1,11
+Kainuu wellbeing services county;Breast;C50;Unknown;180;103,84;77,69;41,92
+Kainuu wellbeing services county;Breast;C50;Localized;45;25,96;19,37;9,43
+Kainuu wellbeing services county;Breast;C50;Non-localized;91;52,5;42,53;25,5
+Kainuu wellbeing services county;Cervix uteri;C53;Unknown;7;4,04;4,19;3,06
+Kainuu wellbeing services county;Cervix uteri;C53;Localized;;0,58;0,68;0,65
+Kainuu wellbeing services county;Cervix uteri;C53;Non-localized;;1,15;0,99;0,73
+Lapland wellbeing services county;Breast;C50;Unknown;362;82,22;70,97;39,4
+Lapland wellbeing services county;Breast;C50;Localized;129;29,3;25,38;14,1
+Lapland wellbeing services county;Breast;C50;Non-localized;246;55,88;46,22;25,48
+Lapland wellbeing services county;Cervix uteri;C53;Unknown;16;3,63;3,39;2,32
+Lapland wellbeing services county;Cervix uteri;C53;Localized;6;1,36;1,54;1,41
+Lapland wellbeing services county;Cervix uteri;C53;Non-localized;;0,91;0,91;0,63

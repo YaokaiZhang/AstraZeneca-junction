@@ -162,7 +162,7 @@ export function TooLate() {
         <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
           <WordsUp text="Found" /><br /><WordsUp text="too late." className="italic text-terra" delay={140} />
         </h2>
-        <Reveal fx="blur" delay={300} className="flex items-center gap-2"><Label>Share at advanced stage</Label><SourceBadge id="cancerRegistry" kind="estimate" /></Reveal>
+        <Reveal fx="blur" delay={300} className="flex items-center gap-2"><Label>Share spread at diagnosis</Label><SourceBadge id="cancerRegistry" kind="direct" demo={false} how={`Whole country, non-localized share of cases with known stage, 2021–25 preliminary statistics. Stage unknown for ${CANCERS.map((c) => `${c.label.toLowerCase()} ${Math.round(c.unknownStage * 100)}%`).join(", ")}.`} /></Reveal>
       </div>
       <Lede className="mt-8">
         The share of cancers found only after they have already spread, when they are far harder to treat. Finding them earlier is what changes these numbers.

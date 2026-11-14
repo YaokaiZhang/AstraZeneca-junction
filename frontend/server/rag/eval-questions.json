@@ -6,7 +6,7 @@
       "id": "q1-referral-navigation",
       "question": "Positive tests are not followed up: what happens after a positive test in Finland, and what is the evidence for patient navigation?",
       "facts": { "pathway_step": "referral", "action_ids": "navigation" },
-      "requiredSourceIds": ["chua-2026-followup-colonoscopy-meta", "fcr-colorectal-2024"]
+      "requiredSourceIds": ["chua-2026-followup-colonoscopy-meta", "naserrudin-2026-followup-colonoscopy-review", "fcr-colorectal-2024"]
     },
     {
       "id": "q2-referral-reminders",

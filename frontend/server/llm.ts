@@ -195,7 +195,7 @@ Rules for evidence:
 - If the action is supported only by passages with setting="international", say so in limitations, naming where the evidence comes from in words, and say it has not been tested in Finland.
 
 Lines: exactly four, each one short plain sentence of at most 20 words, with no label and no citation markers in the text:
-problem: the main problem in this county, with its number.
+problem: the main problem in this county, with its number. Cite the registry statistics passage for the data year.
 do_this: the action, as an instruction.
 result: what the action achieves.
 capacity: the extra colonoscopies a week needed now (if any) and by 2031.

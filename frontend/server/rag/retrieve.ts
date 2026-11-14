@@ -5,7 +5,7 @@
 // passage and an intervention passage) and a minimum-match gate.
 import { isIntervention, isOfficial, type Chunk, type Corpus, type PathwayStep, type RetrievalResult, type ScoredChunk, type SourceType } from './types.ts'
 
-export const QUERY_VERSION = 'kw-2026-11-14.1'
+export const QUERY_VERSION = 'kw-2026-11-14.2'
 export const TOP_K = 6
 const MAX_PER_SOURCE = 2
 /** fewer qualifying passages than this -> insufficient_evidence */
@@ -33,6 +33,7 @@ export const SYNONYMS: Record<string, string[]> = {
   bowel: ['bowel', 'colorectal', 'colon cancer', 'rectal', 'suolisto', 'suolistosyöp', 'paksusuol', 'peräsuol', 'crc'],
   equality: ['equalit', 'equity', 'inequalit', 'yhdenvertai', 'tasa arvo', 'eriarvo', 'disparit', 'underserved'],
   clinician: ['clinician', 'physician', 'general practitioner', 'gp', 'primary care', 'lääkär', 'perusterveydenhu', 'provider', 'terveyskesk'],
+  tracking: ['tracking', 'track', 'tracked', 'ownership', 'responsib', 'rekisteriseuranta', 'vastuuhenkil'],
   booking: ['booking', 'scheduling', 'schedul', 'ajanvara', 'varataan', 'automat', 'automaatt', 'automatic'],
 }
 
@@ -44,10 +45,10 @@ const STEP_CONCEPTS: Record<PathwayStep, string[]> = {
   none: ['screening', 'participation'],
 }
 const ACTION_CONCEPTS: Record<string, string[]> = {
-  navigation: ['navigation', 'followup', 'positive'],
+  navigation: ['navigation', 'tracking', 'followup', 'positive'],
   'patient-reminder': ['reminder', 'outreach', 'followup', 'positive'],
   'clinician-reminder': ['clinician', 'reminder', 'followup'],
-  'auto-referral': ['booking', 'referral', 'followup'],
+  'auto-referral': ['booking', 'tracking', 'referral', 'followup'],
   reminder: ['reminder', 'outreach', 'participation'],
   multilingual: ['multilingual', 'equality', 'reminder', 'participation'],
   clinician: ['clinician', 'reminder', 'participation'],
@@ -150,6 +151,10 @@ function qualifies(s: ScoredChunk, q: Query) {
   return s.score > 0 && s.matched.filter((c) => q.core.includes(c)).length >= Math.min(2, q.core.length)
 }
 
+/** The registry statistics for the facts' data year: the source of the county's own numbers. */
+export const statsForYear = (src: { sourceType: SourceType; dataPeriod?: string }, year: unknown) =>
+  src.sourceType === 'official_statistics' && year !== undefined && year !== '' && !!src.dataPeriod?.startsWith(String(year))
+
 const finnishOfficial = (s: ScoredChunk) => s.source.setting === 'finland' && isOfficial(s.source.sourceType)
 const interventionLike = (s: ScoredChunk, q: Query) => isIntervention(s.source.sourceType) && (!q.action.length || s.matched.some((c) => q.action.includes(c)))
 
@@ -158,7 +163,9 @@ export function retrieve(corpus: Corpus, facts: Record<string, number | string>)
   const q = buildQuery(facts)
   const meta = { method: 'keyword' as const, queryVersion: QUERY_VERSION, corpusVersion: corpus.corpusVersion }
   const query = [...q.weights.keys()]
-  const ranked = scoreAll(corpus, q).filter((s) => qualifies(s, q)).sort((a, b) => b.score - a.score || a.chunk.chunkId.localeCompare(b.chunk.chunkId))
+  const byScore = (a: ScoredChunk, b: ScoredChunk) => b.score - a.score || a.chunk.chunkId.localeCompare(b.chunk.chunkId)
+  const all = scoreAll(corpus, q)
+  const ranked = all.filter((s) => qualifies(s, q)).sort(byScore)
   if (ranked.length < MIN_QUALIFYING) return { status: 'insufficient_evidence', chunks: [], query, meta }
 
   const picked: ScoredChunk[] = []
@@ -168,6 +175,8 @@ export function retrieve(corpus: Corpus, facts: Record<string, number | string>)
     picked.push(s)
     perSource.set(s.source.id, (perSource.get(s.source.id) ?? 0) + 1)
   }
+  // the county's numbers come from the registry statistics for the data year, so the problem line can always cite them
+  take([...all].sort(byScore).find((s) => statsForYear(s.source, facts.data_year)))
   take(ranked.find(finnishOfficial))
   take(ranked.find((s) => interventionLike(s, q)))
   // the national policy the action serves (strategy / roadmap), when one qualifies

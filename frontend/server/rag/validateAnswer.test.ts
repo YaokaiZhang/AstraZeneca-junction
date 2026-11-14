@@ -178,3 +178,20 @@ test('rejects overclaims the data cannot support (never had, found earlier, live
   ok.lines.problem = 'In 2024, 120 people with a positive test have no recorded follow-up colonoscopy.'
   assert.equal(validateAnswer(ok, pack, facts).ok, true)
 })
+
+test('the problem line must cite the registry statistics for the data year (real corpus)', () => {
+  const real = loadCorpusFrom(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'knowledge'))
+  const p = buildEvidencePack(retrieve(real, facts).chunks)
+  const id = (sourceId: string) => p.items.find((i) => i.source.id === sourceId)!.id
+  const STATS = id('fcr-colorectal-2024')
+  const PROGRAMME = id('fcr-crc-screening-programme')
+  const REVIEW = id('chua-2026-followup-colonoscopy-meta')
+  const answer = (problemCites: string[]) => ({
+    ...good(),
+    citations: { problem: problemCites, do_this: [REVIEW], result: [REVIEW], capacity: [] },
+    limitations: [{ text: 'The effect comes from studies in the USA and has not been tested in Finland.', citations: [REVIEW] }],
+  })
+  const wrong = validateAnswer(answer([PROGRAMME]), p, facts)
+  assert.ok(!wrong.ok && wrong.errors.includes('problem: must cite the registry statistics for the data year'))
+  assert.ok(validateAnswer(answer([STATS]), p, facts).ok)
+})

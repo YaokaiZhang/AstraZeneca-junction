@@ -4,6 +4,7 @@
 // the Do-this line cites at least one official or intervention (review / study) source.
 import { LINE_KEYS, type EvidencePack, type LineKey, type ValidAnswer } from './buildEvidencePack.ts'
 import { isIntervention, isOfficial } from './types.ts'
+import { statsForYear } from './retrieve.ts'
 
 export const MAX_LINE_WORDS = 25
 const MAX_LIMITATIONS = 3
@@ -87,6 +88,10 @@ export function validateAnswer(raw: unknown, pack: EvidencePack, facts: Record<s
     if (unknown.length) errors.push(`${k}: unknown evidence id`)
     outCites[k] = ids.filter((id) => known.has(id))
     if (k !== 'capacity' && !outCites[k].length) errors.push(`${k}: no citation`)
+  }
+  // the problem line states the county's registry numbers: it must cite the registry statistics for that year when the pack has them
+  if (pack.items.some((i) => statsForYear(i.source, facts.data_year)) && !outCites.problem.some((id) => statsForYear(known.get(id)!.source, facts.data_year))) {
+    errors.push('problem: must cite the registry statistics for the data year')
   }
   if (outCites.do_this.length && !outCites.do_this.some((id) => { const t = known.get(id)!.source.sourceType; return isOfficial(t) || isIntervention(t) })) {
     errors.push('do_this: needs an official or intervention source')

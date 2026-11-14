@@ -13,7 +13,7 @@ import { GOAL_ATTENDANCE, programmeView, templateFor, stepsBehind, type Programm
 import { ProgrammeTabs } from './ProgrammeTabs'
 import { PlanPanel } from './PlanWriting'
 import { Bars, Measures, StepsStrip } from './PlanGlance'
-import { SAME, VsFinland, type Cmp } from './VsFinland'
+import { VsFinland, type Cmp } from './VsFinland'
 import type { usePlanWriter } from './planWriter'
 
 const n0 = (x: number) => Math.round(x).toLocaleString('en-GB')
@@ -72,17 +72,15 @@ function NumbersTable({ p, id, v }: { p: ProgrammeId; id: string; v: ProgrammeVi
   return (
     <div>
       <table className="w-full font-sans text-[15px] border-collapse">
-        <thead><tr className="text-left text-[13px] opacity-60"><th className="font-normal py-2 pr-4">2024</th><th className="font-normal pr-4">This county</th><th className="font-normal pr-4">Finland</th><th className="font-normal hidden sm:table-cell">Against Finland</th></tr></thead>
+        <thead><tr className="text-left text-[13px] opacity-60"><th className="font-normal py-2 pr-4">2024</th><th className="font-normal pr-4">This county</th><th className="font-normal">Finland</th></tr></thead>
         <tbody>{rows.map(([a, b, c, cmp]) => (
           <tr key={a} className="border-t border-black/10 align-top sm:align-middle">
             <td className="py-2.5 pr-4">{a}</td>
-            <td className="py-2.5 pr-4"><span className="font-serif text-lg">{b}</span>{cmp && <span className="block mt-1 sm:hidden"><VsFinland cmp={cmp} /></span>}</td>
-            <td className="py-2.5 opacity-70 pr-4">{c}</td>
-            <td className="hidden sm:table-cell"><VsFinland cmp={cmp} /></td>
+            <td className="py-2.5 pr-4"><span className="font-serif text-lg mr-2">{b}</span><VsFinland cmp={cmp} /></td>
+            <td className="py-2.5 opacity-70">{c}</td>
           </tr>
         ))}</tbody>
       </table>
-      <p className="mt-3 font-sans text-[13px] opacity-60 max-w-4xl">Better or worse only where the direction is clear; within {SAME.pts} points or {SAME.months} months counts as about the same. Counts and call-back or referral rates are shown for context. &ldquo;Check data&rdquo; means the figure may reflect how results or dates reach the register.</p>
     </div>
   )
 }

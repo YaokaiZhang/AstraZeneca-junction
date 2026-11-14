@@ -176,9 +176,10 @@ test('plan charts reuse the start-card numbers (cervical kit vs letter, breast r
 })
 
 test('better / worse than Finland: direction, tolerance and check data', () => {
-  assert.equal(vsFinland({ county: 83.8, finland: 81.6, better: 'higher', unit: 'pts' }).text, '▲ better · 2.2 pts higher')
+  assert.equal(vsFinland({ county: 83.8, finland: 81.6, better: 'higher', unit: 'pts' }).text, '▲ 2.2 pts')
+  assert.equal(vsFinland({ county: 83.8, finland: 81.6, better: 'higher', unit: 'pts' }).label, 'better than Finland, 2.2 points higher')
   assert.equal(vsFinland({ county: 5.1, finland: 5.0, better: 'lower', unit: 'pts' }).kind, 'same')
-  assert.equal(vsFinland({ county: 4.4, finland: 3.8, better: 'lower', unit: 'months' }).text, '▼ worse · 0.6 mo longer')
+  assert.equal(vsFinland({ county: 4.4, finland: 3.8, better: 'lower', unit: 'months' }).label, 'worse than Finland, 0.6 months longer')
   assert.equal(vsFinland({ county: 0.6, finland: 0.6, better: 'lower', unit: 'months' }).kind, 'same')
   assert.equal(vsFinland({ county: 0.6, finland: 3.8, better: 'lower', unit: 'months', check: true }).kind, 'check')
   assert.equal(vsFinland({ county: null, finland: 3.8, better: 'lower', unit: 'months' }).kind, 'none')

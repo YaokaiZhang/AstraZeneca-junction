@@ -75,7 +75,7 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
       detail: `${fmt(lungRad.highRisk)} high-risk people ${RISK.lung.ages} · start with the self-check, then CT`,
       why: `Late stage ${pct(lungLate)} vs FI ${pct(natLate)} · smoking ${c.smoking}% vs ${fmt(NAT.smoking, 1)}%`,
       gap: `Lung cancer found late: ${pct(lungLate)}`, stamp: 'Late lung', stages: ['Screening', 'Visit'],
-      badge: <SourceBadge id="ourModel" kind="estimate" how="Rule: late-stage share above national + smoking above national. High-risk count from the detection radar (population 50–74 × smoking prevalence)." />,
+      badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how="Rule: spread share (non-localized, of known stage) above national + smoking above national. High-risk count from the detection radar (population 50–74 × smoking prevalence)." />,
     },
     {
       id: 'remind', score: (natTurnout - turnout) / 2 + helpTowns.length * 0.8,
@@ -108,7 +108,7 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
       detail: 'Direct CT referral from health centres for weight loss + new diabetes / jaundice',
       why: `Pancreas + liver deaths÷cases ${plFat >= 0 ? '+' : '−'}${fmt(Math.abs(plFat) * 100, 0)} pts vs FI`,
       gap: 'Pancreas & liver found too late', stamp: 'Fatal late', stages: ['Visit', 'Referral'],
-      badge: <SourceBadge id="ourModel" kind="estimate" how="Rule: pooled 2020–24 deaths ÷ cases above national for pancreas and liver." />,
+      badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how="Rule: Cancer Registry deaths ÷ cases 2020–24 above national for pancreas and liver." />,
     },
     {
       id: 'dates', score: 1.2,
@@ -138,10 +138,10 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
     stats: [
       { label: `High risk · ${cancerLabel(k)}`, value: fmt(rad.highRisk), badge: stepBadge('risk', k, rad) },
       { label: 'Residents', value: fmt(c.population), badge: <SourceBadge id="statfinProjection" kind="direct" demo={false} how="Residents in 2025, population projection 2024 (table 14wx)" /> },
-      { label: 'Lung late', value: pct(lungLate), badge: <SourceBadge id="cancerRegistry" kind="direct" /> },
-      { label: 'Lung deaths / case', value: fmt(metricValue(c, 'lung', 'fatality').v, 2), badge: <SourceBadge id="ourModel" kind="estimate" how="deaths ÷ new cases" /> },
+      { label: 'Lung spread', value: pct(lungLate), badge: <SourceBadge id="cancerRegistry" kind="direct" demo={false} how={`Non-localized share of lung cases with known stage, 2021–25 (preliminary). Stage unknown for ${pct(c.cancers.lung.unknownStage)}.`} /> },
+      { label: 'Lung deaths / case', value: fmt(metricValue(c, 'lung', 'fatality').v, 2), badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how="Cancer Registry deaths ÷ new cases, 2020–24" /> },
       { label: 'Bowel turnout', value: `${c.bowelTurnout}%`, badge: <SourceBadge id="sotkanetScreening" kind="direct" demo={false} how="2024, share of invited who attended (Sotkanet 6103)" /> },
-      { label: 'Cases 2035', value: `${growth >= 0 ? '+' : '−'}${pct(Math.abs(growth))}`, badge: <SourceBadge id="ourModel" kind="estimate" how="Today's cases × the change in people under and over 75 to 2035 (Statistics Finland 14wx), all four cancers. Today's case counts are demo values." /> },
+      { label: 'Cases 2035', value: `${growth >= 0 ? '+' : '−'}${pct(Math.abs(growth))}`, badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how="Cancer Registry cases 2020–24 × the change in people under and over 75 to 2035 (Statistics Finland 14wx), all four cancers." /> },
     ],
   }
 }

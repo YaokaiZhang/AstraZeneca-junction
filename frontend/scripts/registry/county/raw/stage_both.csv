@@ -1,0 +1,16 @@
+Cancer site;ICD-10;Cancer stage;Diagnosed cancer cases;Rate per 100,000;Rate per 100,000, age-standardised (Finland 2014);Rate per 100,000, age-standardised (world standard population)
+Liver;C22;Unknown;2498;8,98;7,9;3,29
+Liver;C22;Localized;77;0,28;0,25;0,12
+Liver;C22;Non-localized;379;1,36;1,23;0,61
+Pancreas;C25;Unknown;4394;15,79;13,66;5,04
+Pancreas;C25;Localized;78;0,28;0,25;0,11
+Pancreas;C25;Non-localized;2548;9,16;8,21;3,71
+Lung, trachea;C33-34;Unknown;8107;29,13;25,07;9,58
+Lung, trachea;C33-34;Localized;815;2,93;2,56;1,09
+Lung, trachea;C33-34;Non-localized;6050;21,74;19,35;8,46
+Colon and rectum;C18-20;Unknown;11115;39,94;35,69;15,19
+Colon and rectum;C18-20;Localized;924;3,32;3,02;1,3
+Colon and rectum;C18-20;Non-localized;8382;30,12;27,13;12,26
+Anus;C21;Unknown;307;1,1;1,01;0,47
+Anus;C21;Localized;13;0,05;0,04;0,02
+Anus;C21;Non-localized;63;0,23;0,21;0,11

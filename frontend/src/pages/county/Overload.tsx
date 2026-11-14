@@ -3,13 +3,13 @@ import { useMemo, useState } from 'react'
 import { Card, Display, SourceBadge, cx } from '../../components/ui'
 import { CANCERS, COUNTIES, countyById } from '../../data/counties'
 import { Seg, Slider, Spark, useWidth } from './bits'
-import { QUEUE_YEARS, RR75, YEARS, fmt, overloadYear, projection, queueRising, queueSlope, type ProjCancer } from './model'
+import { QUEUE_YEARS, YEARS, fmt, overloadYear, projection, queueRising, queueSlope, type ProjCancer } from './model'
 import type { TabProps } from './index'
 
 type SortKey = 'growth' | 'year' | 'queue' | 'name'
 
 const HOW = (h: number) =>
-  `cases(y) = cases₂₀₂₅ × [f75 × A75^t + (1−f75) × A<75^t], t = (y−2025)/10. A75 and A<75 = people 75+ and under 75 in 2035 ÷ 2025 (Statistics Finland projection, table 14wx). f75 = share of cases in people 75+, assuming ${RR75}× the incidence of younger people. Rates held at today's level. Overload = first year cases exceed 2025 by more than ${Math.round(h * 100)}%. Today's case counts are demo values.`
+  `cases(y) = cases today × [f75 × A75^t + (1−f75) × A<75^t], t = (y−2025)/10. Cases today = Cancer Registry mean 2020–24. A75 and A<75 = people 75+ and under 75 in 2035 ÷ 2025 (Statistics Finland projection, table 14wx). f75 = share of the county's cases expected in people 75+ at national age × sex rates (Cancer Registry 2020–24, population 2023). Rates held at today's level. Overload = first year cases exceed today by more than ${Math.round(h * 100)}%.`
 
 export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
   const [all, setAll] = useState(true)
@@ -67,7 +67,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
           <p className="font-type text-[15px] uppercase tracking-wider mt-3 flex flex-wrap items-baseline gap-x-2">
             <span className="font-serif text-2xl normal-case tracking-normal">{fmt(me.s[0])} → {fmt(me.s[10])}</span>
             <span className="opacity-80">cases / yr</span>
-            <SourceBadge id="ourModel" kind="estimate" how={HOW(headroom)} />
+            <SourceBadge id="ourModel" kind="estimate" demo={false} how={HOW(headroom)} />
           </p>
           <div ref={chartRef} className="mt-3">
           <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block max-w-full" role="img" aria-label="Projected cases 2025 to 2035">

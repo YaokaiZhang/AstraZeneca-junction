@@ -3,9 +3,10 @@
 
   python3 scripts/fetch_statfin.py            # writes scripts/data/statfin_*.json
 
-- Cancer deaths by wellbeing services county and cause, 2021-2025 (table 13u5, open PxWeb API).
 - Population by 5-year age band and sex per county, 31 Dec 2023 (table 11re, municipalities summed into
-  counties using the municipality list in src/pages/county/towns.ts). 2023 is the middle of 2021-2025.
+  counties using the municipality list in src/pages/county/towns.ts). Used for expected cases.
+- Cancer deaths by wellbeing services county and cause, 2021-2025 (table 13u5, open PxWeb API). Kept as a
+  cross-check: the app uses the Cancer Registry's own death counts, which match its case definitions.
 
 Then run scripts/build_cancer_data.py to regenerate src/data/registry.generated.ts.
 """

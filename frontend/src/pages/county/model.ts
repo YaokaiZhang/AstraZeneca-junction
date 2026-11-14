@@ -48,6 +48,8 @@ export function wilson(p: number, n: number): [number, number] {
 
 export interface MetricValue { v: number; lo: number; hi: number; n: number; wide: boolean }
 export const WIDE = 0.5 // relative interval width above which a county is de-emphasised
+/** Stage unknown for more than this share: the spread share mostly reflects reporting, so it is de-emphasised too. */
+export const UNKNOWN_MAX = 0.5
 
 export function metricValue(c: County, cancer: RadarCancerId, m: Metric): MetricValue {
   const f = figures(c, cancer)
@@ -59,8 +61,10 @@ export function metricValue(c: County, cancer: RadarCancerId, m: Metric): Metric
     const [a, b] = poissonCI(n)
     v = n / e; lo = a / e; hi = b / e
   } else if (m === 'late') {
+    // stage is a 5-year share: interval on the cases with known stage, not on all cases
     v = f.lateShare
-    ;[lo, hi] = wilson(v, n)
+    ;[lo, hi] = wilson(v, f.stageKnown)
+    return { v, lo, hi, n: f.stageKnown, wide: (hi - lo) / v > WIDE || f.unknownStage > UNKNOWN_MAX }
   } else {
     const d = f.deaths * y
     const [a, b] = poissonCI(d)
@@ -75,7 +79,7 @@ export function national(cancer: RadarCancerId, m: Metric): number {
   for (const c of COUNTIES) {
     const f = figures(c, cancer)
     if (m === 'ratio') { a += f.cases; b += f.expected }
-    else if (m === 'late') { a += f.lateShare * f.cases; b += f.cases }
+    else if (m === 'late') { a += f.lateShare * f.stageKnown; b += f.stageKnown }
     else { a += f.deaths; b += f.cases }
   }
   return a / b
@@ -103,15 +107,18 @@ export const NAT = {
 
 // ---------- 3.3 overload projection ----------
 export const YEARS = Array.from({ length: 11 }, (_, i) => 2025 + i)
-/** Relative incidence in people 75+ vs everyone younger (all four cancers, rough assumption). */
-export const RR75 = 4
 export type ProjCancer = CancerId | 'all'
 export function baseCases(c: County, cancer: ProjCancer) {
   return cancer === 'all' ? CANCERS.reduce((s, k) => s + c.cancers[k.id].cases, 0) : c.cancers[cancer].cases
 }
+/** Share of today's cases in people 75+: from national age × sex rates applied to the county's population. */
+export function share75(c: County, cancer: ProjCancer) {
+  if (cancer !== 'all') return c.cancers[cancer].exp75
+  return CANCERS.reduce((s, k) => s + c.cancers[k.id].exp75 * c.cancers[k.id].cases, 0) / baseCases(c, 'all')
+}
 export function projection(c: County, cancer: ProjCancer): number[] {
   const base = baseCases(c, cancer)
-  const f75 = (c.share75plus * RR75) / (c.share75plus * RR75 + (1 - c.share75plus))
+  const f75 = share75(c, cancer)
   return YEARS.map((y) => {
     const t = (y - 2025) / 10
     // age-specific rates held at today's level: only the number of people in each age group changes
@@ -147,7 +154,7 @@ export type StepId = 'risk' | 'screen' | 'late' | 'survival'
 export const STEPS: { id: StepId; n: number; label: string; short: string; stamp: string; worse: string }[] = [
   { id: 'risk', n: 1, label: 'At risk', short: 'Risk', stamp: 'Many at risk', worse: 'more high-risk people' },
   { id: 'screen', n: 2, label: 'Screened', short: 'Screen', stamp: 'Low turnout', worse: 'fewer take part' },
-  { id: 'late', n: 3, label: 'Found late', short: 'Late', stamp: 'Found late', worse: 'more found at stage III–IV' },
+  { id: 'late', n: 3, label: 'Found late', short: 'Late', stamp: 'Found late', worse: 'more found after spread' },
   { id: 'survival', n: 4, label: 'Survival', short: 'Survival', stamp: 'Few survive', worse: 'more deaths per new case' },
 ]
 export const stepInfo = (s: StepId) => STEPS.find((x) => x.id === s)!
@@ -281,6 +288,6 @@ export function weakestSentence(r: RadarRow, k: RadarCancerId) {
   const lbl = cancerLabel(k)
   if (r.weakest === 'risk') return `${lbl}: ${pct(s.v!)} of ${RISK[k].who} at high risk vs FI ${pct(s.nat!)}`
   if (r.weakest === 'screen') return `${lbl} screening turnout ${pct(s.v!, 1)} vs FI ${pct(s.nat!, 1)}`
-  if (r.weakest === 'late') return `${lbl} found late: ${pct(s.v!)} at stage III–IV vs FI ${pct(s.nat!)}`
+  if (r.weakest === 'late') return `${lbl} found late: ${pct(s.v!)} had spread (of known stage) vs FI ${pct(s.nat!)}`
   return `${lbl}: ${fmt(s.v!, 2)} deaths per new case vs FI ${fmt(s.nat!, 2)}`
 }

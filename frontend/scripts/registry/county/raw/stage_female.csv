@@ -1,0 +1,7 @@
+Cancer site;ICD-10;Cancer stage;Diagnosed cancer cases;Rate per 100,000;Rate per 100,000, age-standardised (Finland 2014);Rate per 100,000, age-standardised (world standard population)
+Breast;C50;Unknown;9303;66,13;60,13;32,15
+Breast;C50;Localized;7200;51,18;47,62;26,09
+Breast;C50;Non-localized;8807;62,61;57,41;32,52
+Cervix uteri;C53;Unknown;553;3,93;3,77;2,81
+Cervix uteri;C53;Localized;326;2,32;2,35;2,07
+Cervix uteri;C53;Non-localized;121;0,86;0,83;0,61

@@ -1,0 +1,116 @@
+Area;Cancer site;ICD-10;Cancer deaths;Mortality per 100,000;Mortality per 100,000, age-standardised (Finland 2014);Mortality per 100,000, age-standardised (world standard population)
+Whole country;Liver;C22;2472;8,88;7,73;3,07
+Whole country;Pancreas;C25;6546;23,52;20,44;7,69
+Whole country;Lung, trachea;C33-34;11519;41,39;35,79;13,73
+Whole country;Colon and rectum;C18-20;7024;25,24;21,95;8,1
+Whole country;Anus;C21;110;0,4;0,35;0,13
+East Uusimaa wellbeing services county;Liver;C22;45;9,11;7,77;3,19
+East Uusimaa wellbeing services county;Pancreas;C25;118;23,9;20,3;7,46
+East Uusimaa wellbeing services county;Lung, trachea;C33-34;238;48,2;41,13;15,68
+East Uusimaa wellbeing services county;Colon and rectum;C18-20;121;24,5;21,53;8,12
+East Uusimaa wellbeing services county;Anus;C21;;0,2;0,18;0,03
+Central Uusimaa wellbeing services county;Liver;C22;95;9,39;9,3;3,59
+Central Uusimaa wellbeing services county;Pancreas;C25;214;21,14;21,3;8,03
+Central Uusimaa wellbeing services county;Lung, trachea;C33-34;362;35,77;35,02;13,49
+Central Uusimaa wellbeing services county;Colon and rectum;C18-20;201;19,86;20,06;7,57
+Central Uusimaa wellbeing services county;Anus;C21;;0,4;0,41;0,14
+West Uusimaa wellbeing services county;Liver;C22;154;6,36;6,45;2,67
+West Uusimaa wellbeing services county;Pancreas;C25;460;19,01;20,43;7,43
+West Uusimaa wellbeing services county;Lung, trachea;C33-34;856;35,37;37,52;13,82
+West Uusimaa wellbeing services county;Colon and rectum;C18-20;472;19,5;21,2;7,73
+West Uusimaa wellbeing services county;Anus;C21;13;0,54;0,58;0,19
+Vantaa and Kerava wellbeing services county;Liver;C22;110;7,87;9,31;4
+Vantaa and Kerava wellbeing services county;Pancreas;C25;243;17,39;20,75;7,82
+Vantaa and Kerava wellbeing services county;Lung, trachea;C33-34;440;31,49;37,87;14,64
+Vantaa and Kerava wellbeing services county;Colon and rectum;C18-20;224;16,03;18,95;7,1
+Vantaa and Kerava wellbeing services county;Anus;C21;7;0,5;0,63;0,15
+Päijät-Häme wellbeing services county;Liver;C22;122;11,9;8,84;3,76
+Päijät-Häme wellbeing services county;Pancreas;C25;275;26,82;20,12;8,09
+Päijät-Häme wellbeing services county;Lung, trachea;C33-34;519;50,62;36,9;14,57
+Päijät-Häme wellbeing services county;Colon and rectum;C18-20;330;32,18;23,57;8,75
+Päijät-Häme wellbeing services county;Anus;C21;;0,39;0,28;0,09
+Kymenlaakso wellbeing services county;Liver;C22;88;10,95;7,85;3,36
+Kymenlaakso wellbeing services county;Pancreas;C25;277;34,48;23,99;9,02
+Kymenlaakso wellbeing services county;Lung, trachea;C33-34;476;59,26;40,09;15,14
+Kymenlaakso wellbeing services county;Colon and rectum;C18-20;300;37,35;25,76;9,22
+Kymenlaakso wellbeing services county;Anus;C21;;0,5;0,39;0,16
+South Karelia wellbeing services county;Liver;C22;78;12,38;8,83;3,6
+South Karelia wellbeing services county;Pancreas;C25;180;28,57;20,08;7,42
+South Karelia wellbeing services county;Lung, trachea;C33-34;291;46,19;32,86;12,97
+South Karelia wellbeing services county;Colon and rectum;C18-20;201;31,91;22,78;8,7
+South Karelia wellbeing services county;Anus;C21;0;0;0;0
+City of Helsinki;Liver;C22;234;7,04;7,77;2,95
+City of Helsinki;Pancreas;C25;604;18,18;20;7,02
+City of Helsinki;Lung, trachea;C33-34;1119;33,68;37,33;14,08
+City of Helsinki;Colon and rectum;C18-20;678;20,4;22,5;8,48
+City of Helsinki;Anus;C21;10;0,3;0,33;0,11
+South Savo wellbeing services county;Liver;C22;73;11,12;7,15;2,86
+South Savo wellbeing services county;Pancreas;C25;204;31,07;19,44;7,16
+South Savo wellbeing services county;Lung, trachea;C33-34;354;53,91;34,37;13,63
+South Savo wellbeing services county;Colon and rectum;C18-20;210;31,98;20,95;8,51
+South Savo wellbeing services county;Anus;C21;6;0,91;0,71;0,41
+North Savo wellbeing services county;Liver;C22;141;11,36;9,01;3,71
+North Savo wellbeing services county;Pancreas;C25;309;24,89;18,86;7,06
+North Savo wellbeing services county;Lung, trachea;C33-34;465;37,46;28,24;10,99
+North Savo wellbeing services county;Colon and rectum;C18-20;326;26,26;20,18;7,25
+North Savo wellbeing services county;Anus;C21;;0,16;0,14;0,06
+North Karelia wellbeing services county;Liver;C22;84;10,31;7,58;2,97
+North Karelia wellbeing services county;Pancreas;C25;224;27,49;20,46;7,94
+North Karelia wellbeing services county;Lung, trachea;C33-34;407;49,94;36,44;14,12
+North Karelia wellbeing services county;Colon and rectum;C18-20;207;25,4;18,85;6,79
+North Karelia wellbeing services county;Anus;C21;;0,25;0,17;0,04
+Central Finland wellbeing services county;Liver;C22;89;6,52;5,49;2,17
+Central Finland wellbeing services county;Pancreas;C25;312;22,87;19,19;7,44
+Central Finland wellbeing services county;Lung, trachea;C33-34;484;35,47;29,3;11,18
+Central Finland wellbeing services county;Colon and rectum;C18-20;346;25,36;21,36;7,7
+Central Finland wellbeing services county;Anus;C21;5;0,37;0,32;0,16
+Kanta-Häme wellbeing services county;Liver;C22;77;9,06;6,92;2,86
+Kanta-Häme wellbeing services county;Pancreas;C25;233;27,41;20,48;7,89
+Kanta-Häme wellbeing services county;Lung, trachea;C33-34;423;49,76;37,57;14,53
+Kanta-Häme wellbeing services county;Colon and rectum;C18-20;238;28;21,13;7,77
+Kanta-Häme wellbeing services county;Anus;C21;;0,24;0,18;0,1
+Pirkanmaa wellbeing services county;Liver;C22;201;7,57;6,89;2,67
+Pirkanmaa wellbeing services county;Pancreas;C25;551;20,75;18,54;6,91
+Pirkanmaa wellbeing services county;Lung, trachea;C33-34;936;35,25;31,61;12,13
+Pirkanmaa wellbeing services county;Colon and rectum;C18-20;701;26,4;23,5;8,62
+Pirkanmaa wellbeing services county;Anus;C21;14;0,53;0,47;0,15
+South Ostrobothnia wellbeing services county;Liver;C22;98;10,24;7,82;3,03
+South Ostrobothnia wellbeing services county;Pancreas;C25;298;31,15;24,16;9,54
+South Ostrobothnia wellbeing services county;Lung, trachea;C33-34;408;42,64;32,55;12,81
+South Ostrobothnia wellbeing services county;Colon and rectum;C18-20;312;32,61;24,75;8,92
+South Ostrobothnia wellbeing services county;Anus;C21;0;0;0;0
+Southwest Finland wellbeing services county;Liver;C22;215;8,85;7,45;3,02
+Southwest Finland wellbeing services county;Pancreas;C25;574;23,64;19,51;7,11
+Southwest Finland wellbeing services county;Lung, trachea;C33-34;1037;42,7;35,85;13,73
+Southwest Finland wellbeing services county;Colon and rectum;C18-20;666;27,43;22,88;8,33
+Southwest Finland wellbeing services county;Anus;C21;10;0,41;0,32;0,09
+Satakunta wellbeing services county;Liver;C22;107;10,02;7,33;2,98
+Satakunta wellbeing services county;Pancreas;C25;315;29,49;21,53;8,37
+Satakunta wellbeing services county;Lung, trachea;C33-34;566;53;38,44;15,26
+Satakunta wellbeing services county;Colon and rectum;C18-20;387;36,24;25,84;9,61
+Satakunta wellbeing services county;Anus;C21;6;0,56;0,47;0,22
+Ostrobothnia wellbeing services county;Liver;C22;86;9,74;7,91;2,79
+Ostrobothnia wellbeing services county;Pancreas;C25;211;23,89;19,94;7,66
+Ostrobothnia wellbeing services county;Lung, trachea;C33-34;352;39,86;33,71;12,64
+Ostrobothnia wellbeing services county;Colon and rectum;C18-20;227;25,7;21,5;7,94
+Ostrobothnia wellbeing services county;Anus;C21;;0,45;0,38;0,13
+Central Ostrobothnia wellbeing services county;Liver;C22;31;9,13;7,67;2,65
+Central Ostrobothnia wellbeing services county;Pancreas;C25;86;25,34;20,91;7,7
+Central Ostrobothnia wellbeing services county;Lung, trachea;C33-34;122;35,95;29,74;10,91
+Central Ostrobothnia wellbeing services county;Colon and rectum;C18-20;93;27,4;22,98;8,34
+Central Ostrobothnia wellbeing services county;Anus;C21;;1,18;1,06;0,6
+North Ostrobothnia wellbeing services county;Liver;C22;189;9,09;8,9;3,51
+North Ostrobothnia wellbeing services county;Pancreas;C25;443;21,3;20,78;8,04
+North Ostrobothnia wellbeing services county;Lung, trachea;C33-34;824;39,62;38,65;15
+North Ostrobothnia wellbeing services county;Colon and rectum;C18-20;411;19,76;19,29;7,15
+North Ostrobothnia wellbeing services county;Anus;C21;7;0,34;0,31;0,14
+Kainuu wellbeing services county;Liver;C22;40;11,28;7,42;2,57
+Kainuu wellbeing services county;Pancreas;C25;135;38,07;26,9;10,74
+Kainuu wellbeing services county;Lung, trachea;C33-34;207;58,38;39,94;15,8
+Kainuu wellbeing services county;Colon and rectum;C18-20;110;31,02;21,29;8,32
+Kainuu wellbeing services county;Anus;C21;;0,56;0,37;0,07
+Lapland wellbeing services county;Liver;C22;111;12,59;9,61;3,72
+Lapland wellbeing services county;Pancreas;C25;238;26,99;20,93;8,1
+Lapland wellbeing services county;Lung, trachea;C33-34;550;62,38;46,79;17,4
+Lapland wellbeing services county;Colon and rectum;C18-20;212;24,04;18,56;6,83
+Lapland wellbeing services county;Anus;C21;;0,23;0,19;0,07

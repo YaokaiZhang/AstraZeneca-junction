@@ -6,7 +6,7 @@ import { countyById, type RadarCancerId } from '../../data/counties'
 import { Legend, Seg } from './bits'
 import { TileMap } from './TileMap'
 import {
-  POOL_YEARS, RADAR_CANCERS, REAL_RANGE, RISK, STEPS, figures, fmt, formatStep, pct, periodLabel,
+  POOL_YEARS, RADAR_CANCERS, REAL_RANGE, RISK, STEPS, UNKNOWN_MAX, figures, fmt, formatStep, pct, periodLabel,
   radar, rangeText, scaleColor, stepInfo, type RadarRow, type StepId,
 } from './model'
 import { PROGRAMMES, TOWNS } from './towns'
@@ -28,14 +28,20 @@ export function stepBadge(s: StepId, k: RadarCancerId, row?: RadarRow) {
     return <SourceBadge id="sotkanetScreening" kind="direct" demo={false} how={`2024 share of invited ${R.who} who took part (Sotkanet ${p.indicator}). FI line = whole-country figure. Missed vs FI = invited × (FI turnout − county turnout), an estimate.`} />
   }
   const st = row?.steps[s]
-  const range = st && st.lo != null ? ` 95% range ${formatStep(s, st.lo)}–${formatStep(s, st.hi!)} (${s === 'late' ? 'Wilson' : 'Poisson'} interval on ${fmt(figures(row!.c, k).cases * POOL_YEARS[k])} cases).` : ''
-  if (s === 'late') return <SourceBadge id="cancerRegistry" kind="direct" how={`Share of new cases found at stage III–IV. Extra late vs FI = cases × (county share − FI share).${pooled}${range}`} />
-  return <SourceBadge id="ourModel" kind="estimate" how={`deaths (Statistics Finland) ÷ new cases (Cancer Registry). Survival stand-in: official survival exists only for 5 large regions.${pooled}${range}`} />
+  const f = row ? figures(row.c, k) : null
+  if (s === 'late') {
+    const range = st && st.lo != null && f ? ` 95% range ${formatStep(s, st.lo)}–${formatStep(s, st.hi!)} (Wilson interval on ${fmt(f.stageKnown)} cases with known stage).` : ''
+    const unk = f ? ` Stage unknown for ${pct(f.unknownStage)} here${f.unknownStage > UNKNOWN_MAX ? ', so this step counts half' : ''}.` : ''
+    const hidden = f?.stageHidden ? ' A count of 1–4 is hidden by the Registry and taken as 2.5.' : ''
+    return <SourceBadge id="cancerRegistry" kind="direct" demo={false} how={`Share that had spread beyond the organ at diagnosis (non-localized), of cases with known stage, 2021–25 preliminary statistics. Not the same as stage III–IV.${unk}${hidden} Extra late vs FI = cases × (county share − FI share).${range}`} />
+  }
+  const range = st && st.lo != null && f ? ` 95% range ${formatStep(s, st.lo)}–${formatStep(s, st.hi!)} (Poisson interval on ${fmt(f.deaths * POOL_YEARS[k])} deaths).` : ''
+  return <SourceBadge id="ourModel" kind="estimate" demo={false} how={`Cancer deaths ÷ new cases, Cancer Registry 2020–24. Survival stand-in: official survival exists only for 5 large regions.${pooled}${range}`} />
 }
 
 const weakBadge = (
-  <SourceBadge id="ourModel" kind="estimate"
-    how="Each step is scored against the other 21 counties (standard score, worse = higher). The weakest step is the one with the highest score. Small pooled counts with a wide 95% range count half. Steps without a screening programme are skipped." />
+  <SourceBadge id="ourModel" kind="estimate" demo={false}
+    how="Each step is scored against the other 21 counties (standard score, worse = higher). The weakest step is the one with the highest score. Small pooled counts with a wide 95% range, and stage shares where most stages are unknown, count half. Steps without a screening programme are skipped." />
 )
 
 /** z → 0..1 for the paper → mustard → terra scale. */
@@ -193,7 +199,7 @@ function Funnel({ row, k }: { row: RadarRow; k: RadarCancerId }) {
               </p>
               {st.lo != null && (
                 <p className={cx('font-type text-sm mt-2 tracking-wide', !isWeak && 'opacity-70', st.wide && !isWeak && 'text-terra !opacity-100')}>
-                  95%: {rangeText(s.id, st)}{st.wide ? ' · wide' : ''}
+                  95%: {rangeText(s.id, st)}{s.id === 'late' && figures(row.c, k).unknownStage > UNKNOWN_MAX ? ` · ${pct(figures(row.c, k).unknownStage)} unknown` : st.wide ? ' · wide' : ''}
                 </p>
               )}
               {lost && <p className="font-serif italic text-lg sm:text-xl mt-2 leading-tight">{lost}</p>}

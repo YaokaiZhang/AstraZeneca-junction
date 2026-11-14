@@ -15,7 +15,7 @@ const SOTKANET = (n: string) => `https://sotkanet.fi/sotkanet/en/metadata/indica
 const ind = (...n: string[]) => n.map((x) => ({ label: `Sotkanet ${x}`, url: SOTKANET(x) }))
 
 export const SOURCES: Record<string, Source> = {
-  cancerRegistry: { id: 'cancerRegistry', name: 'Finnish Cancer Registry statistics', url: 'https://cancerregistry.fi/statistics/', note: 'Cancer cases, deaths and stage at diagnosis by county (CSV download)' },
+  cancerRegistry: { id: 'cancerRegistry', name: 'Finnish Cancer Registry statistics', url: 'https://cancerregistry.fi/statistics/', note: 'Statistics app, retrieved 14 Nov 2026 (CC BY 4.0). Cases and deaths by county, 2020–24; stage (localized / non-localized / unknown) by county, preliminary 2021–25; national rates by age and sex' },
   cancerRegistryScreening: { id: 'cancerRegistryScreening', name: 'Finnish Cancer Registry – screening statistics', url: 'https://cancerregistry.fi/screening/', note: 'Screening positivity and detection rates' },
   statfinDeaths: { id: 'statfinDeaths', name: 'Statistics Finland – causes of death', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__ksyyt/', note: 'Cancer deaths by wellbeing services county, 1969–2025 (table 13u5)' },
   statfinPop: { id: 'statfinPop', name: 'Statistics Finland – population structure', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/', note: 'Key figures by municipality, 2024 (table 11ra): residents, share 65+, Swedish and foreign-language speakers' },
@@ -36,5 +36,5 @@ export const SOURCES: Record<string, Source> = {
   demoPatients: { id: 'demoPatients', name: 'Synthetic demo patients', note: 'Generated from county case volumes; not real people' },
 }
 
-/** County cancer cases, deaths and stage are placeholders until the Cancer Registry CSV pull is wired in. */
-export const DEMO_DATA = true
+/** County cancer cases, deaths and stage now come from the Cancer Registry. */
+export const DEMO_DATA = false

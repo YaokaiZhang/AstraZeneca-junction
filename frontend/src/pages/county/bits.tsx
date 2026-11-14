@@ -75,7 +75,7 @@ export function Seg<T extends string>({ items, value, onChange, className }: { i
 
 export function Tear({ left, right, className }: { left?: ReactNode; right?: ReactNode; className?: string }) {
   return (
-    <div className={cx('tear pt-2 flex items-center justify-between font-type text-[13px] uppercase tracking-wider opacity-70', className)}>
+    <div className={cx('tear pt-2 flex items-center justify-between font-type text-sm uppercase tracking-wider opacity-70', className)}>
       <span>{left}</span><span>{right}</span>
     </div>
   )
@@ -88,7 +88,7 @@ export function CountyStyles() {
       .county-range { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 9999px; outline-offset: 6px; }
       .county-range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 9999px; background: #FFC233; border: 2px solid #1F1F1F; cursor: grab; }
       .county-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 9999px; background: #FFC233; border: 2px solid #1F1F1F; cursor: grab; }
-      .county-root button.w-4.h-4.bg-mustard { box-shadow: inset 0 0 0 1px rgba(31,31,31,.75); }
+      .county-root button.w-5.h-5.bg-mustard { box-shadow: inset 0 0 0 1px rgba(31,31,31,.75); }
       .county-root .rounded-lg.paper-texture:not(.clip) { overflow: visible; }
       .county-root .rounded-lg.paper-texture::before { border-radius: inherit; }
       .county-root .rounded-lg.paper-texture:focus-within, .county-root .rounded-lg.paper-texture:has(span.rise.absolute) { z-index: 30; }

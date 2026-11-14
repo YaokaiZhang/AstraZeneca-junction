@@ -30,7 +30,7 @@ export default function Layout() {
           {NAV.map((n) => {
             const active = pathname.startsWith(n.to)
             return (
-              <NavLink key={n.to} to={n.to} className={cx('group font-type uppercase text-[13px] sm:text-sm lg:text-sm tracking-wider sm:tracking-widest hover:text-terra transition-colors', !active && 'opacity-50')}>
+              <NavLink key={n.to} to={n.to} className={cx('group font-type uppercase text-sm tracking-wider sm:tracking-widest hover:text-terra transition-colors', !active && 'opacity-50')}>
                 <span className="flex items-center gap-2">
                   {active && <span className="w-1.5 h-1.5 bg-terra rounded-full" />}
                   {n.label}

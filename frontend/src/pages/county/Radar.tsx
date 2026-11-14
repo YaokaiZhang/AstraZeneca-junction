@@ -7,7 +7,7 @@ import { Legend, Seg } from './bits'
 import { TileMap } from './TileMap'
 import {
   POOL_YEARS, RADAR_CANCERS, REAL_RANGE, RISK, STEPS, figures, fmt, formatStep, pct, periodLabel,
-  radar, scaleColor, stepInfo, type RadarRow, type StepId,
+  radar, rangeText, scaleColor, stepInfo, type RadarRow, type StepId,
 } from './model'
 import { PROGRAMMES, TOWNS } from './towns'
 import type { TabProps } from './index'
@@ -19,16 +19,18 @@ export function stepBadge(s: StepId, k: RadarCancerId, row?: RadarRow) {
   const pooled = POOL_YEARS[k] > 1 ? ` Counts pooled over ${POOL_YEARS[k]} years.` : ''
   const R = RISK[k]
   if (s === 'risk') return (
-    <SourceBadge id="sotkanetRisk" kind="estimate"
-      how={<>high-risk people = residents (Statistics Finland) × share who are {R.who} × prevalence of {R.factor} (THL Sotkanet 4404, 4411, 4459, 5527).{row ? <><br /><br />{fmt(row.bandPop)} × {pct(row.steps.risk.v!, 1)} = {fmt(row.highRisk)}</> : null}</>} />
+    <SourceBadge id="sotkanetRisk" kind="estimate" demo={false}
+      how={<>high-risk people = residents 2025 (Statistics Finland 14wx) × share who are {R.who} × prevalence of {R.factor} (THL Sotkanet 2024). The county prevalence is applied to the age band as is.{row ? <><br /><br />{fmt(row.bandPop)} × {pct(row.steps.risk.v!, 1)} = {fmt(row.highRisk)}</> : null}</>} />
   )
   if (s === 'screen') {
     const p = PROGRAMMES.find((x) => x.id === row?.programme || x.id === k)
     if (!p) return <SourceBadge id="screeningRules" kind="gap" how="Finland has no national screening programme for this cancer. Lung CT screening exists only as research pilots." />
-    return <SourceBadge id="sotkanetScreening" kind="direct" how={`Share of invited ${R.who} who took part (Sotkanet ${p.indicator}). Missed vs FI = invited × (FI turnout − county turnout).`} />
+    return <SourceBadge id="sotkanetScreening" kind="direct" demo={false} how={`2024 share of invited ${R.who} who took part (Sotkanet ${p.indicator}). FI line = whole-country figure. Missed vs FI = invited × (FI turnout − county turnout), an estimate.`} />
   }
-  if (s === 'late') return <SourceBadge id="cancerRegistry" kind="direct" how={`Share of new cases found at stage III–IV. Extra late vs FI = cases × (county share − FI share).${pooled}`} />
-  return <SourceBadge id="ourModel" kind="estimate" how={`deaths (Statistics Finland) ÷ new cases (Cancer Registry). Survival stand-in: official survival exists only for 5 large regions.${pooled}`} />
+  const st = row?.steps[s]
+  const range = st && st.lo != null ? ` 95% range ${formatStep(s, st.lo)}–${formatStep(s, st.hi!)} (${s === 'late' ? 'Wilson' : 'Poisson'} interval on ${fmt(figures(row!.c, k).cases * POOL_YEARS[k])} cases).` : ''
+  if (s === 'late') return <SourceBadge id="cancerRegistry" kind="direct" how={`Share of new cases found at stage III–IV. Extra late vs FI = cases × (county share − FI share).${pooled}${range}`} />
+  return <SourceBadge id="ourModel" kind="estimate" how={`deaths (Statistics Finland) ÷ new cases (Cancer Registry). Survival stand-in: official survival exists only for 5 large regions.${pooled}${range}`} />
 }
 
 const weakBadge = (
@@ -82,7 +84,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
               return (
                 <>
                   <span className="block text-mustard text-sm">Weakest: {stepInfo(r.weakest).n} · {stepInfo(r.weakest).label}</span>
-                  {by !== 'weakest' && <span className="block">{stepInfo(by).label}: {formatStep(by, r.steps[by].v)}</span>}
+                  {by !== 'weakest' && <span className="block">{stepInfo(by).label}: {formatStep(by, r.steps[by].v)}{rangeText(by, r.steps[by]) ? ` (${rangeText(by, r.steps[by])})` : ''}</span>}
                   <span className="block">{fmt(r.highRisk)} high-risk</span>
                   <span className="block">{fmt(figures(r.c, k).cases * POOL_YEARS[k])} cases {pooled ? '(5 yrs)' : '/ yr'}</span>
                 </>
@@ -102,7 +104,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
         </Card>
 
         <Card tone="stone" tilt={0.6} className="p-4 sm:p-6 min-w-0">
-          <div className="grid grid-cols-[1.4rem_minmax(0,1fr)_6rem_3rem] gap-2 px-2 pb-2 border-b border-black/10 font-type text-[13px] uppercase tracking-wider opacity-70">
+          <div className="grid grid-cols-[1.4rem_minmax(0,1fr)_6rem_3rem] gap-2 px-2 pb-2 border-b border-black/10 font-type text-sm uppercase tracking-wider opacity-70">
             <span />
             <span>County</span>
             <span className="flex items-center gap-1">Weakest {weakBadge}</span>
@@ -131,7 +133,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
         </Card>
       </div>
 
-      <Towns row={me} k={k} />
+      <Towns key={me.c.id} row={me} k={k} />
     </div>
   )
 }
@@ -141,7 +143,7 @@ const tileLabel = (s: StepId, v: number | null) => (v == null ? '' : s === 'surv
 
 /** Short human line for the people lost at the weakest step. */
 function lostLine(s: StepId, x: number | null): string | null {
-  if (x == null || x <= 0) return null
+  if (x == null || Math.round(x) < 1) return null
   const n = fmt(Math.round(x))
   return s === 'risk' ? `+${n} people vs FI rate`
     : s === 'screen' ? `+${n} missed vs FI rate`
@@ -189,6 +191,11 @@ function Funnel({ row, k }: { row: RadarRow; k: RadarCancerId }) {
               <p className={cx('font-serif leading-none mt-3 flex items-baseline gap-1.5 flex-wrap', isWeak ? 'text-5xl sm:text-6xl' : 'text-2xl sm:text-4xl', !isWeak && !none && 'opacity-80')}>
                 {main} {stepBadge(s.id, k, row)}
               </p>
+              {st.lo != null && (
+                <p className={cx('font-type text-sm mt-2 tracking-wide', !isWeak && 'opacity-70', st.wide && !isWeak && 'text-terra !opacity-100')}>
+                  95%: {rangeText(s.id, st)}{st.wide ? ' · wide' : ''}
+                </p>
+              )}
               {lost && <p className="font-serif italic text-lg sm:text-xl mt-2 leading-tight">{lost}</p>}
               <div className="mt-auto pt-5">
                 {st.v != null && (
@@ -197,7 +204,7 @@ function Funnel({ row, k }: { row: RadarRow; k: RadarCancerId }) {
                     {st.nat != null && (
                       <div className="absolute -top-1.5 -bottom-1.5" style={{ left: `${(st.nat / top) * 100}%` }}>
                         <div className={cx('h-full border-l-2', isWeak ? 'border-ink' : 'border-terra')} />
-                        <span className={cx('absolute top-full mt-0.5 -translate-x-1/2 font-type text-[13px] tracking-wider', isWeak ? 'text-ink' : 'text-terra')}>FI</span>
+                        <span className={cx('absolute top-full mt-0.5 -translate-x-1/2 font-type text-sm tracking-wider', isWeak ? 'text-ink' : 'text-terra')}>FI</span>
                       </div>
                     )}
                   </div>
@@ -214,7 +221,10 @@ function Funnel({ row, k }: { row: RadarRow; k: RadarCancerId }) {
 }
 
 /** Town drill-down: the two steps that exist at town level (high-risk estimate and turnout). */
+const TOWN_ROWS = 10
+
 function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
+  const [all, setAll] = useState(false)
   const c = row.c
   const towns = TOWNS.filter((t) => t.county === c.id)
   const prog = row.programme
@@ -243,7 +253,7 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
     <Card tone="paper" tilt={0.3} className="mt-10 p-4 sm:p-6">
       <p className="font-serif text-2xl leading-tight">Towns in {county.name}</p>
 
-      <div className={cx('mt-3 grid gap-2 sm:gap-3 px-1 pb-2 border-b border-black/10 font-type text-[13px] uppercase tracking-wider opacity-70 items-center', cols)}>
+      <div className={cx('mt-3 grid gap-2 sm:gap-3 px-1 pb-2 border-b border-black/10 font-type text-sm uppercase tracking-wider opacity-70 items-center', cols)}>
         <span />
         <span className="flex items-center gap-1 whitespace-nowrap">High risk {stepBadge('risk', k)}</span>
         {prog && (
@@ -254,7 +264,7 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
         )}
       </div>
       <ul className="mt-1">
-        {list.map((d, i) => {
+        {(all ? list : list.slice(0, TOWN_ROWS)).map((d, i) => {
           const worst = prog ? i === 0 : false
           return (
             <li key={d.t.id} className={cx('grid gap-2 sm:gap-3 items-center py-1.5 px-1 border-b border-black/5', cols)}>
@@ -279,6 +289,11 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
           )
         })}
       </ul>
+      {list.length > TOWN_ROWS && (
+        <button onClick={() => setAll((a) => !a)} className="mt-3 font-type text-sm uppercase tracking-wider underline underline-offset-4 hover:text-terra">
+          {all ? `Show ${TOWN_ROWS} ${prog ? 'lowest' : 'largest'}` : `Show all ${list.length} towns`}
+        </button>
+      )}
       {prog && (
         <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-type text-sm uppercase tracking-wider opacity-70">
           <span className="flex items-center gap-1.5"><span className="h-3 border-l border-ink/60" />{county.name} {countyT != null ? fmt(countyT, 1) : ''}%</span>

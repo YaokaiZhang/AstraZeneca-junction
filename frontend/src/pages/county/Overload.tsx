@@ -3,13 +3,13 @@ import { useMemo, useState } from 'react'
 import { Card, Display, SourceBadge, cx } from '../../components/ui'
 import { CANCERS, COUNTIES, countyById } from '../../data/counties'
 import { Seg, Slider, Spark, useWidth } from './bits'
-import { YEARS, fmt, overloadYear, projection, queueRising, queueSlope, type ProjCancer } from './model'
+import { QUEUE_YEARS, RR75, YEARS, fmt, overloadYear, projection, queueRising, queueSlope, type ProjCancer } from './model'
 import type { TabProps } from './index'
 
 type SortKey = 'growth' | 'year' | 'queue' | 'name'
 
 const HOW = (h: number) =>
-  `cases(y) = cases₂₀₂₅ × [f75 × ageingIndex^((y−2025)/10) + (1−f75) × (1 + 0.02·t)], f75 = share of cases in people 75+ (incidence ×4). Overload = first year cases exceed 2025 by more than ${Math.round(h * 100)}%.`
+  `cases(y) = cases₂₀₂₅ × [f75 × A75^t + (1−f75) × A<75^t], t = (y−2025)/10. A75 and A<75 = people 75+ and under 75 in 2035 ÷ 2025 (Statistics Finland projection, table 14wx). f75 = share of cases in people 75+, assuming ${RR75}× the incidence of younger people. Rates held at today's level. Overload = first year cases exceed 2025 by more than ${Math.round(h * 100)}%. Today's case counts are demo values.`
 
 export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
   const [all, setAll] = useState(true)
@@ -26,7 +26,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
     const d = sort.k === 'name' ? a.c.name.localeCompare(b.c.name)
       : sort.k === 'growth' ? a.growth - b.growth
       : sort.k === 'year' ? (a.year ?? 9999) - (b.year ?? 9999)
-      : a.slope - b.slope
+      : (a.slope ?? -Infinity) - (b.slope ?? -Infinity)
     return sort.desc ? -d : d
   })
 
@@ -34,7 +34,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
   const me = rows.find((r) => r.c.id === countyId)!
   const county = countyById(countyId)!
   // main chart geometry
-  const W = cw, H = 230, M = { l: 44, r: 16, t: 18, b: 28 }
+  const W = cw, H = 230, M = { l: 50, r: 16, t: 18, b: 28 }
   const ymax = Math.max(me.s[10], me.s[0] * (1 + headroom)) * 1.08
   const ymin = me.s[0] * 0.85
   const sx = (i: number) => M.l + (i / 10) * (W - M.l - M.r)
@@ -72,17 +72,17 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
           <div ref={chartRef} className="mt-3">
           <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block max-w-full" role="img" aria-label="Projected cases 2025 to 2035">
             {[0, 2, 4, 6, 8, 10].map((i) => (
-              <text key={i} x={sx(i)} y={H - 8} textAnchor="middle" className="font-type" style={{ fontSize: 12 }} fill="currentColor" opacity=".7">{YEARS[i]}</text>
+              <text key={i} x={sx(i)} y={H - 8} textAnchor="middle" className="font-type" style={{ fontSize: 14 }} fill="currentColor" opacity=".7">{YEARS[i]}</text>
             ))}
             {[ymin, (ymin + ymax) / 2, ymax].map((v) => (
               <g key={v}>
                 <line x1={M.l} x2={W - M.r} y1={sy(v)} y2={sy(v)} stroke="currentColor" strokeOpacity=".12" />
-                <text x={M.l - 6} y={sy(v) + 3} textAnchor="end" className="font-type" style={{ fontSize: 12 }} fill="currentColor" opacity=".7">{fmt(v)}</text>
+                <text x={M.l - 6} y={sy(v) + 3} textAnchor="end" className="font-type" style={{ fontSize: 14 }} fill="currentColor" opacity=".7">{fmt(v)}</text>
               </g>
             ))}
             <path d={`${line}L${sx(10)},${H - M.b}L${sx(0)},${H - M.b}Z`} fill="currentColor" fillOpacity=".12" />
             <line x1={M.l} x2={W - M.r} y1={sy(cap)} y2={sy(cap)} stroke="currentColor" strokeDasharray="5 4" strokeWidth={1.2} />
-            <text x={W - M.r} y={sy(cap) - 5} textAnchor="end" className="font-type uppercase" style={{ fontSize: 11, letterSpacing: '.1em' }} fill="currentColor">capacity +{Math.round(headroom * 100)}%</text>
+            <text x={W - M.r} y={sy(cap) - 5} textAnchor="end" className="font-type uppercase" style={{ fontSize: 14, letterSpacing: '.08em' }} fill="currentColor">capacity +{Math.round(headroom * 100)}%</text>
             <path d={line} fill="none" stroke="currentColor" strokeWidth={2.2} />
             {yi >= 0 && (
               <g>
@@ -96,12 +96,21 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
             <Slider label="Spare capacity" value={headroom} min={0.05} max={0.4} step={0.05} onChange={setHeadroom}
               display={`+${Math.round(headroom * 100)}%`} />
           </div>
-          <div className="mt-4 flex items-center gap-3 font-type text-[15px] uppercase tracking-wider">
-            <span>Queue &gt;90 d</span>
-            <Spark values={county.queueTrend} w={70} h={22} mark={3} stroke="currentColor" fill="rgba(0,0,0,.08)" />
-            <span>{county.queueTrend[0]} → {county.queueTrend[3]} /10k</span>
-            <SourceBadge id="sotkanetQueue" kind="direct" />
-            {me.rising && <span className="text-mustard">▲</span>}
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-type text-[15px] uppercase tracking-wider">
+            <span>Waited &gt; 6 months</span>
+            {county.queueTrend ? (
+              <>
+                <Spark values={county.queueTrend} w={70} h={22} mark={3} stroke="currentColor" fill="rgba(0,0,0,.08)" />
+                <span>{fmt(county.queueTrend[0], 1)} → {fmt(county.queueTrend[3], 1)} /10k</span>
+                <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how={`Per 10 000 residents, ${QUEUE_YEARS.map((y, i) => `${y}: ${fmt(county.queueTrend![i], 1)}`).join(' · ')}. Growing = 2022–25 trend above +2 a year.`} />
+                {me.rising && <span className={cx('normal-case', me.year ? 'text-mustard' : 'text-terra')}>▲ already growing</span>}
+              </>
+            ) : (
+              <>
+                <span className="normal-case italic font-serif text-lg tracking-normal">not published</span>
+                <SourceBadge id="sotkanetQueue" kind="gap" how="THL publishes no full 2022–25 series of indicator 3336 for this county (HUS-area counties and Helsinki)." />
+              </>
+            )}
           </div>
         </Card>
 
@@ -119,16 +128,23 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
                   className={cx('w-full grid grid-cols-[minmax(0,1fr)_3.2rem_3.2rem_4.5rem] gap-2 items-center py-1.5 px-1.5 rounded text-left',
                     r.c.id === countyId ? 'bg-mustard' : 'hover:bg-black/5')}>
                   <span className="font-serif text-base leading-tight truncate">{r.c.name}</span>
-                  <span className="font-type text-sm text-right tabular-nums">+{Math.round(r.growth * 100)}%</span>
+                  <span className="font-type text-sm text-right tabular-nums">{r.growth >= 0 ? '+' : '−'}{Math.abs(Math.round(r.growth * 100))}%</span>
                   <span className={cx('font-type text-sm text-right tabular-nums', r.year != null && 'text-terra font-bold')}>{r.year ?? '—'}</span>
                   <span className="flex items-center justify-end gap-1">
-                    <Spark values={r.c.queueTrend} w={34} h={14} stroke={r.rising ? '#C65D3B' : '#1F1F1F'} fill="transparent" />
+                    {r.c.queueTrend
+                      ? <Spark values={r.c.queueTrend} w={34} h={14} stroke={r.rising ? '#C65D3B' : '#1F1F1F'} fill="transparent" />
+                      : <span className="font-type text-sm opacity-50">n/a</span>}
                     <span className={cx('font-type text-sm w-3', r.rising ? 'text-terra' : 'opacity-30')}>{r.rising ? '▲' : '·'}</span>
                   </span>
                 </button>
               </li>
             ))}
           </ul>
+          <p className="mt-3 px-1.5 font-type text-sm uppercase tracking-wider flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-terra">▲ {rows.filter((r) => r.rising).length} waiting lists already growing</span>
+            <span className="opacity-60">n/a = not published</span>
+            <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how="Sotkanet 3336, 2022–25: patients who waited over 6 months for specialist care, per 10 000 residents. Growing = least-squares trend above +2 a year and 2025 above 2022." />
+          </p>
         </Card>
       </div>
     </div>

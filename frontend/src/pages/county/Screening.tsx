@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react'
 import { Card, Display, Label, SourceBadge, cx } from '../../components/ui'
 import { countyById } from '../../data/counties'
-import { Seg } from './bits'
+import { Seg, useWidth } from './bits'
 import { fmt } from './model'
 import { FEATURES, PROGRAMMES, TOWNS, fitModel, verdict, type Programme, type Town, type Verdict } from './towns'
 import type { TabProps } from './index'
@@ -10,13 +10,15 @@ import type { TabProps } from './index'
 const VC: Record<Verdict, string> = { help: '#C65D3B', copy: '#5E6B4E', ok: '#D1D1C9' }
 const VL: Record<Verdict, string> = { help: 'Needs help', copy: 'Worth copying', ok: 'As predicted' }
 
-const W = 520, H = 400, M = { l: 40, r: 14, t: 14, b: 34 }
+const M = { l: 44, r: 14, t: 16, b: 44 }
 
 export function Screening({ countyId, select }: TabProps) {
   const [prog, setProg] = useState<Programme>('bowel')
   const [townId, setTownId] = useState<string | null>(null)
   const [scope, setScope] = useState<'county' | 'all'>('county')
   const fit = useMemo(() => fitModel(prog), [prog])
+  const [chartRef, W] = useWidth<HTMLDivElement>(520)
+  const H = Math.round(Math.min(440, Math.max(320, W * 0.78)))
 
   const pts = useMemo(() => TOWNS.map((t) => {
     const p = fit.predicted.get(t.id)!
@@ -51,8 +53,8 @@ export function Screening({ countyId, select }: TabProps) {
   const pick = (t: Town) => { setTownId(t.id); if (t.county !== countyId) select(t.county) }
 
   const fitBadge = (
-    <SourceBadge id="ourModel" kind="estimate"
-      how={<>{fit.formula}<br /><br />Least squares over {TOWNS.length} towns · R² {fit.r2.toFixed(2)} · outlier = ±1.5 × residual SD ({fit.sd.toFixed(1)} pts)</>} />
+    <SourceBadge id="ourModel" kind="estimate" demo={false}
+      how={<>{fit.formula}<br /><br />Inputs: Statistics Finland 11ra and 14ww, 2024. Turnout: Sotkanet {PROGRAMMES.find((p) => p.id === prog)!.indicator}, 2024. Least squares over all {TOWNS.length} municipalities · R² {fit.r2.toFixed(2)} · outlier = ±1.5 × residual SD ({fit.sd.toFixed(1)} pts)</>} />
   )
 
   return (
@@ -78,22 +80,23 @@ export function Screening({ countyId, select }: TabProps) {
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full border-2 border-ink" />{county.name}</span>
             </div>
           </div>
-          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Scatter of predicted versus actual turnout">
+          <div ref={chartRef}>
+          <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block max-w-full" role="img" aria-label="Scatter of predicted versus actual turnout">
             {ticks.map((v) => (
               <g key={v}>
                 <line x1={sx(v)} x2={sx(v)} y1={M.t} y2={H - M.b} stroke="#1F1F1F" strokeOpacity=".07" />
                 <line x1={M.l} x2={W - M.r} y1={sy(v)} y2={sy(v)} stroke="#1F1F1F" strokeOpacity=".07" />
-                <text x={sx(v)} y={H - M.b + 14} textAnchor="middle" className="font-type" style={{ fontSize: 12 }} fill="#1F1F1F" opacity=".6">{v}</text>
-                <text x={M.l - 6} y={sy(v) + 3} textAnchor="end" className="font-type" style={{ fontSize: 12 }} fill="#1F1F1F" opacity=".6">{v}</text>
+                <text x={sx(v)} y={H - M.b + 17} textAnchor="middle" className="font-type" style={{ fontSize: 14 }} fill="#1F1F1F" opacity=".6">{v}</text>
+                <text x={M.l - 6} y={sy(v) + 4} textAnchor="end" className="font-type" style={{ fontSize: 14 }} fill="#1F1F1F" opacity=".6">{v}</text>
               </g>
             ))}
             <polygon fill="#FFC233" fillOpacity=".14"
               points={`${sx(lo)},${sy(lo + band)} ${sx(hi - band)},${sy(hi)} ${sx(hi)},${sy(hi)} ${sx(hi)},${sy(hi - band)} ${sx(lo + band)},${sy(lo)} ${sx(lo)},${sy(lo)}`} />
             <line x1={sx(lo)} y1={sy(lo)} x2={sx(hi)} y2={sy(hi)} stroke="#1F1F1F" strokeDasharray="4 4" strokeOpacity=".5" />
-            <text x={W - M.r - 4} y={M.t + 12} textAnchor="end" className="font-type uppercase" style={{ fontSize: 11, letterSpacing: '.1em' }} fill="#5E6B4E">↖ better than predicted</text>
-            <text x={W - M.r - 4} y={H - M.b - 8} textAnchor="end" className="font-type uppercase" style={{ fontSize: 11, letterSpacing: '.1em' }} fill="#C65D3B">↘ worse than predicted</text>
-            <text x={(W + M.l) / 2} y={H - 4} textAnchor="middle" className="font-type uppercase" style={{ fontSize: 11, letterSpacing: '.15em' }} fill="#1F1F1F" opacity=".55">predicted</text>
-            <text transform={`translate(10 ${(H - M.b) / 2}) rotate(-90)`} textAnchor="middle" className="font-type uppercase" style={{ fontSize: 11, letterSpacing: '.15em' }} fill="#1F1F1F" opacity=".55">actual</text>
+            <text x={W - M.r - 4} y={M.t + 14} textAnchor="end" className="font-type" style={{ fontSize: 14 }} fill="#5E6B4E">↖ better than predicted</text>
+            <text x={W - M.r - 4} y={H - M.b - 8} textAnchor="end" className="font-type" style={{ fontSize: 14 }} fill="#C65D3B">↘ worse than predicted</text>
+            <text x={(W + M.l) / 2} y={H - 6} textAnchor="middle" className="font-type uppercase" style={{ fontSize: 14, letterSpacing: '.12em' }} fill="#1F1F1F" opacity=".55">predicted</text>
+            <text transform={`translate(12 ${(H - M.b) / 2}) rotate(-90)`} textAnchor="middle" className="font-type uppercase" style={{ fontSize: 14, letterSpacing: '.12em' }} fill="#1F1F1F" opacity=".55">actual</text>
             {[...pts].sort((a, b) => Number(inCounty(a)) - Number(inCounty(b))).map((d) => {
               const mine = inCounty(d)
               const r = 3 + Math.sqrt(d.t.population / 4000)
@@ -106,12 +109,13 @@ export function Screening({ countyId, select }: TabProps) {
                     fillOpacity={mine ? 0.95 : d.v === 'ok' ? 0.35 : 0.5}
                     stroke="#1F1F1F" strokeOpacity={mine ? 1 : 0.2} strokeWidth={isSel ? 3 : mine ? 1.6 : 0.6} />
                   {(mine && d.v !== 'ok') || isSel ? (
-                    <text x={sx(d.p) + Math.min(r, 14) + 3} y={sy(d.a) + 3} className="font-type" style={{ fontSize: 12 }} fill="#1F1F1F">{d.t.name}</text>
+                    <text x={sx(d.p) + Math.min(r, 14) + 3} y={sy(d.a) + 4} className="font-type" style={{ fontSize: 14 }} fill="#1F1F1F">{d.t.name}</text>
                   ) : null}
                 </g>
               )
             })}
           </svg>
+          </div>
         </Card>
 
         <div className="space-y-5 min-w-0">
@@ -127,7 +131,7 @@ export function Screening({ countyId, select }: TabProps) {
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <div>
                   <Label>Actual</Label>
-                  <p className="font-serif text-4xl leading-none flex items-baseline gap-1">{sel.a}<span className="text-lg">%</span> <SourceBadge id="sotkanetScreening" kind="direct" /></p>
+                  <p className="font-serif text-4xl leading-none flex items-baseline gap-1">{sel.a}<span className="text-lg">%</span> <SourceBadge id="sotkanetScreening" kind="direct" demo={false} how={`2024, Sotkanet ${PROGRAMMES.find((p) => p.id === prog)!.indicator}`} /></p>
                 </div>
                 <div>
                   <Label>Predicted</Label>
@@ -139,9 +143,9 @@ export function Screening({ countyId, select }: TabProps) {
                 {sel.res >= 0 ? '+' : '−'}{fmt(Math.abs(sel.res), 1)} pts · {VL[sel.v]}
               </p>
               <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 font-type text-[15px]">
-                <dt className="opacity-60 uppercase">Residents</dt><dd className="text-right">{fmt(sel.t.population)} <SourceBadge id="statfinPop" kind="direct" /></dd>
+                <dt className="opacity-60 uppercase">Residents</dt><dd className="text-right">{fmt(sel.t.population)} <SourceBadge id="statfinPop" kind="direct" demo={false} /></dd>
                 {FEATURES.map((f) => (
-                  <FeatureRow key={f.key} label={f.label} value={sel.t[f.key]} />
+                  <FeatureRow key={f.key} label={f.label} value={sel.t[f.key]} src={f.key === 'income' ? 'statfinIncome' : 'statfinPop'} />
                 ))}
               </dl>
             </Card>
@@ -156,11 +160,11 @@ export function Screening({ countyId, select }: TabProps) {
   )
 }
 
-function FeatureRow({ label, value }: { label: string; value: number }) {
+function FeatureRow({ label, value, src }: { label: string; value: number; src: string }) {
   return (
     <>
       <dt className="opacity-60 uppercase">{label}</dt>
-      <dd className="text-right">{fmt(value, 1)} <SourceBadge id="statfinPop" kind="direct" /></dd>
+      <dd className="text-right">{fmt(value, 1)} <SourceBadge id={src} kind="direct" demo={false} /></dd>
     </>
   )
 }

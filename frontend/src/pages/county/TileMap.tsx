@@ -50,7 +50,7 @@ export function TileMap({ style, selected, onSelect, tooltip, className }: {
                 stroke={sel ? '#1F1F1F' : 'rgba(31,31,31,.15)'} strokeWidth={sel ? 2.5 : 1}
                 className="transition-[fill] duration-500 group-hover:brightness-95 group-focus-visible:[stroke:#C65D3B] group-focus-visible:[stroke-width:2.5]" />
               {st.faded && <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={8} fill="url(#county-hatch)" pointerEvents="none" />}
-              <text x={r.x + 6} y={r.y + 13} className="font-type" style={{ fontSize: big ? 12 : 10, letterSpacing: '.08em' }} fill="#1F1F1F" opacity={0.75}>
+              <text x={r.x + 5} y={r.y + 15} className="font-type" style={{ fontSize: big ? 16 : 14, letterSpacing: '.04em' }} fill="#1F1F1F" opacity={0.75}>
                 {ABBR[c.id]}
               </text>
               {st.label && (

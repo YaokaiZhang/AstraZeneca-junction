@@ -1,5 +1,6 @@
 // 3.4 Missing-data map and starter plan.
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Card, Display, Label, SourceBadge, cx, toast } from '../../components/ui'
 import { CANCERS, countyById } from '../../data/counties'
 import { PATHWAY, type StepId } from '../../data/pathway'
@@ -11,11 +12,11 @@ import type { TabProps } from './index'
 type Cell = { k: SourceKind | 'na'; src?: string; how?: string }
 const COLS = ['How many', 'How long', 'By county']
 const ROWS: { stage: string; cells: Cell[] }[] = [
-  { stage: 'Screening', cells: [{ k: 'direct', src: 'sotkanetScreening' }, { k: 'na' }, { k: 'direct', src: 'sotkanetScreening' }] },
+  { stage: 'Screening', cells: [{ k: 'direct', src: 'sotkanetScreening', how: 'Invited and attended, by municipality and county (Sotkanet). Positivity and cancers found: Cancer Registry screening statistics.' }, { k: 'na' }, { k: 'direct', src: 'sotkanetScreening' }] },
   { stage: 'First visit', cells: [{ k: 'estimate', src: 'ourModel', how: 'Primary-care visits are counted, not by suspected cancer.' }, { k: 'gap', src: 'waitGap' }, { k: 'estimate', src: 'ourModel' }] },
   { stage: 'Referral', cells: [{ k: 'estimate', src: 'sotkanetQueue', how: 'All specialist referrals; not cancer-specific.' }, { k: 'gap', src: 'waitGap' }, { k: 'estimate', src: 'sotkanetQueue' }] },
-  { stage: 'Scan', cells: [{ k: 'estimate', src: 'sotkanetQueue' }, { k: 'estimate', src: 'sotkanetQueue', how: 'Only “waiting > 90 days” for all specialties.' }, { k: 'direct', src: 'sotkanetQueue' }] },
-  { stage: 'Diagnosis', cells: [{ k: 'direct', src: 'cancerRegistry' }, { k: 'gap', src: 'waitGap' }, { k: 'direct', src: 'cancerRegistry' }] },
+  { stage: 'Scan', cells: [{ k: 'estimate', src: 'sotkanetQueue' }, { k: 'estimate', src: 'thlSampo', how: 'Only waits for all specialties together (THL Sampo, Sotkanet 3336 “waited over 6 months”), never for suspected cancer.' }, { k: 'direct', src: 'sotkanetQueue' }] },
+  { stage: 'Diagnosis', cells: [{ k: 'direct', src: 'cancerRegistry', how: 'New cases and stage at diagnosis by county.' }, { k: 'gap', src: 'waitGap' }, { k: 'direct', src: 'cancerRegistry' }] },
   { stage: 'Planning', cells: [{ k: 'gap', src: 'waitGap' }, { k: 'gap', src: 'waitGap' }, { k: 'gap', src: 'waitGap' }] },
   { stage: 'Treatment', cells: [{ k: 'estimate', src: 'cancerRegistry', how: 'Registry records first treatment type, not its date.' }, { k: 'gap', src: 'waitGap' }, { k: 'gap', src: 'waitGap' }] },
   { stage: 'Survival', cells: [{ k: 'direct', src: 'nordcan' }, { k: 'na' }, { k: 'estimate', src: 'ourModel', how: 'Deaths ÷ cases; official survival only for 5 regions.' }] },
@@ -78,7 +79,7 @@ export function DataGaps({ countyId }: TabProps) {
             return (
               <div key={s.id} className="min-w-0">
                 <div className={cx('h-2 rounded-full', inGap ? 'bg-paper/25 border border-dashed border-paper' : 'bg-paper')} />
-                <p className={cx('font-type text-[13px] sm:text-sm uppercase tracking-wider mt-2 truncate', !inGap && 'opacity-70')}>{s.short}</p>
+                <p className={cx('font-type text-sm uppercase tracking-wider mt-2 truncate', !inGap && 'opacity-70')}>{s.short}</p>
               </div>
             )
           })}
@@ -100,7 +101,7 @@ export function DataGaps({ countyId }: TabProps) {
         <Card tone="stone" tilt={0.5} className="p-4 sm:p-6 min-w-0">
           <div className="grid grid-cols-[minmax(0,6rem)_repeat(3,minmax(0,1fr))] gap-1.5 sm:gap-2 items-center">
             <span />
-            {COLS.map((c) => <span key={c} className="label text-center !text-[13px]">{c}</span>)}
+            {COLS.map((c) => <span key={c} className="label text-center !text-sm">{c}</span>)}
             {ROWS.map((r) => (
               <Row key={r.stage} stage={r.stage} cells={r.cells} hot={r.stage === 'Referral' || r.stage === 'Treatment' || r.stage === 'Diagnosis' || r.stage === 'Planning'} />
             ))}
@@ -127,12 +128,15 @@ export function DataGaps({ countyId }: TabProps) {
                     <span className={cx('w-6 h-6 rounded-full border flex items-center justify-center text-sm shrink-0 transition-colors',
                       on ? 'bg-mustard border-mustard text-ink' : 'border-paper/50 group-hover:border-mustard')}>{on ? '✓' : i + 1}</span>
                     <span className={cx('font-serif text-xl flex-1', on && 'line-through decoration-mustard/70')}>{p.label}</span>
-                    {mine && <span className="font-type text-[13px] uppercase tracking-wider text-mustard">you ✓</span>}
+                    {mine && <span className="font-type text-sm uppercase tracking-wider text-mustard">you ✓</span>}
                   </button>
                 </li>
               )
             })}
           </ol>
+          <Link to="/patient/pathway" className="mt-4 inline-flex items-center gap-2 font-type text-sm uppercase tracking-wider text-mustard hover:text-paper">
+            Same dates as the patient pathway clock →
+          </Link>
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
               <Label className="!opacity-70">Shared by patients</Label>
@@ -159,8 +163,8 @@ function Row({ stage, cells, hot }: { stage: string; cells: Cell[]; hot?: boolea
     <>
       <span className={cx('font-serif text-base sm:text-lg leading-tight truncate', hot && 'italic')}>{stage}</span>
       {cells.map((c, i) => (
-        <span key={i} className={cx('relative h-9 rounded-md flex items-center justify-center gap-1.5 font-type text-[13px] sm:text-sm uppercase tracking-wider', CELL_CLS[c.k])}>
-          {c.k === 'na' ? '—' : c.src && <SourceBadge id={c.src} kind={c.k} how={c.how} className="[&>button]:ring-1 [&>button]:ring-white/70" />}
+        <span key={i} className={cx('relative h-9 rounded-md flex items-center justify-center gap-1.5 font-type text-sm uppercase tracking-wider', CELL_CLS[c.k])}>
+          {c.k === 'na' ? '—' : c.src && <SourceBadge id={c.src} kind={c.k} how={c.how} demo={false} className="[&>button]:ring-1 [&>button]:ring-white/70" />}
         </span>
       ))}
     </>

@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react'
 import { Btn, Display, Label, SourceBadge, cx } from '../../components/ui'
 import { COUNTIES, type County, type RadarCancerId } from '../../data/counties'
-import { RISK, cancerLabel, fmt, metricValue, national, overloadYear, pct, projection, queueSlope, radarFor, stepInfo, weakestSentence, NAT, type StepId } from './model'
+import { RISK, cancerLabel, fmt, metricValue, national, overloadYear, pct, projection, queueRising, queueSlope, radarFor, stepInfo, weakestSentence, NAT, type StepId } from './model'
 import { stepBadge } from './Radar'
 import { PROGRAMMES, TOWNS, fitModel, verdict, type Programme } from './towns'
 
@@ -83,7 +83,7 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
       detail: helpTowns.length ? `Start in ${helpTowns.map((t) => t.name).join(', ')}` : `Start in ${lowTowns.slice(0, 2).map((t) => t.name).join(', ')}`,
       why: `${progLabel} turnout ${turnout}% vs FI ${fmt(natTurnout, 1)}%${helpTowns.length ? ` · ${helpTowns.length} town${helpTowns.length > 1 ? 's' : ''} below prediction` : ''}`,
       gap: `${progLabel} screening turnout: ${turnout}%`, stamp: 'Low turnout', stages: ['Screening'],
-      badge: <SourceBadge id="sotkanetScreening" kind="estimate" how={`Rule: turnout below national + towns more than 1.5 SD below the model (${fit.formula}).`} />,
+      badge: <SourceBadge id="sotkanetScreening" kind="estimate" demo={false} how={`Rule: turnout below national + towns more than 1.5 SD below the model (${fit.formula}).`} />,
     },
     {
       id: 'risk', score: rad.steps.risk.z! * 1.2,
@@ -94,13 +94,13 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
       badge: stepBadge('risk', k, rad),
     },
     {
-      id: 'diag', score: slope / 0.4 + (growth - natGrowth) / 0.04 + (oy ? (2036 - oy) / 4 : 0),
+      id: 'diag', score: (slope ?? 0) / 5 + (growth - natGrowth) / 0.04 + (oy ? (2036 - oy) / 4 : 0),
       title: 'Add diagnostic capacity',
-      detail: `Scan + specialist slots for +${pct(growth)} cases by 2035${oy ? ` · overload ${oy}` : ''}`,
-      why: `Queue >90 d ${c.queueTrend[0]} → ${c.queueTrend[3]} /10k`,
-      gap: `Queue ${slope > 0 ? 'rising' : 'flat'}, cases +${pct(growth)} by 2035`, stamp: oy ? `Overload ${oy}` : slope > 0 ? 'Queue rising' : 'Capacity',
+      detail: `Scan + specialist slots for ${growth >= 0 ? '+' : '−'}${pct(Math.abs(growth))} cases by 2035${oy ? ` · overload ${oy}` : ''}`,
+      why: c.queueTrend ? `Waited > 6 months ${fmt(c.queueTrend[0], 1)} → ${fmt(c.queueTrend[3], 1)} per 10k, 2022–25` : 'Waiting-list trend not published for this county',
+      gap: `Queue ${slope == null ? 'unknown' : queueRising(c) ? 'rising' : 'not rising'}, cases ${growth >= 0 ? '+' : '−'}${pct(Math.abs(growth))} by 2035`, stamp: oy ? `Overload ${oy}` : queueRising(c) ? 'Queue rising' : 'Capacity',
       stages: ['Referral', 'Scan', 'Diagnosis'],
-      badge: <SourceBadge id="ourModel" kind="estimate" how="Rule: rising specialist queue (Sotkanet 3336) + ageing projection above average." />,
+      badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how="Rule: rising specialist waiting list (Sotkanet 3336, 2022–25 trend) + ageing projection (Statistics Finland 14wx) above the county average." />,
     },
     {
       id: 'fast', score: plFat / 0.04,
@@ -131,17 +131,17 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
     stamp: weak.stamp,
     gap: {
       cancer: k, step: rad.weakest, stages: STEP_STAGES[rad.weakest],
-      text: `${cancerLabel(k)}: most people lost at ${weak.label.toLowerCase()}`,
+      text: `${cancerLabel(k)}: biggest gap at step ${weak.n}, ${weak.label.toLowerCase()}`,
       why: weakestSentence(rad, k),
       badge: stepBadge(rad.weakest, k, rad),
     },
     stats: [
       { label: `High risk · ${cancerLabel(k)}`, value: fmt(rad.highRisk), badge: stepBadge('risk', k, rad) },
-      { label: 'Residents', value: fmt(c.population), badge: <SourceBadge id="statfinPop" kind="direct" /> },
+      { label: 'Residents', value: fmt(c.population), badge: <SourceBadge id="statfinProjection" kind="direct" demo={false} how="Residents in 2025, population projection 2024 (table 14wx)" /> },
       { label: 'Lung late', value: pct(lungLate), badge: <SourceBadge id="cancerRegistry" kind="direct" /> },
       { label: 'Lung deaths / case', value: fmt(metricValue(c, 'lung', 'fatality').v, 2), badge: <SourceBadge id="ourModel" kind="estimate" how="deaths ÷ new cases" /> },
-      { label: 'Bowel turnout', value: `${c.bowelTurnout}%`, badge: <SourceBadge id="sotkanetScreening" kind="direct" /> },
-      { label: 'Cases 2035', value: `+${pct(growth)}`, badge: <SourceBadge id="ourModel" kind="estimate" how="Ageing projection, all four cancers" /> },
+      { label: 'Bowel turnout', value: `${c.bowelTurnout}%`, badge: <SourceBadge id="sotkanetScreening" kind="direct" demo={false} how="2024, share of invited who attended (Sotkanet 6103)" /> },
+      { label: 'Cases 2035', value: `${growth >= 0 ? '+' : '−'}${pct(Math.abs(growth))}`, badge: <SourceBadge id="ourModel" kind="estimate" how="Today's cases × the change in people under and over 75 to 2035 (Statistics Finland 14wx), all four cancers. Today's case counts are demo values." /> },
     ],
   }
 }
@@ -162,7 +162,7 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
           {STRIP.map((s) => (
             <div key={s} className="min-w-0">
               <div className={cx('h-2 rounded-full', hot.has(s) ? 'bg-terra' : 'bg-black/10')} />
-              <p className={cx('font-type text-[13px] sm:text-[13px] uppercase tracking-wide mt-1 truncate', hot.has(s) ? '' : 'opacity-70')}>{s}</p>
+              <p className={cx('font-type text-sm uppercase tracking-wide mt-1 truncate', hot.has(s) ? '' : 'opacity-70')}>{s}</p>
             </div>
           ))}
         </div>

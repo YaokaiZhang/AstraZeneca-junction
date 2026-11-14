@@ -1,6 +1,6 @@
 // County-page calculations. Pure functions over COUNTIES so every tab and the brief agree.
 import type { Programme } from './towns'
-import { CANCERS, COUNTIES, SCREEN_CANCERS, type CancerFigures, type CancerId, type County, type RadarCancerId } from '../../data/counties'
+import { CANCERS, COUNTIES, FINLAND, SCREEN_CANCERS, type CancerFigures, type CancerId, type County, type RadarCancerId } from '../../data/counties'
 
 export type Metric = 'ratio' | 'late' | 'fatality'
 
@@ -93,20 +93,18 @@ export function scaleColor(t: number) {
 }
 export const SCALE_CSS = 'linear-gradient(90deg, #F4F1EA, #FFC233, #C65D3B)'
 
-// ---------- national averages for rules ----------
-const popW = (f: (c: County) => number) =>
-  COUNTIES.reduce((s, c) => s + f(c) * c.population, 0) / COUNTIES.reduce((s, c) => s + c.population, 0)
+// ---------- national values for rules: the published whole-country figures (Sotkanet, 2024) ----------
 export const NAT = {
-  smoking: popW((c) => c.smoking),
-  bowelTurnout: popW((c) => c.bowelTurnout),
-  breastTurnout: popW((c) => c.breastTurnout),
-  cervicalTurnout: popW((c) => c.cervicalTurnout),
+  smoking: FINLAND.smoking,
+  bowelTurnout: FINLAND.bowelTurnout,
+  breastTurnout: FINLAND.breastTurnout,
+  cervicalTurnout: FINLAND.cervicalTurnout,
 }
 
 // ---------- 3.3 overload projection ----------
 export const YEARS = Array.from({ length: 11 }, (_, i) => 2025 + i)
-/** Relative incidence in people 75+ vs everyone younger (all four cancers, rough). */
-const RR75 = 4
+/** Relative incidence in people 75+ vs everyone younger (all four cancers, rough assumption). */
+export const RR75 = 4
 export type ProjCancer = CancerId | 'all'
 export function baseCases(c: County, cancer: ProjCancer) {
   return cancer === 'all' ? CANCERS.reduce((s, k) => s + c.cancers[k.id].cases, 0) : c.cancers[cancer].cases
@@ -116,15 +114,27 @@ export function projection(c: County, cancer: ProjCancer): number[] {
   const f75 = (c.share75plus * RR75) / (c.share75plus * RR75 + (1 - c.share75plus))
   return YEARS.map((y) => {
     const t = (y - 2025) / 10
-    return base * (f75 * Math.pow(c.ageingIndex, t) + (1 - f75) * (1 + 0.02 * t))
+    // age-specific rates held at today's level: only the number of people in each age group changes
+    return base * (f75 * Math.pow(c.ageingIndex, t) + (1 - f75) * Math.pow(c.under75Index, t))
   })
 }
 export function overloadYear(series: number[], headroom: number): number | null {
   const i = series.findIndex((v) => v > series[0] * (1 + headroom))
   return i < 0 ? null : YEARS[i]
 }
-export const queueSlope = (c: County) => (c.queueTrend[3] - c.queueTrend[0]) / 3
-export const queueRising = (c: County) => queueSlope(c) > 0.4
+/** Least-squares slope of the 2022–25 waiting-list series, per 10 000 residents per year; null if unpublished. */
+export function queueSlope(c: County): number | null {
+  const q = c.queueTrend
+  if (!q) return null
+  const mx = (q.length - 1) / 2, my = q.reduce((a, b) => a + b, 0) / q.length
+  return q.reduce((s, v, i) => s + (i - mx) * (v - my), 0) / q.reduce((s, _, i) => s + (i - mx) ** 2, 0)
+}
+export const QUEUE_YEARS = [2022, 2023, 2024, 2025]
+/** "Already growing": the 2022–25 trend rises by more than 2 per 10 000 a year and 2025 is above 2022. */
+export const queueRising = (c: County) => {
+  const s = queueSlope(c)
+  return s != null && s > 2 && c.queueTrend![3] > c.queueTrend![0]
+}
 
 // ---------- data contributed by patients (3.4) ----------
 export function baseRecords(c: County) {
@@ -155,11 +165,11 @@ export const REAL_RANGE: Record<Programme, [number, number]> = { bowel: [59.5, 8
  */
 export const RISK: Record<RadarCancerId, { ages: string; who: string; band: (c: County) => number; sex: number; prev: (c: County) => number; factor: string }> = {
   lung: { ages: '50–74', who: 'people 50–74', band: (c) => c.share50to74, sex: 1, prev: (c) => c.smoking * 1.5, factor: 'smoking now or quit < 15 yrs (smoking % × 1.5)' },
-  bowel: { ages: '56–74', who: 'people 56–74', band: (c) => c.share50to74 * 0.75, sex: 1, prev: (c) => (c.obesity + c.inactivity) / 2, factor: 'obesity or inactivity (mean of the two %)' },
-  breast: { ages: '50–69', who: 'women 50–69', band: (c) => c.share50to74 * 0.8, sex: 0.5, prev: (c) => (c.obesity + c.alcohol) / 2, factor: 'obesity or heavy drinking (mean of the two %)' },
+  bowel: { ages: '56–74', who: 'people 56–74', band: (c) => c.share50to74 * 0.75, sex: 1, prev: (c) => c.obesity, factor: 'obesity (BMI ≥ 30 %)' },
+  breast: { ages: '50–69', who: 'women 50–69', band: (c) => c.share50to74 * 0.8, sex: 0.5, prev: (c) => (c.obesity + c.alcohol) / 2, factor: 'obesity or risky drinking (mean of the two %)' },
   cervical: { ages: '30–65', who: 'women 30–65', band: (c) => 0.47 - c.share75plus * 0.8, sex: 0.5, prev: (c) => c.smoking * 1.2, factor: 'smoking (× 1.2); HPV status is not published' },
   pancreas: { ages: '50+', who: 'people 50+', band: (c) => c.share50to74 + c.share75plus, sex: 1, prev: (c) => (c.smoking + c.obesity) / 2, factor: 'smoking or obesity (mean of the two %)' },
-  liver: { ages: '50+', who: 'people 50+', band: (c) => c.share50to74 + c.share75plus, sex: 1, prev: (c) => c.alcohol, factor: 'heavy drinking (alcohol %)' },
+  liver: { ages: '50+', who: 'people 50+', band: (c) => c.share50to74 + c.share75plus, sex: 1, prev: (c) => c.alcohol, factor: 'risky drinking (AUDIT-C %)' },
 }
 
 export interface StepValue {
@@ -172,6 +182,9 @@ export interface StepValue {
   /** people lost compared with the Finnish rate, per year (or per screening round) */
   excess: number | null
   wide: boolean
+  /** 95% range for the steps built on small counts (found late, survival) */
+  lo?: number
+  hi?: number
 }
 export interface RadarRow {
   c: County
@@ -205,7 +218,7 @@ export function radar(k: RadarCancerId): RadarRow[] {
   const sumBand = base.reduce((s, b) => s + b.bandPop, 0)
   const nat = {
     risk: base.reduce((s, b) => s + b.prev * b.bandPop, 0) / sumBand,
-    screen: prog ? base.reduce((s, b) => s + b.turnout! * b.bandPop, 0) / sumBand : null,
+    screen: prog ? FINLAND[`${prog}Turnout`] / 100 : null,
     late: national(k, 'late'),
     survival: national(k, 'fatality'),
   }
@@ -227,8 +240,8 @@ export function radar(k: RadarCancerId): RadarRow[] {
         ? { id: 'screen', v: b.turnout, nat: nat.screen, z: zScreen![i], excess: b.bandPop * (nat.screen! - b.turnout!), wide: false }
         : { id: 'screen', v: null, nat: null, z: null, excess: null, wide: false },
       // fade noisy small counts: they still show, but a wide interval halves their pull on "weakest"
-      late: { id: 'late', v: b.late.v, nat: nat.late, z: zLate[i] * (b.late.wide ? 0.5 : 1), excess: b.f.cases * (b.late.v - nat.late), wide: b.late.wide },
-      survival: { id: 'survival', v: b.dc.v, nat: nat.survival, z: zDc[i] * (b.dc.wide ? 0.5 : 1), excess: b.f.cases * (b.dc.v - nat.survival), wide: b.dc.wide },
+      late: { id: 'late', v: b.late.v, nat: nat.late, z: zLate[i] * (b.late.wide ? 0.5 : 1), excess: b.f.cases * (b.late.v - nat.late), wide: b.late.wide, lo: b.late.lo, hi: b.late.hi },
+      survival: { id: 'survival', v: b.dc.v, nat: nat.survival, z: zDc[i] * (b.dc.wide ? 0.5 : 1), excess: b.f.cases * (b.dc.v - nat.survival), wide: b.dc.wide, lo: b.dc.lo, hi: b.dc.hi },
     }
     let weakest: StepId = 'risk', weakZ = -Infinity
     for (const s of STEPS) {
@@ -241,6 +254,12 @@ export function radar(k: RadarCancerId): RadarRow[] {
   return rows
 }
 export const radarFor = (c: County, k: RadarCancerId) => radar(k).find((r) => r.c.id === c.id)!
+
+/** "95% range 0.71–0.93" text for a step with an interval. */
+export function rangeText(s: StepId, v: StepValue) {
+  if (v.lo == null || v.hi == null) return null
+  return `${formatStep(s, v.lo)}–${formatStep(s, v.hi)}`
+}
 
 /** Value as shown on screen for each step. */
 export function formatStep(s: StepId, v: number | null) {

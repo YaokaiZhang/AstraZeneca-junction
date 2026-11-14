@@ -1,33 +1,34 @@
 // Page 3: County — where people are lost. Tabs share the selected county + cancer through the URL query.
+// 3.1 Radar · 3.2 Screening · 3.3 Overload · 3.4 Data gaps · 3.5 Brief (drawer).
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { Card, Drawer, EdgeText, Label, RoundBtn, SourceBadge, Stamp, Tabs, cx } from '../../components/ui'
-import { COUNTIES, countyById, type CancerId } from '../../data/counties'
+import { COUNTIES, countyById, type CancerId, type RadarCancerId } from '../../data/counties'
 import { CountyStyles, Spark, Tear } from './bits'
-import { CAPACITY_DEFAULT, NAT, fmt, pct, queueRising, type CapacityInputs, type Metric } from './model'
+import { NAT, RADAR_CANCERS, cancerLabel, fmt, isCoreCancer, queueRising, radarFor, stepInfo } from './model'
 import { Radar } from './Radar'
 import { Screening } from './Screening'
-import { Capacity } from './Capacity'
 import { Overload } from './Overload'
 import { DataGaps } from './DataGaps'
 import { Brief, buildBrief } from './Brief'
 
-type Tab = 'radar' | 'screening' | 'capacity' | 'overload' | 'gaps'
+type Tab = 'radar' | 'screening' | 'overload' | 'gaps'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'radar', label: 'Radar' },
   { id: 'screening', label: 'Screening' },
-  { id: 'capacity', label: 'Capacity' },
   { id: 'overload', label: 'Overload' },
   { id: 'gaps', label: 'Data gaps' },
 ]
 const CANCER_IDS: CancerId[] = ['lung', 'bowel', 'pancreas', 'liver']
-const METRIC_IDS: Metric[] = ['ratio', 'late', 'fatality']
 
 export interface TabProps {
   countyId: string
   cancer: CancerId
   setCancer: (c: CancerId) => void
+  /** radar also covers breast + cervical (screening programmes) */
+  radarCancer: RadarCancerId
+  setRadarCancer: (c: RadarCancerId) => void
   select: (id: string) => void
   openBrief: (id: string) => void
 }
@@ -37,7 +38,7 @@ export default function CountyPage() {
   const tab = (TABS.some((t) => t.id === q.get('tab')) ? q.get('tab') : 'radar') as Tab
   const countyId = countyById(q.get('c') ?? '') ? q.get('c')! : 'pohjois-karjala'
   const cancer = (CANCER_IDS.includes(q.get('cancer') as CancerId) ? q.get('cancer') : 'lung') as CancerId
-  const metric = (METRIC_IDS.includes(q.get('m') as Metric) ? q.get('m') : 'late') as Metric
+  const radarCancer = (RADAR_CANCERS.some((x) => x.id === q.get('rc')) ? q.get('rc') : cancer) as RadarCancerId
 
   const setParam = useCallback((patch: Record<string, string>) => {
     setQ((prev) => {
@@ -48,14 +49,16 @@ export default function CountyPage() {
   }, [setQ])
 
   const [briefOpen, setBriefOpen] = useState(false)
-  const [cap, setCap] = useState<CapacityInputs>(CAPACITY_DEFAULT)
   const county = countyById(countyId)!
-  const brief = useMemo(() => buildBrief(county, cap), [county, cap])
+  const brief = useMemo(() => buildBrief(county, radarCancer), [county, radarCancer])
+  const rad = radarFor(county, radarCancer)
 
   const tp: TabProps = {
     countyId,
     cancer,
-    setCancer: (c) => setParam({ cancer: c }),
+    setCancer: (c) => setParam({ cancer: c, rc: c }),
+    radarCancer,
+    setRadarCancer: (c) => setParam(isCoreCancer(c) ? { rc: c, cancer: c } : { rc: c }),
     select: (id) => setParam({ c: id }),
     openBrief: (id) => { setParam({ c: id }); setBriefOpen(true) },
   }
@@ -88,9 +91,8 @@ export default function CountyPage() {
       <div className="grid lg:grid-cols-[minmax(0,1fr)_260px] xl:grid-cols-[minmax(0,1fr)_290px] gap-8 lg:gap-10 mt-8">
         <div className="min-w-0 relative z-10" key={tab}>
           <div className="rise">
-            {tab === 'radar' && <Radar {...tp} metric={metric} setMetric={(m) => setParam({ m })} />}
+            {tab === 'radar' && <Radar {...tp} />}
             {tab === 'screening' && <Screening {...tp} />}
-            {tab === 'capacity' && <Capacity {...tp} cap={cap} setCap={setCap} />}
             {tab === 'overload' && <Overload {...tp} />}
             {tab === 'gaps' && <DataGaps {...tp} />}
           </div>
@@ -111,7 +113,10 @@ export default function CountyPage() {
               </div>
               <div className="mt-5 space-y-3">
                 <MiniStat label="Residents" value={fmt(county.population)} badge={<SourceBadge id="statfinPop" kind="direct" />} />
-                <MiniStat label="Lung · late stage" value={pct(county.cancers.lung.lateShare)} badge={<SourceBadge id="cancerRegistry" kind="direct" />} />
+                <MiniStat label={`High risk · ${cancerLabel(radarCancer)}`} value={fmt(rad.highRisk)}
+                  badge={<SourceBadge id="sotkanetRisk" kind="estimate" how="residents in the age band × risk-factor prevalence (Statistics Finland × THL Sotkanet). See the Radar tab for the recipe." />} />
+                <MiniStat label="Weakest step" value={`${stepInfo(rad.weakest).n} · ${stepInfo(rad.weakest).label}`}
+                  badge={<SourceBadge id="ourModel" kind="estimate" how="Detection radar (3.1): the step where this county scores worst against the other counties." />} />
                 <MiniStat label="Smoking" value={`${county.smoking}%`} sub={`FI ${fmt(NAT.smoking, 1)}%`} badge={<SourceBadge id="sotkanetRisk" kind="direct" />} />
                 <MiniStat label="Bowel turnout" value={`${county.bowelTurnout}%`} sub={`FI ${fmt(NAT.bowelTurnout, 1)}%`} badge={<SourceBadge id="sotkanetScreening" kind="direct" />} />
                 <div className="flex items-end justify-between gap-2 border-b border-black/10 pb-2">

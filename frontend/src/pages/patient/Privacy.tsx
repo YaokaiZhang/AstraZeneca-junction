@@ -22,7 +22,7 @@ export default function Privacy({ onErased, onSimulate }: { onErased: () => void
           </div>
           <div className="mt-4">
             <ShareSwitch which="hospital" label={t('pr.hospital')}>
-              {(['tab.diary', 'tab.risk', 'tab.pathway'] as const).map((k) => <Tag key={k}>{t(k)}</Tag>)}
+              {(['tab.diary', 'tab.check', 'tab.pathway'] as const).map((k) => <Tag key={k}>{t(k)}</Tag>)}
             </ShareSwitch>
             <ShareSwitch which="stats" label={t('pr.stats')}>
               <Tag>{t('pr.statsWhat')}</Tag>

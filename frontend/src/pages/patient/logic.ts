@@ -1,25 +1,26 @@
-// Pure logic for the patient page: keyword symptom extraction (fi/sv/en, some ru/so),
-// date parsing, smoking parsing, the two-week flag rule, PLCOm2012 and screening ages.
+// Pure logic for the patient page: keyword symptom extraction (fi/sv/en),
+// date parsing, smoking parsing, the two-week flag rule, PLCOm2012, the bowel/breast/cervical
+// Estimate, screening ages and the "next step" each person sees (never a score).
 import { DAY, daysBetween, today } from '../../data/pathway'
-import type { DiaryEntry, RiskInputs } from '../../lib/store'
+import type { CheckInputs, DiaryEntry, Estimates, RiskInputs, State } from '../../lib/store'
 
 export const SYMPTOM_KEYS = ['cough', 'weight-loss', 'blood-cough', 'blood-stool', 'blood', 'breathless', 'chest-pain', 'fatigue', 'bowel-change', 'jaundice', 'abdominal-pain', 'hoarse', 'smoking'] as const
 
 const RX: [string, RegExp][] = [
-  ['cough', /cough|yski|yskä|hosta|hostar|hostat|каш[её]?л|qufac/i],
-  ['breathless', /breath|hengäst|hengenahd|hengitys|andfådd|andnöd|andas tungt|одышк|задыха|neef/i],
-  ['chest-pain', /chest|rintakip|kipua? rinnassa|rinnassa kipu|bröstsmärt|ont i bröstet|боль в груди|груд|laab/i],
-  ['fatigue', /tired|fatigue|exhaust|no energy|väsy|uupu|voimaton|trött|utmatt|orkeslös|устал|слабост|\bdaal|daciif/i],
-  ['bowel-change', /bowel|diarrh|constipat|loose stool|ripul|ummet|suolen toimin|vatsan toimin|förstopp|diarré|avföringsvan|понос|запор|shuban/i],
-  ['jaundice', /jaundic|yellow|keltai|gulsot|gul hy|gula ögon|желт|cagaar/i],
-  ['abdominal-pain', /stomach|abdom|belly|tummy|vatsakip|mahakip|vatsaan sattuu|kipua vatsassa|ont i magen|magont|buksmärt|magsmärt|боль в живот|живот|calool/i],
-  ['hoarse', /hoarse|käheä|käheys|heshet|\bhes\b|осип|хрип|xabeeb/i],
-  ['weight-loss', /(lost|lose|losing|dropped|down)\b[^.]{0,20}\b(weight|kg|kilo|pound)|weight ?loss|laihtu|laihdu|laihtun|paino[^.]{0,15}(laski|putos|vähen|pudon)|kiloa? pois|menettänyt[^.]{0,10}kilo|gått ner|tappat[^.]{0,10}(vikt|kilo)|viktnedgång|minskat i vikt|похуд|сбросил|потерял[^.]{0,10}(вес|кг)|miisaan/i],
-  ['smoking', /smok|cigar|tobacco|\bpacks?\b|tupak|polta|poltin|poltan|savuk|aski|röker|rökt|rökare|röka|cigarett|курю|курил|курен|сигарет|sigaar/i],
+  ['cough', /cough|yski|yskä|hosta|hostar|hostat/i],
+  ['breathless', /breath|hengäst|hengenahd|hengitys|andfådd|andnöd|andas tungt/i],
+  ['chest-pain', /chest|rintakip|kipua? rinnassa|rinnassa kipu|bröstsmärt|ont i bröstet/i],
+  ['fatigue', /tired|fatigue|exhaust|no energy|väsy|uupu|voimaton|trött|utmatt|orkeslös/i],
+  ['bowel-change', /bowel|diarrh|constipat|loose stool|ripul|ummet|suolen toimin|vatsan toimin|förstopp|diarré|avföringsvan/i],
+  ['jaundice', /jaundic|yellow|keltai|gulsot|gul hy|gula ögon/i],
+  ['abdominal-pain', /stomach|abdom|belly|tummy|vatsakip|mahakip|vatsaan sattuu|kipua vatsassa|ont i magen|magont|buksmärt|magsmärt/i],
+  ['hoarse', /hoarse|käheä|käheys|heshet|\bhes\b/i],
+  ['weight-loss', /(lost|lose|losing|dropped|down)\b[^.]{0,20}\b(weight|kg|kilo|pound)|weight ?loss|laihtu|laihdu|laihtun|paino[^.]{0,15}(laski|putos|vähen|pudon)|kiloa? pois|menettänyt[^.]{0,10}kilo|gått ner|tappat[^.]{0,10}(vikt|kilo)|viktnedgång|minskat i vikt/i],
+  ['smoking', /smok|cigar|tobacco|\bpacks?\b|tupak|polta|poltin|poltan|savuk|aski|röker|rökt|rökare|röka|cigarett/i],
 ]
-const BLOOD = /blood|bleed|veri|verta|veris|blod|кров|dhiig/i
-const STOOL = /stool|poo|faec|fec|toilet|bottom|uloste|kakka|vessa|peräsuoli|avföring|bajs|toalett|стул|кал\b|saxar/i
-const NEG = /(?:\bno|\bnot|\bnever|\bwithout|\bei|\beikä|\bingen|\binte|\butan|нет|не|без|\bmaya|\bma)\s+(?:\S+\s+)?$/i
+const BLOOD = /blood|bleed|veri|verta|veris|blod/i
+const STOOL = /stool|poo|faec|fec|toilet|bottom|uloste|kakka|vessa|peräsuoli|avföring|bajs|toalett/i
+const NEG = /(?:\bno|\bnot|\bnever|\bwithout|\bei|\beikä|\bingen|\binte|\butan)\s+(?:\S+\s+)?$/i
 
 function hit(text: string, rx: RegExp) {
   const m = rx.exec(text)
@@ -33,7 +34,7 @@ export function extractTags(text: string): string[] {
   for (const [k, rx] of RX) if (hit(text, rx)) tags.add(k)
   if (hit(text, BLOOD)) {
     if (STOOL.test(text)) tags.add('blood-stool')
-    else if (tags.has('cough') || /cough(ing)? up|ysk|host|каш[её]?л/i.test(text)) tags.add('blood-cough')
+    else if (tags.has('cough') || /cough(ing)? up|ysk|host/i.test(text)) tags.add('blood-cough')
     else tags.add('blood')
   }
   // "blood in stool" should not also count as a bowel change by itself
@@ -41,7 +42,7 @@ export function extractTags(text: string): string[] {
 }
 
 export const parseKg = (text: string) => {
-  const m = /(\d+(?:[.,]\d+)?)\s*(?:kg|kilo|кг)/i.exec(text) ?? /^\s*(\d+(?:[.,]\d+)?)\s*$/.exec(text)
+  const m = /(\d+(?:[.,]\d+)?)\s*(?:kg|kilo)/i.exec(text) ?? /^\s*(\d+(?:[.,]\d+)?)\s*$/.exec(text)
   return m ? parseFloat(m[1].replace(',', '.')) : null
 }
 
@@ -49,20 +50,18 @@ export const parseKg = (text: string) => {
 const EN = ['jan(?:uary)?', 'feb(?:ruary)?', 'mar(?:ch)?', 'apr(?:il)?', 'may', 'june?', 'july?', 'aug(?:ust)?', 'sep(?:t(?:ember)?)?', 'oct(?:ober)?', 'nov(?:ember)?', 'dec(?:ember)?']
 const FI = ['tammi', 'helmi', 'maalis', 'huhti', 'touko', 'kesä', 'heinä', 'elo', 'syys', 'loka', 'marras', 'joulu']
 const SV = ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december']
-const RU = ['январ', 'феврал', 'март', 'апрел', 'ма[яй]', 'июн', 'июл', 'август', 'сентябр', 'октябр', 'ноябр', 'декабр']
-const MONTH_ALT = EN.map((_, i) => `(?:${SV[i]}|${EN[i]}(?![a-zåäö])|${FI[i]}kuu\\S*|${RU[i]}\\S*)`)
+const MONTH_ALT = EN.map((_, i) => `(?:${SV[i]}|${EN[i]}(?![a-zåäö])|${FI[i]}kuu\\S*)`)
 
 const NUMW: Record<string, number> = {
   a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, few: 3, couple: 2,
   yksi: 1, yhden: 1, yhtä: 1, kaksi: 2, kahden: 2, kolme: 3, kolmen: 3, neljä: 4, viisi: 5, kuusi: 6, pari: 2, muutama: 3, muutaman: 3,
   en: 1, ett: 1, två: 2, tre: 3, fyra: 4, fem: 5, sex: 6, några: 3, par: 2,
-  одну: 1, один: 1, два: 2, две: 2, три: 3, четыре: 4, пару: 2, несколько: 3,
 }
 const UNITS: [RegExp, number][] = [
-  [/^(?:days?|päivä\S*|pv|dag(?:ar)?|дн\S*|день|maalmood|maalin)$/i, 1],
-  [/^(?:weeks?|wks?|viikko\S*|vko|veck\S*|недел\S*|toddobaad)$/i, 7],
-  [/^(?:months?|kuukau\S*|kk|månad\S*|mån|месяц\S*|bil(?:ood)?)$/i, 30],
-  [/^(?:years?|vuo\S*|år|лет|год\S*|sano)$/i, 365],
+  [/^(?:days?|päivä\S*|pv|dag(?:ar)?)$/i, 1],
+  [/^(?:weeks?|wks?|viikko\S*|vko|veck\S*)$/i, 7],
+  [/^(?:months?|kuukau\S*|kk|månad\S*|mån)$/i, 30],
+  [/^(?:years?|vuo\S*|år)$/i, 365],
 ]
 
 const iso = (d: Date) => d.toISOString().slice(0, 10)
@@ -71,7 +70,7 @@ const minusDays = (now: string, n: number) => iso(new Date(new Date(now + 'T12:0
 /** Pull a YYYY-MM-DD out of free text ("since 2 October", "3 weeks", "eilen", "2.10."). */
 export function parseWhen(text: string, now: string = today(), allowYears = true): string | null {
   // drop smoking frequencies ("a pack a day", "20 per day") so they don't read as "1 day ago"
-  const s = text.toLowerCase().replace(/(?:\ba|per|om|в)\s+(?:day|dag|день)(?!\s*(?:ago|sedan|назад))|päivässä/g, ' ')
+  const s = text.toLowerCase().replace(/(?:\ba|per|om)\s+(?:day|dag)(?!\s*(?:ago|sedan))|päivässä/g, ' ')
   let m: RegExpExecArray | null
   if ((m = /(\d{4})-(\d{2})-(\d{2})/.exec(s))) return m[0]
   const year = +now.slice(0, 4)
@@ -83,18 +82,18 @@ export function parseWhen(text: string, now: string = today(), allowYears = true
     if (!y && out > now) out = iso(new Date(Date.UTC(yy - 1, mo, d, 12)))
     return out
   }
-  if ((m = /\b(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4}))?(?![\d,]|\s*(?:kg|kilo|aski|pack|paket|кг))/.exec(s))) { const r = mk(+m[1], +m[2] - 1, m[3] ? +m[3] : undefined); if (r) return r }
+  if ((m = /\b(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4}))?(?![\d,]|\s*(?:kg|kilo|aski|pack|paket))/.exec(s))) { const r = mk(+m[1], +m[2] - 1, m[3] ? +m[3] : undefined); if (r) return r }
   for (let i = 0; i < 12; i++) {
     const alt = MONTH_ALT[i]
     if ((m = new RegExp(`(\\d{1,2})\\.?\\s*(?:of\\s+)?${alt}`, 'i').exec(s))) return mk(+m[1], i)
     if ((m = new RegExp(`(?:^|\\s)${alt}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, 'i').exec(s))) return mk(+m[1], i)
   }
   for (let i = 0; i < 12; i++) {
-    if (new RegExp(`(?:since|from|sedan|från|alkaen|lähtien|с|в)\\s+${MONTH_ALT[i]}|${FI[i]}kuusta`, 'i').test(s)) return mk(1, i)
+    if (new RegExp(`(?:since|from|sedan|från|alkaen|lähtien)\\s+${MONTH_ALT[i]}|${FI[i]}kuusta`, 'i').test(s)) return mk(1, i)
   }
-  if (/yesterday|eilen|igår|i går|вчера|shalay/.test(s)) return minusDays(now, 1)
-  if (/last week|viime viikolla|förra veckan|прошлой неделе/.test(s)) return minusDays(now, 7)
-  if (/last month|viime kuussa|förra månaden|прошлом месяце/.test(s)) return minusDays(now, 30)
+  if (/yesterday|eilen|igår|i går/.test(s)) return minusDays(now, 1)
+  if (/last week|viime viikolla|förra veckan/.test(s)) return minusDays(now, 7)
+  if (/last month|viime kuussa|förra månaden/.test(s)) return minusDays(now, 30)
   // "<n> <unit>" relative durations
   const words = s.replace(/[,.!?]/g, ' ').split(/\s+/).filter(Boolean)
   for (let i = 0; i < words.length; i++) {
@@ -106,7 +105,7 @@ export function parseWhen(text: string, now: string = today(), allowYears = true
       return minusDays(now, n * mult)
     }
   }
-  if (/\btoday\b|tänään|idag|сегодня|maanta/.test(s)) return now
+  if (/\btoday\b|tänään|idag/.test(s)) return now
   return null
 }
 
@@ -115,18 +114,18 @@ export interface SmokeInfo { status?: 'never' | 'current' | 'former'; cpd?: numb
 export function parseSmoking(text: string): SmokeInfo {
   const s = text.toLowerCase()
   const out: SmokeInfo = {}
-  if (/never smok|don'?t smoke|non.?smoker|en ole (koskaan )?(tupakoinut|polttanut)|en tupakoi|aldrig rökt|röker inte|не курю|никогда не курил|weligay/.test(s)) return { status: 'never' }
-  if (/quit|stopped|gave up|former|used to|lopet|slutat|slutade|бросил|joojiy/.test(s)) out.status = 'former'
-  else if (/smok|tupak|polt|röker|курю|sigaar/.test(s)) out.status = 'current'
+  if (/never smok|don'?t smoke|non.?smoker|en ole (koskaan )?(tupakoinut|polttanut)|en tupakoi|aldrig rökt|röker inte/.test(s)) return { status: 'never' }
+  if (/quit|stopped|gave up|former|used to|lopet|slutat|slutade/.test(s)) out.status = 'former'
+  else if (/smok|tupak|polt|röker/.test(s)) out.status = 'current'
   let m: RegExpExecArray | null
-  if ((m = /(\d+(?:[.,]\d+)?|a|one|half|yksi|puoli|ett|en|halv|одну|пол)?\s*(?:packs?|aski\S*|paket\S*|пачк\S*|baako)/.exec(s))) {
+  if ((m = /(\d+(?:[.,]\d+)?|a|one|half|yksi|puoli|ett|en|halv)?\s*(?:packs?|aski\S*|paket\S*)/.exec(s))) {
     const w = m[1]
-    const n = !w ? 1 : /half|puoli|halv|пол/.test(w) ? 0.5 : /^\d/.test(w) ? parseFloat(w.replace(',', '.')) : 1
+    const n = !w ? 1 : /half|puoli|halv/.test(w) ? 0.5 : /^\d/.test(w) ? parseFloat(w.replace(',', '.')) : 1
     out.cpd = Math.round(n * 20)
-  } else if ((m = /(\d+)\s*(?:cig\S*|savuk\S*|tupak\S*|sätk\S*|сигарет\S*|sigaar\S*|a day|per day|\/day|päivässä|om dagen|per dag|om dan|в день|maalintii)/.exec(s))) out.cpd = +m[1]
-  const quitM = /(\d+)\s*(?:years?|yrs?|vuotta|år|лет|года?|sano)\s*(?:ago|sitten|sedan|назад|ka hor)/.exec(s)
+  } else if ((m = /(\d+)\s*(?:cig\S*|savuk\S*|tupak\S*|sätk\S*|a day|per day|\/day|päivässä|om dagen|per dag|om dan)/.exec(s))) out.cpd = +m[1]
+  const quitM = /(\d+)\s*(?:years?|yrs?|vuotta|år)\s*(?:ago|sitten|sedan)/.exec(s)
   if (quitM) { out.quit = +quitM[1]; out.status = 'former' }
-  const yrsRx = /(?:for\s+|)(\d+)\s*(?:years?|yrs?|vuotta|vuoden|vuosi|år|лет|года?|sano)(?!\s*(?:ago|sitten|sedan|назад|ka hor))/g
+  const yrsRx = /(?:for\s+|)(\d+)\s*(?:years?|yrs?|vuotta|vuoden|vuosi|år)(?!\s*(?:ago|sitten|sedan))/g
   while ((m = yrsRx.exec(s))) { out.years = +m[1]; break }
   return out
 }
@@ -181,6 +180,141 @@ export const PROGRAMMES = [
   { id: 'breast' as const, from: 50, to: 69, sex: ['f', 'x'] },
   { id: 'cervical' as const, from: 30, to: 65, sex: ['f', 'x'] },
 ]
+
+
+// ---------- bowel / breast / cervical Estimate ----------
+// NOT a clinical model. No free, validated model exists for these cancers, so (spec 3.1) we combine
+// rough Finnish Cancer Registry incidence by age and sex with relative risks from published
+// meta-analyses. Labelled "Estimate" wherever it surfaces. The person never sees the number.
+type Cancer3 = 'bowel' | 'breast' | 'cervical'
+/** New cases per 100 000 per year, by 10-year age band starting at 0, 10, 20 … 80+. Rounded, demo-grade. */
+const INCIDENCE: Record<Cancer3, { f: number[]; m: number[] }> = {
+  bowel: { f: [0, 0, 1, 5, 18, 45, 100, 190, 290], m: [0, 0, 1, 5, 20, 60, 150, 280, 380] },
+  breast: { f: [0, 0, 2, 50, 190, 270, 320, 280, 250], m: [0, 0, 0, 0, 1, 1, 2, 2, 3] },
+  cervical: { f: [0, 0, 6, 11, 9, 7, 7, 6, 6], m: [0, 0, 0, 0, 0, 0, 0, 0, 0] },
+}
+/** Relative risks (approximate, from published meta-analyses). Multiplied together. */
+export const ESTIMATE_RR = {
+  bowel: { current: 1.2, former: 1.15, drinks7: 1.15, drinks14: 1.4, bmi25: 1.1, bmi30: 1.3, family: 1.8 },
+  breast: { current: 1.1, former: 1.05, drinks7: 1.1, drinks14: 1.3, bmi30after50: 1.25, family: 1.8 },
+  cervical: { current: 2.0, former: 1.3 },
+} as const
+export interface EstimateInput { age: number; sex: 'f' | 'm' | 'x'; smoker: CheckInputs['smoker']; drinksPerWeek: number; bmi: number; familyBowel: boolean; familyBreast: boolean }
+
+function baseline10y(c: Cancer3, sex: 'f' | 'm' | 'x', age: number) {
+  const rows = INCIDENCE[c][sex === 'm' ? 'm' : 'f']
+  let rate = 0
+  for (let a = age; a < age + 10; a++) rate += rows[Math.min(8, Math.floor(a / 10))]
+  return 1 - Math.exp(-rate / 100_000)
+}
+function relRisk(c: Cancer3, i: EstimateInput) {
+  let rr = 1
+  if (c === 'bowel') {
+    const r = ESTIMATE_RR.bowel
+    if (i.smoker === 'current') rr *= r.current; else if (i.smoker === 'former') rr *= r.former
+    rr *= i.drinksPerWeek > 14 ? r.drinks14 : i.drinksPerWeek >= 7 ? r.drinks7 : 1
+    rr *= i.bmi >= 30 ? r.bmi30 : i.bmi >= 25 ? r.bmi25 : 1
+    if (i.familyBowel) rr *= r.family
+  } else if (c === 'breast') {
+    const r = ESTIMATE_RR.breast
+    if (i.smoker === 'current') rr *= r.current; else if (i.smoker === 'former') rr *= r.former
+    rr *= i.drinksPerWeek > 14 ? r.drinks14 : i.drinksPerWeek >= 7 ? r.drinks7 : 1
+    if (i.bmi >= 30 && i.age >= 50) rr *= r.bmi30after50
+    if (i.familyBreast) rr *= r.family
+  } else {
+    const r = ESTIMATE_RR.cervical
+    if (i.smoker === 'current') rr *= r.current; else if (i.smoker === 'former') rr *= r.former
+  }
+  return rr
+}
+/** Estimate of the 10-year chance of one cancer, or null if it does not apply (e.g. cervical for men). */
+export function estimate(c: Cancer3, i: EstimateInput): number | null {
+  if (c !== 'bowel' && i.sex === 'm') return null
+  return Math.min(0.99, baseline10y(c, i.sex, i.age) * relRisk(c, i))
+}
+export function estimates(i: EstimateInput): Estimates {
+  return { bowel: estimate('bowel', i), breast: estimate('breast', i), cervical: estimate('cervical', i) }
+}
+/**
+ * "High" = the person's Estimate is already at least the average 10-year risk of someone at the age the
+ * national programme starts inviting (same sex). Only used before programme age, to suggest asking a doctor.
+ */
+export function estimateHigh(c: 'bowel' | 'breast', i: EstimateInput) {
+  const e = estimate(c, i)
+  const start = PROGRAMMES.find((p) => p.id === c)!.from
+  return e !== null && i.age < start && e >= baseline10y(c, i.sex, start)
+}
+export const ESTIMATE_HOW = 'Estimate, not a clinical score. 10-year chance = Finnish Cancer Registry incidence for your age and sex × relative risks (smoking, alcohol, BMI, family history) from published meta-analyses. Before programme age, "ask a doctor" is suggested when this reaches the average risk of people at the age invitations start.'
+
+export const bmiOf = (heightCm: number, weightKg: number) => +(weightKg / Math.pow(heightCm / 100, 2)).toFixed(1)
+export const DEFAULT_CHECK: CheckInputs = {
+  smoker: 'never', cigsPerDay: 15, yearsSmoked: 25, yearsQuit: 0, heightCm: 172, weightKg: 76, drinksPerWeek: 3,
+  familyLung: false, familyBowel: false, familyBreast: false, education: 4, copd: false, personalCancer: false, ethnicity: 'white',
+}
+/** Lung model inputs from the check, or null for never-smokers (PLCOm2012 only covers ever-smokers). */
+export function toRiskInputs(age: number, c: CheckInputs): RiskInputs | null {
+  if (c.smoker === 'never') return null
+  return { age, education: c.education, bmi: bmiOf(c.heightCm, c.weightKg), copd: c.copd, personalCancer: c.personalCancer, familyLung: c.familyLung, smoker: c.smoker, cigsPerDay: c.cigsPerDay, yearsSmoked: c.yearsSmoked, yearsQuit: c.smoker === 'current' ? 0 : c.yearsQuit, ethnicity: c.ethnicity }
+}
+
+// ---------- next step per cancer: the only thing the person sees ----------
+export type CheckCancer = 'lung' | 'bowel' | 'breast' | 'cervical'
+export type StepLevel = 'doctor' | 'act' | 'done' | 'none' | 'unknown'
+export interface NextStep {
+  id: CheckCancer
+  level: StepLevel
+  /** i18n key of the full sentence */
+  say: string
+  /** i18n key of the 2–3 word stamp */
+  short: string
+  /** in the national programme's invitation group */
+  invited: boolean
+  /** false = does not apply to this person (breast/cervical for men) */
+  applies: boolean
+}
+const LUNG_SYM = ['blood-cough', 'cough', 'hoarse', 'breathless', 'chest-pain']
+const BOWEL_SYM = ['blood-stool', 'bowel-change']
+export const CHECK_ORDER: CheckCancer[] = ['lung', 'bowel', 'breast', 'cervical']
+const RANK: Record<StepLevel, number> = { doctor: 0, act: 1, unknown: 2, done: 3, none: 4 }
+
+export function nextSteps(s: Pick<State, 'profile' | 'check' | 'screening' | 'diary'>, override?: CheckInputs): NextStep[] {
+  const { age, sex } = s.profile
+  const c = override ?? s.check?.inputs ?? null
+  const sym = new Set(assess(s.diary).reasons.map((r) => r.tag))
+  const mk = (id: CheckCancer, level: StepLevel, say: string, short: string, invited = false, applies = true): NextStep => ({ id, level, say, short, invited, applies })
+  const symptomStep = (id: CheckCancer) => mk(id, 'doctor', 'ck.sym', 'ck.s.doctor2w')
+  const ei: EstimateInput | null = age && c ? { age, sex: sex ?? 'x', smoker: c.smoker, drinksPerWeek: c.drinksPerWeek, bmi: bmiOf(c.heightCm, c.weightKg), familyBowel: c.familyBowel, familyBreast: c.familyBreast } : null
+
+  return CHECK_ORDER.map((id) => {
+    const prog = PROGRAMMES.find((p) => p.id === id)
+    const applies = !prog || !sex || prog.sex.includes(sex)
+    if (!applies) return mk(id, 'none', 'ck.notForYou', 'ck.s.none', false, false)
+    if (id === 'lung' && LUNG_SYM.some((t) => sym.has(t))) return symptomStep(id)
+    if (id === 'bowel' && BOWEL_SYM.some((t) => sym.has(t))) return symptomStep(id)
+    if (!age) return mk(id, 'unknown', 'ck.needAge', 'ck.s.unknown')
+
+    if (id === 'lung') {
+      if (!c) return mk(id, 'unknown', 'ck.needAnswers', 'ck.s.unknown')
+      if (c.smoker === 'never') return mk(id, 'none', 'ck.lung.never', 'ck.s.none')
+      const ri = toRiskInputs(age, c)!
+      if (plco(ri) >= PLCO_THRESHOLD) return mk(id, 'doctor', 'ck.lung.high', 'ck.s.discuss')
+      return mk(id, 'none', c.smoker === 'current' ? 'ck.lung.lowSmoker' : 'ck.none', 'ck.s.none')
+    }
+
+    const p = prog!
+    const invited = age >= p.from && age <= p.to
+    if (invited) {
+      const a = s.screening[id as Cancer3]
+      if (a === 'yes') return mk(id, 'done', `ck.${id}.done`, 'ck.s.done', true)
+      if (a === 'no') return mk(id, 'act', 'ck.newInvite', 'ck.s.ask', true)
+      return mk(id, 'act', `ck.${id}.due`, id === 'bowel' ? 'ck.s.kit' : 'ck.s.go', true)
+    }
+    if ((id === 'bowel' || id === 'breast') && ei && estimateHigh(id, ei)) return mk(id, 'doctor', 'ck.early', 'ck.s.askDoctor')
+    return mk(id, 'none', age < p.from ? `ck.${id}.later` : 'ck.none', 'ck.s.none')
+  })
+}
+/** The most pressing step first. */
+export const byUrgency = (steps: NextStep[]) => [...steps].filter((x) => x.applies).sort((a, b) => RANK[a.level] - RANK[b.level])
 
 export const addDays = (isoDate: string, n: number) => iso(new Date(new Date(isoDate.slice(0, 10) + 'T12:00:00').getTime() + n * DAY))
 export { minusDays }

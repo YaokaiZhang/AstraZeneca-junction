@@ -11,6 +11,15 @@ export const CANCERS: { id: CancerId; label: string; ratePer100k: number; fatali
   { id: 'liver', label: 'Liver', ratePer100k: 11, fatality: 0.85, lateShare: 0.66 },
 ]
 
+/** Cancers with a national screening programme that are not in CANCERS. Used by the detection radar (3.1). */
+export type ScreenCancerId = 'breast' | 'cervical'
+export type RadarCancerId = CancerId | ScreenCancerId
+export const SCREEN_CANCERS: { id: ScreenCancerId; label: string; ratePer100k: number; fatality: number; lateShare: number }[] = [
+  // rates per 100k of the whole population (women only get them): ~5 000 and ~180 cases a year in Finland
+  { id: 'breast', label: 'Breast', ratePer100k: 90, fatality: 0.17, lateShare: 0.2 },
+  { id: 'cervical', label: 'Cervical', ratePer100k: 3.3, fatality: 0.34, lateShare: 0.4 },
+]
+
 export interface CancerFigures {
   /** new cases per year, mean of last 5 years */
   cases: number
@@ -43,6 +52,8 @@ export interface County {
   /** yearly forecast multiplier of over-75 population, 2025 → 2035 */
   ageingIndex: number
   cancers: Record<CancerId, CancerFigures>
+  /** breast + cervical, for the detection radar */
+  screenCancers: Record<ScreenCancerId, CancerFigures>
 }
 
 const RAW: [string, string, number, number, number][] = [
@@ -103,9 +114,35 @@ function build(): County[] {
       cancers[c.id] = { cases, deaths, lateShare, expected: Math.round(expected) }
     }
     return { id, name, col, row, population, share50to74, share75plus, smoking, alcohol, obesity, inactivity,
-      bowelTurnout, breastTurnout, cervicalTurnout, queueTrend, ageingIndex, cancers }
+      bowelTurnout, breastTurnout, cervicalTurnout, queueTrend, ageingIndex, cancers,
+      screenCancers: {} as Record<ScreenCancerId, CancerFigures> }
   })
 }
 
-export const COUNTIES: County[] = build()
+/**
+ * Breast + cervical figures. Separate generator (own seed) so the four original cancers keep their values.
+ * Late stage leans on screening turnout: counties where fewer women take part find more cancers late.
+ */
+function addScreenCancers(list: County[]) {
+  const mean = (f: (c: County) => number) => list.reduce((s, c) => s + f(c), 0) / list.length
+  const avg = { breast: mean((c) => c.breastTurnout), cervical: mean((c) => c.cervicalTurnout) }
+  list.forEach((c, i) => {
+    const r = mulberry32(7000 + i * 53)
+    const rural = RURAL.has(c.id)
+    for (const k of SCREEN_CANCERS) {
+      const turnout = k.id === 'breast' ? c.breastTurnout : c.cervicalTurnout
+      const ageFactor = k.id === 'breast' ? c.share50to74 / 0.33 : (0.47 - c.share75plus * 0.8) / 0.38
+      const riskFactor = k.id === 'breast' ? (c.alcohol / 13) * 0.5 + (c.obesity / 22) * 0.5 : (c.smoking / 10) * 0.5 + 0.5
+      const expected = (c.population / 100_000) * k.ratePer100k * ageFactor * (0.6 + 0.4 * riskFactor)
+      const cases = Math.max(1, Math.round(expected * (0.88 + r() * 0.24)))
+      const lateShare = Math.min(0.9, Math.max(0.05,
+        +(k.lateShare + (avg[k.id] - turnout) * 0.006 + (rural ? 0.02 : -0.01) + (r() - 0.5) * 0.06).toFixed(2)))
+      const deaths = Math.round(cases * Math.min(0.95, k.fatality + (lateShare - k.lateShare) * 0.7 + (r() - 0.5) * 0.05))
+      c.screenCancers[k.id] = { cases, deaths, lateShare, expected: Math.round(expected) }
+    }
+  })
+  return list
+}
+
+export const COUNTIES: County[] = addScreenCancers(build())
 export const countyById = (id: string) => COUNTIES.find((c) => c.id === id)

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Btn, Card, Chip, Display, EdgeText, Label, RoundBtn, SourceBadge, Stamp, Tabs, cx } from '../../components/ui'
+import { Btn, Card, Chip, Display, EdgeText, Label, RoundBtn, Stamp, Tabs, cx } from '../../components/ui'
 import { PATHWAY, daysBetween, today } from '../../data/pathway'
 import { useStore } from '../../lib/store'
 import { send, simulateCheckin, useChat, type Msg } from './chat'
-import { assess, firstSeen, nextCheckin, packYears, parseKg, PLCO_THRESHOLD } from './logic'
+import { assess, firstSeen, nextCheckin, nextSteps, packYears, parseKg } from './logic'
 import { split2, useT, type Key } from './i18n'
 import { ArrowIcon, ShareSwitch, Tag } from './bits'
 
@@ -127,9 +127,13 @@ export function CheckinCard({ onSimulate }: { onSimulate?: () => void }) {
   const { t, d } = useT()
   const checkins = useStore((s) => s.checkins)
   const diary = useStore((s) => s.diary)
-  const risk = useStore((s) => s.risk)
+  const profile = useStore((s) => s.profile)
+  const check = useStore((s) => s.check)
+  const screening = useStore((s) => s.screening)
   const set = useStore((s) => s.set)
-  const rec = recommendedEvery(!!risk && risk.prob6y >= PLCO_THRESHOLD, assess(diary).flag)
+  // more check-ins when the screening check suggests a doctor (spec 1.6) or the diary flags a symptom
+  const doctor = nextSteps({ profile, check, screening, diary }).some((x) => x.level === 'doctor')
+  const rec = recommendedEvery(doctor, assess(diary).flag)
   const nextIso = nextCheckin(checkins)
   const nextIn = daysBetween(today(), nextIso.slice(0, 10))
   const upd = (p: Partial<typeof checkins>) => set((s) => ({ checkins: { ...s.checkins, ...p } }))
@@ -256,6 +260,9 @@ function Summary() {
   const risk = useStore((s) => s.risk)
   const pathway = useStore((s) => s.pathway)
   const profile = useStore((s) => s.profile)
+  const check = useStore((s) => s.check)
+  const screening = useStore((s) => s.screening)
+  const steps = nextSteps({ profile, check, screening, diary }).filter((x) => x.applies && x.level !== 'unknown')
   const sharing = useStore((s) => s.sharing)
   const now = today()
   const first = firstSeen(diary)
@@ -309,11 +316,13 @@ function Summary() {
                 <p className="font-serif text-3xl leading-none mt-1">{py || '—'}</p>
               </div>
               <div className="border-b border-black/10 pb-3">
-                <Label>{t('tab.risk')} · {t('r.sixYear')}</Label>
-                <p className={cx('font-serif text-3xl leading-none mt-1 flex items-baseline gap-2', risk && risk.prob6y >= PLCO_THRESHOLD && 'text-terra')}>
-                  {risk ? `${(risk.prob6y * 100).toFixed(2)} %` : '—'}
-                  {risk && <SourceBadge id="plco" kind="estimate" how="PLCOm2012, patient-entered inputs. ≥1.51 % = screening-level risk." className="no-print" />}
-                </p>
+                <Label>{t('tab.check')}</Label>
+                <ul className="mt-1 space-y-0.5">
+                  {steps.map((st) => (
+                    <li key={st.id} className={cx('font-type text-xs flex justify-between gap-2', st.level === 'doctor' && 'text-terra')}><span>{t(`prog.${st.id}`)}</span><span className="text-right">{t(st.short)}</span></li>
+                  ))}
+                  {!steps.length && <li className="font-type text-xs opacity-50">—</li>}
+                </ul>
               </div>
               <div>
                 <Label>{t('tab.pathway')}</Label>

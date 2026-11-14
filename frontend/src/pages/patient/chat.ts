@@ -129,13 +129,13 @@ export function send(label: string, value?: string) {
     out.push(bot('bot.saved', { date }))
     finish(p.source)
   } else if (p?.kind === 'blood') {
-    const where = value ?? (/(cough|ysk|host|каш)/i.test(text) ? 'cough' : /(stool|ulost|avför|стул|saxar)/i.test(text) ? 'stool' : 'other')
+    const where = value ?? (/(cough|ysk|host)/i.test(text) ? 'cough' : /(stool|ulost|avför)/i.test(text) ? 'stool' : 'other')
     const tag = where === 'cough' ? 'blood-cough' : where === 'stool' ? 'blood-stool' : 'blood'
     patchLast((e) => ({ ...e, tags: [...new Set(e.tags.filter((t) => t !== 'blood').concat(tag))] }), (e) => e.tags.includes('blood'))
     out.push(bot('bot.noted', { syms: syms([tag]) }))
     finish()
   } else if (p?.kind === 'yesno') {
-    const yes = value ? value === 'yes' : /^(y|yes|kyllä|joo|ja|да|haa)/i.test(text.trim()) || extractTags(text).includes(p.tag)
+    const yes = value ? value === 'yes' : /^(y|yes|kyllä|joo|ja)/i.test(text.trim()) || extractTags(text).includes(p.tag)
     if (yes) {
       patchLast((e) => ({ ...e, tags: [...new Set([...e.tags, p.tag])] }), (e) => e.source === 'chat' && e.tags.some((t) => t !== 'smoking'))
       out.push(bot('bot.noted', { syms: syms([p.tag]) }))
@@ -162,7 +162,7 @@ export function send(label: string, value?: string) {
     const answer = value ?? ''
     const symLabel = p.tag ? tr(lang, `sym.${p.tag}`) : tr(lang, 'd.checkin')
     const extra = extractTags(text).filter((t) => t !== 'smoking')
-    const keep = p.tag && (answer === 'still' || answer === 'worse' || (!answer && !/gone|better|ohi|parempi|borta|bättre|прошл|лучше/i.test(text)))
+    const keep = p.tag && (answer === 'still' || answer === 'worse' || (!answer && !/gone|better|ohi|parempi|borta|bättre/i.test(text)))
     const tags = [...new Set([...(keep && p.tag ? [p.tag] : []), ...extra])]
     const entryText = value ? `${symLabel}: ${label}` : `${symLabel}: ${text}`
     addEntry(entryText, tags, parseWhen(text) ?? today(), 'checkin')

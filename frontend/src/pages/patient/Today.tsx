@@ -2,13 +2,13 @@ import { useState, type ReactNode } from 'react'
 import { Card, EdgeText, Label, RoundBtn, Stamp, cx } from '../../components/ui'
 import { pathwayStatus, daysBetween, today } from '../../data/pathway'
 import { useStore } from '../../lib/store'
-import { assess, firstSeen, nextCheckin, PLCO_THRESHOLD } from './logic'
+import { assess, byUrgency, firstSeen, nextCheckin, nextSteps } from './logic'
 import { send } from './chat'
 import { useT } from './i18n'
-import { ArrowIcon, Clock, Gauge, Tag } from './bits'
-import { invitedTo } from './Screening'
+import { ArrowIcon, Clock, Tag } from './bits'
+import { LEVEL_TAG } from './Check'
 
-export type TabId = 'today' | 'diary' | 'risk' | 'pathway' | 'screening' | 'settings'
+export type TabId = 'today' | 'diary' | 'pathway' | 'check' | 'settings'
 
 function Tile({ tone, tilt, onOpen, children, className, edge }: { tone: 'paper' | 'mustard' | 'terra' | 'stone' | 'ink'; tilt: number; onOpen: () => void; children: ReactNode; className?: string; edge?: string }) {
   const { t } = useT()
@@ -35,9 +35,10 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
   const { flag, reasons } = assess(s.diary)
   const symCount = Object.keys(firstSeen(s.diary)).filter((k) => k !== 'smoking').length
   const last = [...s.diary].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
-  const high = !!s.risk && s.risk.prob6y >= PLCO_THRESHOLD
   const nextCheck = s.checkins.enabled ? nextCheckin(s.checkins) : null
-  const invited = invitedTo(s.profile.age, s.profile.sex)
+  const steps = byUrgency(nextSteps(s))
+  const top = steps[0]
+  const urgent = !!top && (top.level === 'doctor' || top.level === 'act')
 
   return (
     <div className="space-y-10">
@@ -86,35 +87,23 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
           {last && <p className="font-serif italic text-lg leading-snug mt-auto pt-4 line-clamp-2"><span className="font-type not-italic text-[10px] opacity-60 mr-2">{d(last.date)}</span>{last.text}</p>}
         </Tile>
 
-        <Tile tone={high ? 'terra' : 'paper'} tilt={-0.8} onOpen={() => go('risk')} edge={t('tab.risk')}>
-          <Label className="!opacity-80">{t('r.sixYear')}</Label>
-          {s.risk ? (
-            <div className="flex items-end gap-4 mt-2">
-              <div className="w-36 shrink-0"><Gauge p={s.risk.prob6y} dark={high} /></div>
-              <p className="font-serif text-5xl leading-none">{(s.risk.prob6y * 100).toFixed(2)}<span className="font-type text-sm ml-1">%</span></p>
-            </div>
-          ) : <p className="font-serif italic text-3xl mt-2 opacity-60">{t('m.notChecked')}</p>}
-          {s.risk && <p className="font-type text-[10px] uppercase tracking-widest mt-3">{high ? t('r.stampHigh') : t('r.stampLow')}</p>}
+        <Tile tone={urgent ? 'stone' : 'paper'} tilt={-0.8} onOpen={() => go('check')} edge={t('tab.check')}>
+          <Label className="!opacity-80">{t('ck.next')}</Label>
+          {top && <p className="font-serif italic text-2xl leading-tight mt-2">{t(top.say)}</p>}
+          <div className="mt-4 space-y-2">
+            {steps.map((st) => (
+              <div key={st.id} className="flex items-center justify-between gap-3 border-b border-black/10 pb-2">
+                <span className="font-serif text-2xl">{t(`prog.${st.id}`)}</span>
+                <Tag tone={LEVEL_TAG[st.level]}>{t(st.short)}</Tag>
+              </div>
+            ))}
+          </div>
         </Tile>
 
         <Tile tone="ink" tilt={1.5} onOpen={() => go('diary')} edge={t('ci.title')}>
           <Label className="!opacity-70">{t('ci.next')}</Label>
           <p className="font-serif text-4xl leading-none mt-2">{nextCheck ? d(nextCheck, { weekday: 'short', day: 'numeric', month: 'short' }) : t('pr.off')}</p>
           {s.checkins.enabled && <p className="font-type text-[10px] uppercase tracking-widest text-mustard mt-2">{t('ci.every')} {t('ci.days', { n: s.checkins.everyDays })}</p>}
-        </Tile>
-
-        <Tile tone="stone" tilt={-1.2} onOpen={() => go('screening')} edge={t('tab.screening')}>
-          <Label>{t('s.invited')}</Label>
-          {s.profile.age ? (
-            <div className="mt-3 space-y-2">
-              {invited.length ? invited.map((p) => (
-                <div key={p.id} className="flex items-center justify-between border-b border-black/10 pb-2">
-                  <span className="font-serif text-2xl">{t(`prog.${p.id}`)}</span>
-                  {s.screening[p.id] ? <Tag tone={s.screening[p.id] === 'yes' ? 'ink' : 'terra'}>{t(s.screening[p.id] === 'yes' ? 'c.yes' : s.screening[p.id] === 'kit' ? 's.a.kit' : s.screening[p.id] === 'no' ? 'c.no' : 's.a.unsure')}</Tag> : <span className="w-2.5 h-2.5 rounded-full bg-terra" />}
-                </div>
-              )) : <p className="font-serif italic text-2xl opacity-60">—</p>}
-            </div>
-          ) : <p className="font-serif italic text-2xl mt-2 opacity-60">{t('s.ageFirst')}</p>}
         </Tile>
 
         <Tile tone="paper" tilt={0.8} onOpen={() => go('settings')} edge={t('tab.settings')}>

@@ -1,7 +1,7 @@
 // Demo seed: realistic example patient so every view has something to show.
-import { useStore, uid, type DiaryEntry, type RiskInputs } from '../../lib/store'
+import { useStore, uid, type CheckInputs, type DiaryEntry } from '../../lib/store'
 import { today } from '../../data/pathway'
-import { minusDays, plco } from './logic'
+import { bmiOf, DEFAULT_CHECK, estimates, minusDays, plco, toRiskInputs } from './logic'
 import { useChat, helloMsg, type Msg } from './chat'
 
 export function seedDemo() {
@@ -16,11 +16,14 @@ export function seedDemo() {
     { id: uid(), date: ago(16), createdAt: at(16), text: 'Cough: still there', tags: ['cough'], source: 'checkin' },
     { id: uid(), date: ago(9), createdAt: at(9), text: 'Very tired in the afternoons.', tags: ['fatigue'], source: 'chat' },
   ]
-  const inputs: RiskInputs = { age: 64, education: 3, bmi: 24.2, copd: false, personalCancer: false, familyLung: false, smoker: 'current', cigsPerDay: 20, yearsSmoked: 30, yearsQuit: 0, ethnicity: 'white' }
+  const check: CheckInputs = { ...DEFAULT_CHECK, smoker: 'current', cigsPerDay: 20, yearsSmoked: 30, heightCm: 178, weightKg: 77, drinksPerWeek: 8, education: 3 }
+  const inputs = toRiskInputs(64, check)!
+  const est = estimates({ age: 64, sex: 'm', smoker: check.smoker, drinksPerWeek: check.drinksPerWeek, bmi: bmiOf(check.heightCm, check.weightKg), familyBowel: false, familyBreast: false })
   useStore.getState().set({
     profile: { age: 64, sex: 'm', county: 'Kainuu' },
     diary,
     risk: { inputs, prob6y: plco(inputs), at: new Date().toISOString() },
+    check: { inputs: check, est, at: new Date().toISOString() },
     pathway: { cancer: 'lung', dates: { gp: ago(28), referral: ago(21) } },
     barriers: [],
     checkins: { enabled: true, everyDays: 3, lastAt: at(16) },
@@ -56,7 +59,7 @@ export function seedDemo() {
 
 export function erasePatient() {
   useStore.getState().set({
-    profile: {}, diary: [], risk: null, pathway: { cancer: 'lung', dates: {} }, barriers: [],
+    profile: {}, diary: [], risk: null, check: null, pathway: { cancer: 'lung', dates: {} }, barriers: [],
     checkins: { enabled: false, everyDays: 7 }, screening: {}, sharing: { hospital: false, stats: false },
   })
   useChat.getState().set({ msgs: [helloMsg()], pending: null, asked: [], smoke: {} })

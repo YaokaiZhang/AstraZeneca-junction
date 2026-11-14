@@ -13,7 +13,7 @@ export default function Layout() {
   const reset = useStore((s) => s.reset)
   return (
     <div className="w-full min-h-screen flex flex-col lg:flex-row">
-      <aside className="w-full lg:w-[260px] xl:w-[300px] lg:h-screen lg:sticky lg:top-0 border-b lg:border-b-0 lg:border-r border-stone/60 flex lg:flex-col justify-between gap-6 p-5 lg:p-10 z-20 bg-paper shrink-0">
+      <aside className="w-full lg:w-[260px] xl:w-[300px] lg:h-screen lg:sticky lg:top-0 border-b lg:border-b-0 lg:border-r border-stone/60 flex lg:flex-col justify-between gap-3 sm:gap-6 p-4 sm:p-5 lg:p-10 z-20 bg-paper shrink-0">
         <div className="flex lg:flex-col gap-4 lg:gap-8 items-center lg:items-start">
           <NavLink to="/" className="flex items-center gap-3">
             <div className="w-10 h-10 border border-current rounded-full flex items-center justify-center">
@@ -26,11 +26,11 @@ export default function Layout() {
           </div>
         </div>
 
-        <nav className="flex lg:flex-col gap-4 lg:gap-5 lg:mt-auto items-center lg:items-start">
+        <nav className="flex lg:flex-col gap-3 sm:gap-4 lg:gap-5 lg:mt-auto items-center lg:items-start">
           {NAV.map((n) => {
             const active = pathname.startsWith(n.to)
             return (
-              <NavLink key={n.to} to={n.to} className={cx('group font-type uppercase text-sm tracking-widest hover:text-terra transition-colors', !active && 'opacity-50')}>
+              <NavLink key={n.to} to={n.to} className={cx('group font-type uppercase text-[11px] sm:text-xs lg:text-sm tracking-wider sm:tracking-widest hover:text-terra transition-colors', !active && 'opacity-50')}>
                 <span className="flex items-center gap-2">
                   {active && <span className="w-1.5 h-1.5 bg-terra rounded-full" />}
                   {n.label}

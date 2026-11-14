@@ -6,20 +6,22 @@ import { useStore } from '../../lib/store'
 import { LANGS, split2, useT } from './i18n'
 import Today, { type TabId } from './Today'
 import Diary from './Diary'
-import Risk from './Risk'
 import Pathway from './Pathway'
-import Screening from './Screening'
+import Check from './Check'
 import Privacy from './Privacy'
 import { seedDemo } from './seed'
 
-const TABS: TabId[] = ['today', 'diary', 'pathway', 'risk', 'screening', 'settings']
+const TABS: TabId[] = ['today', 'diary', 'pathway', 'check', 'settings']
+// old links: the lung-risk and screening tabs were merged into the screening check
+const ALIAS: Record<string, TabId> = { risk: 'check', screening: 'check' }
 
 export default function PatientPage() {
   const { t, lang } = useT()
   const set = useStore((s) => s.set)
   const params = useParams()
   const navigate = useNavigate()
-  const raw = (params['*'] ?? '').split('/')[0] as TabId
+  const seg = (params['*'] ?? '').split('/')[0]
+  const raw = (ALIAS[seg] ?? seg) as TabId
   const tab: TabId = TABS.includes(raw) ? raw : 'today'
   const go = (id: TabId) => { navigate(id === 'today' ? '/patient' : `/patient/${id}`); window.scrollTo({ top: 0 }) }
   const [gen, setGen] = useState(0) // remount forms after seed / erase
@@ -54,9 +56,8 @@ export default function PatientPage() {
       <div key={`${tab}-${gen}`} className="rise">
         {tab === 'today' && <Today go={go} />}
         {tab === 'diary' && <Diary />}
-        {tab === 'risk' && <Risk />}
         {tab === 'pathway' && <Pathway />}
-        {tab === 'screening' && <Screening />}
+        {tab === 'check' && <Check />}
         {tab === 'settings' && <Privacy onErased={() => setGen((g) => g + 1)} onSimulate={() => go('diary')} />}
       </div>
     </div>

@@ -1,4 +1,4 @@
-// Towns (municipalities, or districts for single-city counties) for "Who misses screening" (3.2).
+// Towns (municipalities, or districts for single-city counties) for "Who misses screening" (3.2) and the radar town drill-down (3.1).
 // DEMO VALUES: names are real, populations are rounded; income, age, language mix and turnout are
 // generated deterministically until the Statistics Finland + Sotkanet municipality pulls are wired in.
 import { COUNTIES } from '../../data/counties'
@@ -7,8 +7,8 @@ import { mulberry32 } from '../../lib/random'
 export type Programme = 'bowel' | 'breast' | 'cervical'
 export const PROGRAMMES: { id: Programme; label: string; ages: string; indicator: string }[] = [
   { id: 'bowel', label: 'Bowel', ages: '56–74', indicator: '6103' },
-  { id: 'breast', label: 'Breast', ages: '50–69', indicator: '3620' },
-  { id: 'cervical', label: 'Cervical', ages: '30–65', indicator: '3621' },
+  { id: 'breast', label: 'Breast', ages: '50–69', indicator: '3621' },
+  { id: 'cervical', label: 'Cervical', ages: '30–65', indicator: '3620' },
 ]
 
 export interface Town {
@@ -79,7 +79,24 @@ function build(): Town[] {
   })
 }
 
-export const TOWNS: Town[] = build()
+/** Real 2024 municipal turnout ranges (THL Sotkanet 6103, 3621, 3620) across 292 towns. */
+const RANGE: Record<Programme, [number, number]> = { bowel: [59.5, 82.4], breast: [68.1, 92.5], cervical: [45.7, 92.3] }
+
+/** Shift each county's towns so their population-weighted turnout equals the county figure, then keep inside the real range. */
+function calibrate(towns: Town[]): Town[] {
+  for (const c of COUNTIES) {
+    const ts = towns.filter((t) => t.county === c.id)
+    const pop = ts.reduce((s, t) => s + t.population, 0)
+    for (const p of PROGRAMMES) {
+      const target = p.id === 'bowel' ? c.bowelTurnout : p.id === 'breast' ? c.breastTurnout : c.cervicalTurnout
+      const mean = ts.reduce((s, t) => s + t.turnout[p.id] * t.population, 0) / pop
+      for (const t of ts) t.turnout[p.id] = +Math.max(RANGE[p.id][0], Math.min(RANGE[p.id][1], t.turnout[p.id] + target - mean)).toFixed(1)
+    }
+  }
+  return towns
+}
+
+export const TOWNS: Town[] = calibrate(build())
 
 // ---------- linear model: turnout ~ income + share65 + foreign + swedish ----------
 export const FEATURES = [

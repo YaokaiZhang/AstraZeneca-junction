@@ -1,9 +1,10 @@
 // 3.5 County action brief: biggest gap, where it happens, three ranked actions. Printable.
 import type { ReactNode } from 'react'
 import { Btn, Display, Label, SourceBadge, Stamp, cx } from '../../components/ui'
-import { COUNTIES, type County } from '../../data/counties'
-import { capacity, eur, fmt, metricValue, national, overloadYear, pct, projection, queueSlope, NAT, type CapacityInputs } from './model'
-import { TOWNS, fitModel, verdict } from './towns'
+import { COUNTIES, type County, type RadarCancerId } from '../../data/counties'
+import { RISK, cancerLabel, fmt, metricValue, national, overloadYear, pct, projection, queueSlope, radarFor, stepInfo, weakestSentence, NAT, type StepId } from './model'
+import { stepBadge } from './Radar'
+import { PROGRAMMES, TOWNS, fitModel, verdict, type Programme } from './towns'
 
 const STRIP = ['Screening', 'Visit', 'Referral', 'Scan', 'Diagnosis', 'Planning', 'Treatment'] as const
 type Stage = (typeof STRIP)[number]
@@ -19,18 +20,47 @@ export interface Action {
   stages: Stage[]
   badge: ReactNode
 }
-export interface BriefData { actions: Action[]; top: Action; stamp: string; stats: { label: string; value: string; badge: ReactNode }[] }
+export interface BriefData {
+  actions: Action[]
+  top: Action
+  stamp: string
+  /** biggest gap, from the detection radar (3.1): the weakest step for the chosen cancer */
+  gap: { cancer: RadarCancerId; step: StepId; text: string; why: string; stages: Stage[]; badge: ReactNode }
+  stats: { label: string; value: string; badge: ReactNode }[]
+}
 
-const bowelFit = fitModel('bowel')
+/** Where each radar step sits on the care-pathway strip. */
+const STEP_STAGES: Record<StepId, Stage[]> = {
+  risk: ['Screening', 'Visit'],
+  screen: ['Screening'],
+  late: ['Visit', 'Referral', 'Scan', 'Diagnosis'],
+  survival: ['Planning', 'Treatment'],
+}
+/** Which action answers which weakest step (gets a bonus in the ranking). */
+const STEP_ACTION = (step: StepId, k: RadarCancerId): string =>
+  step === 'risk' ? (k === 'lung' ? 'lung' : 'risk')
+  : step === 'screen' ? 'remind'
+  : step === 'late' ? (k === 'lung' ? 'lung' : k === 'pancreas' || k === 'liver' ? 'fast' : 'remind')
+  : 'diag'
+
+const FITS = { bowel: fitModel('bowel'), breast: fitModel('breast'), cervical: fitModel('cervical') } as const
 const natGrowth = COUNTIES.reduce((s, c) => { const p = projection(c, 'all'); return s + p[10] / p[0] - 1 }, 0) / COUNTIES.length
 
-export function buildBrief(c: County, cap: CapacityInputs): BriefData {
+export function buildBrief(c: County, k: RadarCancerId): BriefData {
   const natLate = national('lung', 'late')
   const lungLate = c.cancers.lung.lateShare
-  const cp = capacity(c, cap)
-  const helpTowns = TOWNS.filter((t) => t.county === c.id && verdict(t.turnout.bowel, bowelFit.predicted.get(t.id)!, bowelFit.sd) === 'help')
+  const rad = radarFor(c, k)
+  const lungRad = radarFor(c, 'lung')
+  const weak = stepInfo(rad.weakest)
+  // reminder action targets the programme of the chosen cancer (bowel when it has none)
+  const prog: Programme = (PROGRAMMES.find((p) => p.id === k)?.id ?? 'bowel')
+  const progLabel = PROGRAMMES.find((p) => p.id === prog)!.label
+  const fit = FITS[prog]
+  const turnout = prog === 'bowel' ? c.bowelTurnout : prog === 'breast' ? c.breastTurnout : c.cervicalTurnout
+  const natTurnout = prog === 'bowel' ? NAT.bowelTurnout : prog === 'breast' ? NAT.breastTurnout : NAT.cervicalTurnout
+  const helpTowns = TOWNS.filter((t) => t.county === c.id && verdict(t.turnout[prog], fit.predicted.get(t.id)!, fit.sd) === 'help')
   const lowTowns = [...TOWNS.filter((t) => t.county === c.id)]
-    .sort((a, b) => (a.turnout.bowel - bowelFit.predicted.get(a.id)!) - (b.turnout.bowel - bowelFit.predicted.get(b.id)!))
+    .sort((a, b) => (a.turnout[prog] - fit.predicted.get(a.id)!) - (b.turnout[prog] - fit.predicted.get(b.id)!))
   const proj = projection(c, 'all')
   const growth = proj[10] / proj[0] - 1
   const oy = overloadYear(proj, 0.15)
@@ -42,18 +72,26 @@ export function buildBrief(c: County, cap: CapacityInputs): BriefData {
     {
       id: 'lung', score: (lungLate - natLate) / 0.03 + (c.smoking - NAT.smoking) / 1.5,
       title: 'Lung CT screening pilot',
-      detail: `${fmt(cp.eligible)} eligible · ${fmt(cp.ct)} CT/yr · ${eur(cp.cost)}/yr`,
+      detail: `${fmt(lungRad.highRisk)} high-risk people ${RISK.lung.ages} · start with the self-check, then CT`,
       why: `Late stage ${pct(lungLate)} vs FI ${pct(natLate)} · smoking ${c.smoking}% vs ${fmt(NAT.smoking, 1)}%`,
       gap: `Lung cancer found late: ${pct(lungLate)}`, stamp: 'Late lung', stages: ['Screening', 'Visit'],
-      badge: <SourceBadge id="ourModel" kind="estimate" how="Rule: late-stage share above national + smoking above national. Cost from the capacity planner settings." />,
+      badge: <SourceBadge id="ourModel" kind="estimate" how="Rule: late-stage share above national + smoking above national. High-risk count from the detection radar (population 50–74 × smoking prevalence)." />,
     },
     {
-      id: 'bowel', score: (NAT.bowelTurnout - c.bowelTurnout) / 2 + helpTowns.length * 0.8,
+      id: 'remind', score: (natTurnout - turnout) / 2 + helpTowns.length * 0.8,
       title: 'Reminder + second kit',
       detail: helpTowns.length ? `Start in ${helpTowns.map((t) => t.name).join(', ')}` : `Start in ${lowTowns.slice(0, 2).map((t) => t.name).join(', ')}`,
-      why: `Bowel turnout ${c.bowelTurnout}% vs FI ${fmt(NAT.bowelTurnout, 1)}%${helpTowns.length ? ` · ${helpTowns.length} town${helpTowns.length > 1 ? 's' : ''} below prediction` : ''}`,
-      gap: `Bowel screening turnout: ${c.bowelTurnout}%`, stamp: 'Low turnout', stages: ['Screening'],
-      badge: <SourceBadge id="sotkanetScreening" kind="estimate" how={`Rule: turnout below national + towns more than 1.5 SD below the model (${bowelFit.formula}).`} />,
+      why: `${progLabel} turnout ${turnout}% vs FI ${fmt(natTurnout, 1)}%${helpTowns.length ? ` · ${helpTowns.length} town${helpTowns.length > 1 ? 's' : ''} below prediction` : ''}`,
+      gap: `${progLabel} screening turnout: ${turnout}%`, stamp: 'Low turnout', stages: ['Screening'],
+      badge: <SourceBadge id="sotkanetScreening" kind="estimate" how={`Rule: turnout below national + towns more than 1.5 SD below the model (${fit.formula}).`} />,
+    },
+    {
+      id: 'risk', score: rad.steps.risk.z! * 1.2,
+      title: 'Find the high-risk people',
+      detail: `${fmt(rad.highRisk)} ${RISK[k].who} at high risk for ${cancerLabel(k).toLowerCase()} · self-check in the app, then a doctor visit`,
+      why: `${pct(rad.steps.risk.v!)} of ${RISK[k].who} at risk vs FI ${pct(rad.steps.risk.nat!)}`,
+      gap: `Many at high risk: ${fmt(rad.highRisk)}`, stamp: 'Many at risk', stages: ['Screening', 'Visit'],
+      badge: stepBadge('risk', k, rad),
     },
     {
       id: 'diag', score: slope / 0.4 + (growth - natGrowth) / 0.04 + (oy ? (2036 - oy) / 4 : 0),
@@ -81,25 +119,35 @@ export function buildBrief(c: County, cap: CapacityInputs): BriefData {
       badge: <SourceBadge id="waitGap" kind="gap" />,
     },
   ]
+  // the radar's weakest step decides the first action; the rest keep their own ranking
+  const match = STEP_ACTION(rad.weakest, k)
+  const best = Math.max(...actions.map((a) => a.score))
+  for (const a of actions) if (a.id === match) a.score = best + 1
   actions.sort((a, b) => b.score - a.score)
   const top3 = actions.slice(0, 3)
   return {
     actions: top3,
     top: top3[0],
-    stamp: top3[0].stamp,
+    stamp: weak.stamp,
+    gap: {
+      cancer: k, step: rad.weakest, stages: STEP_STAGES[rad.weakest],
+      text: `${cancerLabel(k)}: most people lost at ${weak.label.toLowerCase()}`,
+      why: weakestSentence(rad, k),
+      badge: stepBadge(rad.weakest, k, rad),
+    },
     stats: [
+      { label: `High risk · ${cancerLabel(k)}`, value: fmt(rad.highRisk), badge: stepBadge('risk', k, rad) },
       { label: 'Residents', value: fmt(c.population), badge: <SourceBadge id="statfinPop" kind="direct" /> },
       { label: 'Lung late', value: pct(lungLate), badge: <SourceBadge id="cancerRegistry" kind="direct" /> },
       { label: 'Lung D/C', value: fmt(metricValue(c, 'lung', 'fatality').v, 2), badge: <SourceBadge id="ourModel" kind="estimate" how="deaths ÷ new cases" /> },
       { label: 'Bowel turnout', value: `${c.bowelTurnout}%`, badge: <SourceBadge id="sotkanetScreening" kind="direct" /> },
-      { label: 'Smoking', value: `${c.smoking}%`, badge: <SourceBadge id="sotkanetRisk" kind="direct" /> },
       { label: 'Cases 2035', value: `+${pct(growth)}`, badge: <SourceBadge id="ourModel" kind="estimate" how="Ageing projection, all four cancers" /> },
     ],
   }
 }
 
 export function Brief({ brief, county, print }: { brief: BriefData; county: County; print?: boolean }) {
-  const hot = new Set(brief.top.stages)
+  const hot = new Set(brief.gap.stages)
   return (
     <div className={cx('p-6 sm:p-10', print ? 'text-ink' : 'pt-16')} style={print ? { printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } : undefined}>
       <div className="flex items-start justify-between gap-4">
@@ -112,8 +160,9 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
 
       <div className={cx('mt-8 rounded-lg p-5 bg-terra text-paper', !print && 'shadow-xl -rotate-1')}>
         <Label className="!opacity-80">Biggest gap</Label>
-        <p className="font-serif text-3xl leading-tight mt-1">{brief.top.gap}</p>
-        <p className="font-type text-[11px] uppercase tracking-wider mt-2 flex items-center gap-2">{brief.top.why} {brief.top.badge}</p>
+        <p className="font-serif text-3xl leading-tight mt-1">{brief.gap.text}</p>
+        <p className="font-type text-[11px] uppercase tracking-wider mt-2 flex flex-wrap items-center gap-2">{brief.gap.why} {brief.gap.badge}</p>
+        <p className="font-type text-[10px] uppercase tracking-wider mt-2 opacity-80">Detection radar · step {stepInfo(brief.gap.step).n} of 4</p>
       </div>
 
       <div className="mt-6">

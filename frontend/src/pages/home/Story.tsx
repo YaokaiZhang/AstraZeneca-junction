@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Label, SourceBadge, TextRing, cx } from '../../components/ui'
+import { SourceBadge, TextRing, cx } from '../../components/ui'
 import { COUNTIES } from '../../data/counties'
 import { BOWEL_SURV, bowelLives, earlierFinds, fmt, pct, projection, screeningGain } from '../county/model'
 import { useCount, useInView, useScrollProgress } from './reveal'
@@ -148,32 +148,38 @@ function useAutoShare(on: boolean): [number, (v: number) => void] {
   return [v, (x) => { setTouched(true); setV(x) }]
 }
 
-/** One dot per cancer found earlier, one block per type. A dot pops in only once it is counted. */
-function Waffle({ share, done }: { share: number; done: boolean }) {
+/** Every dot: its type and a fixed pseudo-random rank inside its type, so each type fills at the same pace. */
+const FIELD = FINDS.rows.flatMap((r) => {
+  const n = Math.round(r.perYear)
+  const h = (j: number) => { const x = Math.sin(j * 12.9898 + n * 78.233) * 43758.5453; return x - Math.floor(x) }
+  const order = Array.from({ length: n }, (_, j) => j).sort((x, y) => h(x) - h(y))
+  const rank = new Array<number>(n)
+  order.forEach((j, pos) => { rank[j] = (pos + 0.5) / n })
+  return rank.map((q) => ({ k: r.k, q }))
+})
+
+/** One dot per cancer found earlier, in bands by type. A dot pops in only once it is counted. */
+function Field({ share, done }: { share: number; done: boolean }) {
   return (
-    <div className="space-y-3" aria-hidden>
-      {FINDS.rows.map((r) => {
-        const n = Math.round(r.perYear), lit = Math.round(r.perYear * share)
+    <div className="grid gap-1 lg:gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(13px, 1.45vw, 22px), 1fr))' }} aria-hidden>
+      {FIELD.map((d, i) => {
+        const lit = d.q < share
         return (
-          <div key={r.k} className="grid gap-[3px] sm:gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(8px, 1fr))' }}>
-            {Array.from({ length: n }, (_, i) => (
-              <span key={i} className="aspect-square">
-                <span className={cx('block w-full h-full rounded-full transition-[transform,opacity] duration-500 ease-[cubic-bezier(.34,1.7,.5,1)]', done && i < lit && 'dot-wave')}
-                  style={{ background: COLORS[r.k], opacity: i < lit ? 1 : 0, transform: i < lit ? undefined : 'scale(0)', animationDelay: `${(i % 48) * 45}ms` }} />
-              </span>
-            ))}
-          </div>
+          <span key={i} className="aspect-square flex items-center justify-center">
+            <span className={cx('block w-[82%] h-[82%] rounded-full transition-[transform,opacity] duration-700 ease-[cubic-bezier(.34,1.8,.5,1)]', done && lit && 'dot-breathe')}
+              style={{ background: COLORS[d.k], opacity: lit ? 1 : 0, transform: lit ? undefined : 'scale(0)', animationDelay: `${(i % 46) * 40}ms` }} />
+          </span>
         )
       })}
     </div>
   )
 }
 
-function Stat({ on, delay, value, unit, line, badge, hot }: { on: boolean; delay: number; value: React.ReactNode; unit?: string; line: string; badge: React.ReactNode; hot?: boolean }) {
+function Stat({ on, delay, value, line, badge }: { on: boolean; delay: number; value: React.ReactNode; line: string; badge: React.ReactNode }) {
   return (
-    <div className={cx('rv rv-up border-t border-ink/20 pt-4', on && 'in')} style={{ transitionDelay: `${delay}ms` }}>
-      <div className={cx('font-serif text-5xl lg:text-6xl leading-none tabular-nums lining-nums', hot && 'text-terra')}>{value}{unit && <span className="text-2xl lg:text-3xl">{unit}</span>}</div>
-      <p className="mt-2 font-sans text-base leading-snug flex items-center gap-2">{line}{badge}</p>
+    <div className={cx('rv rv-up', on && 'in')} style={{ transitionDelay: `${delay}ms` }}>
+      <div className="font-serif text-4xl lg:text-5xl leading-none tabular-nums lining-nums">{value}</div>
+      <p className="mt-2 font-sans text-sm leading-snug opacity-75 flex items-center gap-2">{line}{badge}</p>
     </div>
   )
 }
@@ -183,54 +189,54 @@ export function Impact() {
   const [share, setShare] = useAutoShare(on)
   const t2 = useCount(1, on, 2400)
   const done = share >= AUTO - 0.001
+  const found = FINDS.rows.reduce((t, r) => t + Math.round(r.perYear * share), 0)
   return (
-    <section className="relative min-h-[100svh] flex flex-col justify-center px-5 lg:px-24 py-16 overflow-hidden" aria-label="Estimated impact">
-      <div ref={ref} className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-12 lg:gap-20 items-center">
-        <div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <Label>If Ajoissa closes</Label>
-            <span className="font-serif text-3xl tabular-nums lining-nums text-terra w-[3.2ch]">{Math.round(share * 100)}%</span>
-            <Label>of the gap to Finland's best</Label>
-          </div>
-          <div className="mt-4 flex items-end gap-4 flex-wrap">
-            <span className="font-serif text-8xl lg:text-[9rem] leading-[0.8] tabular-nums lining-nums text-terra w-[3.1ch]">{fmt(FINDS.rows.reduce((t, r) => t + Math.round(r.perYear * share), 0))}</span>
-            <span className="pb-1 font-serif text-2xl lg:text-3xl leading-tight">more cancers a year<br /><span className="italic">found before they spread</span>
+    <section className="relative min-h-[100svh] flex flex-col justify-center px-5 lg:px-24 py-16 lg:py-10 overflow-hidden" aria-label="Estimated impact">
+      <div ref={ref}>
+        <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-4">
+          <p className="font-type text-sm uppercase tracking-widest flex flex-wrap items-baseline gap-x-3">
+            If Ajoissa closes <span className="font-serif normal-case tracking-normal text-4xl text-terra tabular-nums lining-nums min-w-[2.1em] text-right">{Math.round(share * 100)}%</span> of the gap to Finland's best
+          </p>
+          <label className="flex items-center gap-3 font-type text-xs uppercase tracking-widest opacity-70">
+            <input type="range" min={0} max={1} step={0.05} value={share} onChange={(e) => setShare(+e.target.value)}
+              aria-label="Share of the gap Ajoissa closes" className="w-40 lg:w-56 accent-[#C65D3B]" />
+            <span className="flex items-center gap-2">all of it: {fmt(DOTS)} <SourceBadge id="ourModel" kind="estimate" demo={false} how={FINDS_HOW} /></span>
+          </label>
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-x-12 gap-y-4">
+          <div className="flex items-end gap-5 flex-wrap">
+            <span className="font-serif font-light text-[7rem] lg:text-[min(12rem,19svh)] leading-[0.8] tabular-nums lining-nums text-terra w-[3ch]">{fmt(found)}</span>
+            <span className="pb-2 font-serif text-2xl lg:text-4xl leading-tight">more cancers a year<br /><span className="italic">found before they spread</span>
               <SourceBadge id="ourModel" kind="estimate" demo={false} className="ml-2 align-middle" how={SHARE_HOW} />
             </span>
           </div>
-          <p className="mt-4 font-sans text-base">
-            <span className="font-serif text-2xl tabular-nums">{fmt(Math.round(LIVES.lo * share))}–{fmt(Math.round(LIVES.hi * share))}</span> more people alive every year, bowel cancer alone
-          </p>
-          <div className="mt-6 min-h-[118px]"><Waffle share={share} done={done} /></div>
-          <div className="mt-5 flex items-center gap-4">
-            <input type="range" min={0} max={1} step={0.05} value={share} onChange={(e) => setShare(+e.target.value)}
-              aria-label="Share of the gap Ajoissa closes" className="w-full max-w-md accent-[#C65D3B]" />
-            <span className="font-type text-xs uppercase tracking-widest opacity-60 whitespace-nowrap flex items-center gap-2">100% = {fmt(DOTS)} a year
-              <SourceBadge id="ourModel" kind="estimate" demo={false} how={FINDS_HOW} /></span>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 font-sans text-[15px]">
-            {FINDS.rows.map((r) => (
-              <span key={r.k} className="flex items-center gap-2">
-                <i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: COLORS[r.k] }} />
-                {r.label} <span className="tabular-nums opacity-60">{fmt(Math.round(r.perYear * share))}</span>
-              </span>
-            ))}
-            <span className="opacity-60">· one dot = one patient</span>
+          <div className="pb-2 text-right">
+            <div className="font-serif text-5xl lg:text-6xl leading-none tabular-nums lining-nums">{fmt(Math.round(LIVES.lo * share))}–{fmt(Math.round(LIVES.hi * share))}</div>
+            <p className="mt-2 font-type text-xs uppercase tracking-widest opacity-70">more people alive a year · bowel alone</p>
           </div>
         </div>
 
-        <div className="space-y-8">
-          <Stat on={on} delay={600} value={`+${fmt(round1000(SCREEN.total * t2))}`} line="more people screened, at 80% turnout"
+        <div className="mt-8 lg:mt-[4svh]"><Field share={share} done={done} /></div>
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 font-sans text-[15px]">
+          {FINDS.rows.map((r) => (
+            <span key={r.k} className="flex items-center gap-2">
+              <i className="w-3 h-3 rounded-full inline-block" style={{ background: COLORS[r.k] }} />
+              {r.label} <span className="tabular-nums opacity-60">{fmt(Math.round(r.perYear * share))}</span>
+            </span>
+          ))}
+          <span className="opacity-60">· one dot = one person</span>
+        </div>
+
+        <div className="mt-10 lg:mt-[5svh] pt-6 border-t border-ink/15 grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <Stat on={on} delay={900} value={`+${fmt(round1000(SCREEN.total * t2))}`} line="more people screened, at 80% turnout"
             badge={<SourceBadge id="ourModel" kind="estimate" demo={false} how={SCREEN_HOW} />} />
-          <Stat on={on} delay={900} hot value={<>0 <span className="opacity-40 text-4xl">→</span> {Math.round(COUNTIES.length * t2)}</>} line="counties that can see their cancer waits"
+          <Stat on={on} delay={1100} value={<span className="text-terra">0 <span className="opacity-40 text-3xl">→</span> {Math.round(COUNTIES.length * t2)}</span>} line="counties that can see their cancer waits"
             badge={<SourceBadge id="waitGap" kind="gap" demo={false} />} />
-          <Stat on={on} delay={1200} value={`+${Math.round(PROJ.rise * 100 * t2)}`} unit="%" line="more cases by 2035: planned ahead"
+          <Stat on={on} delay={1300} value={<>+{Math.round(PROJ.rise * 100 * t2)}<span className="text-2xl">%</span></>} line="more cases by 2035: planned ahead"
             badge={<SourceBadge id="statfinProjection" kind="estimate" demo={false} how={PROJ_HOW} />} />
         </div>
       </div>
-      <p className={cx('rv rv-up mt-12 font-type text-xs uppercase tracking-widest opacity-60', on && 'in')} style={{ transitionDelay: '1600ms' }}>
-        A scenario, not a measured result · drag to change it · hover a badge for the method
-      </p>
       <Ecg className="opacity-40" />
     </section>
   )

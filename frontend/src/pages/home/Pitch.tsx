@@ -566,19 +566,19 @@ const REAL_SRC: [string, string][] = [
 ]
 const unk = Object.values(REGISTRY_FI).map((r) => r.unknownStage)
 const OURS = [
-  'Survival stand-in: deaths ÷ new cases per county.',
-  'People at higher risk: a rough rule of ours, residents × county risk-factor prevalence. Not validated.',
-  'Bowel, breast and cervical check: Registry incidence × published relative risks. Not clinically validated.',
-  'Step targets: the 6-week rule, split into steps by us.',
+  'Survival: deaths ÷ new cases.',
+  'Higher risk: residents × risk-factor rates. Not validated.',
+  'Bowel, breast, cervical check: Registry rates × published risks.',
+  'Step targets: the 6-week rule, split by us.',
 ]
 /** Stage reporting is itself a finding: how many counties miss it for most bowel cancers. */
 const STAGE_FINDING = `Stage is missing for most bowel cancers in ${unknownMajority('bowel')} of ${COUNTIES.length} counties.`
 const LIMITS = [
-  'No waiting times for cancer are published, so the real pathway length is unknown.',
-  `Nationally, stage is unknown for ${pct(Math.min(...unk))}–${pct(Math.max(...unk))} of cases, so “found late” counts only cases with a known stage.`,
-  'Small counties have wide 95% ranges; the Registry hides counts of 1–4.',
-  'The lung model was built on US trial data and is not validated in Finland.',
-  'Hospital patients in the demo are synthetic, scaled from real county case numbers.',
+  'No cancer waiting times are published.',
+  `Stage is unknown for ${pct(Math.min(...unk))}–${pct(Math.max(...unk))} of cases.`,
+  'Small counties have wide ranges.',
+  'Lung model: US data, not validated here.',
+  'Hospital patients are synthetic.',
 ]
 
 export function Transparency() {
@@ -590,7 +590,7 @@ export function Transparency() {
         </h2>
         <Reveal fx="blur" delay={300}><KindLegend /></Reveal>
       </div>
-      <Lede className="mt-8">Every number in Ajoissa carries a badge. Hover it to see the source, the years and how it was worked out.</Lede>
+      <Lede className="mt-8">Every number has a badge. Hover it for the source.</Lede>
       <div className="mt-16 lg:mt-24 grid md:grid-cols-3 gap-8 lg:gap-10 items-start">
         <Reveal delay={0}>
           <Card tone="paper" tilt={-1.5} className="relative p-6 pl-10 border border-ink/10">

@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Card, EdgeText, Label, SourceBadge, cx } from '../../components/ui'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Label, SourceBadge, cx } from '../../components/ui'
 import { COUNTIES } from '../../data/counties'
-import { earlierFinds, fmt, pct, projection, screeningGain, TURNOUT_TARGET } from '../county/model'
-import { Reveal, WordsUp, useCount, useInView, useScrollProgress } from './reveal'
+import { earlierFinds, fmt, pct, projection, screeningGain } from '../county/model'
+import { useCount, useInView, useScrollProgress } from './reveal'
 
 /* ───────────── the story's chapters ───────────── */
 export const CHAPTERS = [
@@ -103,176 +103,73 @@ const FINDS_HOW = `For breast, bowel and lung: each county's share of cancers fo
 const SCREEN_HOW = `Each county below the strategy target of 80% turnout is brought up to 80% (THL Sotkanet 2024 turnout: bowel 6103, cervical 3620, breast 3621). People invited ≈ residents in the programme's age band (Statistics Finland 2025: bowel 56–74, breast women 50–69, cervical women 30–65). Counties already above 80% are left as they are. Per screening round: bowel and breast every 2 years, cervical every 5.`
 const PROJ_HOW = `Lung, bowel, pancreas and liver. Cases today = Cancer Registry mean 2020–24, ${fmt(Math.round(PROJ.now))} a year. 2035 = the same age-specific rates applied to Statistics Finland's 2035 population projection (table 14wx): ${fmt(Math.round(PROJ.then))} a year.`
 
-function Waffle({ k }: { k: number }) {
-  // one dot per cancer found earlier; grouped by type so the colours read as blocks
+/** One dot per cancer found earlier, grouped by type; fills itself in once on screen. */
+function Waffle({ on }: { on: boolean }) {
   const dots = useMemo(() => FINDS.rows.flatMap((r) => Array.from({ length: Math.round(r.perYear) }, () => r.k)), [])
-  const lit = Math.round(dots.length * k)
   return (
-    <div className="grid gap-[3px] sm:gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(9px, 1fr))' }} aria-hidden>
+    <div className="grid gap-[3px] sm:gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(8px, 1fr))' }} aria-hidden>
       {dots.map((c, i) => (
-        <span key={i} className="aspect-square rounded-full transition-all duration-500"
+        <span key={i} className="aspect-square rounded-full transition-[background-color,transform] duration-300"
           style={{
-            background: i < lit ? COLORS[c] : 'transparent',
-            boxShadow: i < lit ? 'none' : 'inset 0 0 0 1px rgba(31,31,31,.18)',
-            transitionDelay: `${(i % 40) * 6}ms`,
+            background: on ? COLORS[c] : 'rgba(31,31,31,.08)',
+            transform: on ? 'scale(1)' : 'scale(.6)',
+            transitionDelay: `${400 + i * 4}ms`,
           }} />
       ))}
     </div>
   )
 }
 
-const STOPS = [
-  { v: 0.25, t: 'A quarter of the way' },
-  { v: 0.5, t: 'Halfway' },
-  { v: 1, t: 'All the way' },
-]
+const DOTS = FINDS.rows.reduce((t, r) => t + Math.round(r.perYear), 0)
+
+function Stat({ on, delay, value, unit, line, badge, hot }: { on: boolean; delay: number; value: React.ReactNode; unit?: string; line: string; badge: React.ReactNode; hot?: boolean }) {
+  return (
+    <div className={cx('rv rv-up border-t border-ink/20 pt-4', on && 'in')} style={{ transitionDelay: `${delay}ms` }}>
+      <div className={cx('font-serif text-5xl lg:text-6xl leading-none tabular-nums lining-nums', hot && 'text-terra')}>{value}{unit && <span className="text-2xl lg:text-3xl">{unit}</span>}</div>
+      <p className="mt-2 font-sans text-base leading-snug flex items-center gap-2">{line}{badge}</p>
+    </div>
+  )
+}
 
 export function Impact() {
-  const [ref, on] = useInView<HTMLDivElement>(0.3)
-  const [k, setK] = useState(1)
-  const grown = useCount(1, on, 1800)
-  const shown = Math.round(FINDS.rows.reduce((t, r) => t + Math.round(r.perYear), 0) * k * grown)
-  const top = FINDS.byCounty.slice(0, 6)
-  const max = top[0].n
+  const [ref, on] = useInView<HTMLDivElement>(0.35)
+  const t = useCount(1, on, 2000)
+  const t2 = useCount(1, on, 2400)
   return (
-    <section className="relative px-5 lg:px-24 py-28 lg:py-40" aria-label="Estimated impact">
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
-          <WordsUp text="No new target." /><br /><WordsUp text="Just the best quarter." className="italic text-terra" delay={180} />
-        </h2>
-        <Reveal fx="blur" delay={300} className="flex items-center gap-2"><Label>Our estimate · from open data</Label></Reveal>
-      </div>
-      <Reveal fx="up" delay={250} className="mt-8 max-w-2xl font-sans text-base lg:text-lg leading-relaxed opacity-75">
-        <p>
-          The benchmark is not a wish: a quarter of Finnish counties already find cancers this early. Here is what changes if the others catch up, using the actions from the previous chapter. Drag the slider to see a smaller step.
-        </p>
-      </Reveal>
-
-      {/* 1 · cancers found before they spread */}
-      <div ref={ref} className="mt-16 lg:mt-20 grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-12 lg:gap-20 items-start">
+    <section className="relative min-h-[100svh] flex flex-col justify-center px-5 lg:px-24 py-16" aria-label="Estimated impact">
+      <div ref={ref} className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-12 lg:gap-20 items-center">
         <div>
-          <div className="flex items-end gap-4 flex-wrap">
-            <span className="font-serif text-8xl lg:text-[10rem] leading-[0.8] tabular-nums lining-nums text-terra">{fmt(shown)}</span>
-            <span className="pb-2 font-serif text-2xl lg:text-3xl leading-tight max-w-xs">more cancers a year found <span className="italic">before they spread</span>
+          <Label>If every county matched the best quarter</Label>
+          <div className="mt-4 flex items-end gap-4 flex-wrap">
+            <span className="font-serif text-8xl lg:text-[9rem] leading-[0.8] tabular-nums lining-nums text-terra">{fmt(Math.round(DOTS * t))}</span>
+            <span className="pb-1 font-serif text-2xl lg:text-3xl leading-tight">more cancers a year<br /><span className="italic">found before they spread</span>
               <SourceBadge id="ourModel" kind="estimate" demo={false} className="ml-2 align-middle" how={FINDS_HOW} />
             </span>
           </div>
-
-          {/* how far the gap closes */}
-          <div className="mt-10">
-            <div className="flex items-baseline justify-between gap-4">
-              <Label>How far each county closes its gap to the best quarter</Label>
-              <span className="font-type text-sm tabular-nums">{Math.round(k * 100)}%</span>
-            </div>
-            <input type="range" min={0} max={100} step={5} value={Math.round(k * 100)} onChange={(e) => setK(+e.target.value / 100)}
-              aria-label="How far each county closes its gap" className="mt-3 w-full accent-[#C65D3B]" />
-            <div className="mt-2 flex flex-wrap gap-2">
-              {STOPS.map((s) => (
-                <button key={s.v} type="button" onClick={() => setK(s.v)} aria-pressed={k === s.v}
-                  className={cx('font-type text-xs uppercase tracking-widest rounded-full px-3 py-1 border transition-colors', k === s.v ? 'bg-ink text-paper border-ink' : 'border-ink/30 hover:border-ink')}>{s.t}</button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8"><Waffle k={k * grown} /></div>
+          <div className="mt-8"><Waffle on={on} /></div>
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 font-sans text-[15px]">
-            <span className="flex items-center gap-2 opacity-60"><i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: 'transparent', boxShadow: 'inset 0 0 0 1px rgba(31,31,31,.35)' }} />= one patient</span>
             {FINDS.rows.map((r) => (
               <span key={r.k} className="flex items-center gap-2">
                 <i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: COLORS[r.k] }} />
-                {r.label} <span className="tabular-nums opacity-60">{fmt(Math.round(r.perYear * k))}</span>
+                {r.label} <span className="tabular-nums opacity-60">{fmt(Math.round(r.perYear))}</span>
               </span>
             ))}
+            <span className="opacity-60">· one dot = one patient</span>
           </div>
         </div>
 
-        {/* where they come from */}
-        <div className="lg:border-l lg:border-ink/15 lg:pl-12">
-          <Label>Where they would come from</Label>
-          <p className="mt-2 font-sans text-[15px] leading-snug opacity-70">The counties with the biggest gap, and so the most to gain. Bigger counties count more because they have more patients.</p>
-          <ul className="mt-6 space-y-4">
-            {top.map((r, i) => (
-              <li key={r.c.id}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-serif text-xl leading-tight">{r.c.name}</span>
-                  <span className="font-type text-sm tabular-nums">{fmt(Math.round(r.n * k))} / yr</span>
-                </div>
-                <div className="mt-1.5 h-2 bg-ink/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-terra rounded-full transition-all duration-700" style={{ width: `${on ? (r.n * k / max) * 100 : 0}%`, transitionDelay: `${i * 80}ms` }} />
-                </div>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-6 font-sans text-[15px] leading-snug opacity-70">
-            Together these six account for {pct(top.reduce((s, r) => s + r.n, 0) / FINDS.total)} of the total. That is where to start.
-          </p>
+        <div className="space-y-8">
+          <Stat on={on} delay={600} value={`+${fmt(round1000(SCREEN.total * t2))}`} line="screened each round, at 80% turnout"
+            badge={<SourceBadge id="ourModel" kind="estimate" demo={false} how={SCREEN_HOW} />} />
+          <Stat on={on} delay={900} hot value={<>0 <span className="opacity-40 text-4xl">→</span> {Math.round(COUNTIES.length * t2)}</>} line="counties that can see cancer waiting times"
+            badge={<SourceBadge id="waitGap" kind="gap" demo={false} />} />
+          <Stat on={on} delay={1200} value={`+${Math.round(PROJ.rise * 100 * t2)}`} unit="%" line="cases by 2035, planned ahead"
+            badge={<SourceBadge id="statfinProjection" kind="estimate" demo={false} how={PROJ_HOW} />} />
         </div>
       </div>
-
-      {/* 2 · three more changes */}
-      <div className="mt-24 lg:mt-32 grid md:grid-cols-3 gap-8 lg:gap-10 items-stretch">
-        <Reveal delay={0} className="h-full">
-          <Card tone="mustard" tilt={-1} className="relative h-full p-6 pl-10 flex flex-col">
-            <EdgeText>Screening</EdgeText>
-            <Label className="!opacity-80">If every county reaches 80% turnout</Label>
-            <div className="mt-4 font-serif text-6xl leading-none tabular-nums">+{fmt(round1000(SCREEN.total))}</div>
-            <p className="mt-2 font-serif text-2xl leading-tight">people screened each round
-              <SourceBadge id="ourModel" kind="estimate" demo={false} className="ml-2 align-middle" how={SCREEN_HOW} />
-            </p>
-            <ul className="space-y-3 mt-auto pt-6">
-              {SCREEN.rows.map((r) => (
-                <li key={r.p}>
-                  <div className="flex justify-between font-sans text-[15px]"><span>{r.label} <span className="opacity-60">· {r.below} of {COUNTIES.length} counties below</span></span><span className="tabular-nums">+{fmt(round1000(r.extra))}</span></div>
-                  <div className="relative mt-1 h-2 rounded-full bg-ink/10">
-                    <div className="absolute inset-y-0 left-0 rounded-full bg-ink" style={{ width: `${r.now * 100}%` }} />
-                    <div className="absolute -inset-y-1 w-0.5 bg-terra" style={{ left: `${TURNOUT_TARGET * 100}%` }} />
-                  </div>
-                  <div className="mt-1 font-type text-[11px] uppercase tracking-wider opacity-60">Finland today {pct(r.now)} · target 80%</div>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </Reveal>
-
-        <Reveal delay={150} className="h-full">
-          <Card tone="paper" tilt={1} className="relative h-full p-6 pl-10 border border-ink/10 flex flex-col">
-            <EdgeText>Waiting</EdgeText>
-            <Label>Counties that can see cancer waiting times</Label>
-            <div className="mt-4 flex items-end gap-4 font-serif leading-none tabular-nums">
-              <span className="text-6xl opacity-40">0</span>
-              <span className="pb-2 text-3xl opacity-50">→</span>
-              <span className="text-6xl text-terra">{COUNTIES.length}</span>
-            </div>
-            <p className="mt-2 font-serif text-2xl leading-tight">
-              Today no one publishes them. <SourceBadge id="waitGap" kind="gap" demo={false} />
-            </p>
-            <p className="mt-auto pt-6 font-sans text-[15px] leading-snug opacity-75">
-              Three dates per patient are enough for every county to see its real wait, and the 6-week rule finally becomes something that can be checked. Late patients get a call instead of a longer wait.
-            </p>
-          </Card>
-        </Reveal>
-
-        <Reveal delay={300} className="h-full">
-          <Card tone="ink" tilt={-1} className="relative h-full p-6 pl-10 flex flex-col">
-            <EdgeText>Planning</EdgeText>
-            <Label className="!opacity-70">Cases by 2035, as Finland ages</Label>
-            <div className="mt-4 font-serif text-6xl leading-none tabular-nums text-mustard">+{pct(PROJ.rise)}</div>
-            <p className="mt-2 font-serif text-2xl leading-tight">lung, bowel, pancreas and liver cancers
-              <SourceBadge id="statfinProjection" kind="estimate" demo={false} className="ml-2 align-middle [&>button]:ring-1 [&>button]:ring-paper/60" how={PROJ_HOW} />
-            </p>
-            <p className="mt-auto pt-6 font-sans text-[15px] leading-snug opacity-75">
-              Each county sees the year its own cases outgrow today's capacity, so scans and specialist time can be booked years ahead, not after the queue has already grown.
-            </p>
-          </Card>
-        </Reveal>
-      </div>
-
-      <Reveal fx="up" className="mt-14 max-w-3xl font-sans text-[15px] leading-relaxed opacity-70">
-        <p>
-          <span className="font-type text-xs uppercase tracking-widest mr-2">How to read this</span>
-          These are estimates from published county figures, not a forecast of what Ajoissa alone will achieve. They count only cancers with a recorded stage, so the real number is likely higher. Hover any badge for the exact method.
-        </p>
-      </Reveal>
+      <p className={cx('rv rv-up mt-12 font-type text-xs uppercase tracking-widest opacity-60', on && 'in')} style={{ transitionDelay: '1600ms' }}>
+        Estimates from open data · counts only cases with a known stage · hover a badge for the method
+      </p>
     </section>
   )
 }

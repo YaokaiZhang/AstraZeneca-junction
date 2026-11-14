@@ -349,6 +349,26 @@ export function earlierFinds(): { rows: ImpactRow[]; total: number; byCounty: { 
   return { rows, total: rows.reduce((s, r) => s + r.perYear, 0), byCounty }
 }
 
+/**
+ * Cost of late, bowel cancer only: the earlier finds above × the survival gap between localized and spread disease.
+ * Finnish 5-year relative survival by stage (BMC Cancer 2022, diagnosed 2006–15): localized 93.6%; after spread
+ * 84.2% at best (locally advanced) to 14.0% at worst (distant metastasis). No pooled figure, so we give the range.
+ */
+export const BOWEL_SURV = { local: 0.936, spreadBest: 0.842, spreadWorst: 0.14 }
+export function bowelLives() {
+  const k = 'bowel'
+  const ok = COUNTIES.filter((c) => !metricValue(c, k, 'late').wide).map((c) => figures(c, k).lateShare).sort((a, b) => a - b)
+  const bench = ok[Math.floor((ok.length - 1) * 0.25)]
+  const lo = BOWEL_SURV.local - BOWEL_SURV.spreadBest, hi = BOWEL_SURV.local - BOWEL_SURV.spreadWorst
+  const byCounty = COUNTIES.map((c) => {
+    const f = figures(c, k)
+    const found = (f.stageKnown / STAGE_YEARS) * Math.max(0, f.lateShare - bench)
+    return { c, late: f.lateShare, found, lo: found * lo, hi: found * hi, per100k: (found / c.population) * 1e5 }
+  })
+  const found = byCounty.reduce((s, r) => s + r.found, 0)
+  return { bench, nat: national(k, 'late'), found, lo: found * lo, hi: found * hi, gap: [lo, hi] as const, byCounty }
+}
+
 /** Strategy target: 80% turnout in every county. Extra people screened per round, from the radar's age bands. */
 export const TURNOUT_TARGET = 0.8
 export function screeningGain() {

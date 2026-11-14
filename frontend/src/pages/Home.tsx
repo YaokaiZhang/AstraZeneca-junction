@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, TextRing } from '../components/ui'
-import { Actions, CheckIns, Clock, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
+import { Actions, CheckIns, Clock, CostOfLate, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
 import { Tilt, WordsUp } from './home/reveal'
 import { ChapterRail, Ecg, Impact, Transition } from './home/Story'
 import { Radar } from './home/Radar'
@@ -121,6 +121,7 @@ export default function Home() {
       {/* 01 · the gap (insight): where it opens, and the wait nobody counts */}
       <Transition chapter="ch-gap" text="Where you live in Finland changes how early your cancer is found." hot={5} />
       <TooLate />
+      <CostOfLate />
       <Transition text="And between the first symptom and the first treatment, time goes missing." hot={3} />
       <Clock />
 

@@ -3,7 +3,7 @@ import { Card, EdgeText, KindLegend, KindDot, Label, SourceBadge, Stamp, TextRin
 import { CANCERS, COUNTIES, type RadarCancerId } from '../../data/counties'
 import { FinlandMap } from '../../components/FinlandMap'
 import { buildBrief } from '../county/Brief'
-import { RADAR_CANCERS, pct, spreadContrast, stepInfo, unknownMajority } from '../county/model'
+import { BOWEL_SURV, RADAR_CANCERS, bowelLives, fmt, pct, scaleColor, spreadContrast, stepInfo, unknownMajority } from '../county/model'
 import { REGISTRY_FI } from '../../data/registry.generated'
 import { PATHWAY } from '../../data/pathway'
 import { tr } from '../patient/i18n'
@@ -217,6 +217,82 @@ export function TooLate() {
         </p>
         <div className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-y-12">
           {CANCERS.map((c, i) => <Ring key={c.id} label={c.label} value={c.lateShare} unknown={c.unknownStage} delay={i * 150} />)}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────── the cost of late: bowel cancer, in lives ───────────── */
+const LIVES = bowelLives()
+const LIVES_MAX = Math.max(...LIVES.byCounty.map((r) => r.per100k))
+const LIVES_TOP = [...LIVES.byCounty].sort((a, b) => b.hi - a.hi)[0].c.id
+const r1 = (n: number) => (n < 10 ? fmt(n, 1) : fmt(n))
+const LIVES_HOW = `Bowel cancer only. Each county's share of bowel cancers found after spread (Cancer Registry, 2021–25, cases with a recorded stage) is brought down to the best quarter of counties (${pct(LIVES.bench)}; Finland ${pct(LIVES.nat)}). That gives ${fmt(LIVES.found)} cancers a year found before spreading instead of after. Each one is then worth the gap in 5-year relative survival: ${pct(BOWEL_SURV.local, 1)} when localized, against ${pct(BOWEL_SURV.spreadBest, 1)} to ${pct(BOWEL_SURV.spreadWorst, 1)} after spread, depending on how far (Finnish patients diagnosed 2006–15, BMC Cancer 2022). No pooled figure exists, so we show the whole range. Cases with unknown stage are not counted, so this is a floor. Survival has improved since 2006–15, and being found earlier does not guarantee survival.`
+
+export function CostOfLate() {
+  const [ref, on] = useInView<HTMLDivElement>(0.35)
+  const t = useCount(1, on, 1800)
+  const [cid, setCid] = useState(LIVES_TOP)
+  const row = LIVES.byCounty.find((r) => r.c.id === cid)!
+  return (
+    <section className="relative px-5 lg:px-24 py-28 lg:py-40 overflow-hidden" aria-label="The cost of late">
+      <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
+        <WordsUp text="The cost" /><br /><WordsUp text="of late." className="italic text-terra" delay={140} />
+      </h2>
+      <Lede className="mt-8">
+        If every county found bowel cancer as early as the best quarter of counties, more people would be alive five years later. Every year. We show bowel cancer only: it is the one cancer with Finnish survival figures by stage.
+      </Lede>
+
+      <div ref={ref} className="mt-14 lg:mt-20 grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-14 lg:gap-24 items-center">
+        <div>
+          <Label>More people alive 5 years after diagnosis, every year</Label>
+          <div className="mt-4 flex items-end gap-4 flex-wrap">
+            <span className="font-serif text-8xl lg:text-[9rem] leading-[0.8] tabular-nums lining-nums text-terra whitespace-nowrap">
+              {fmt(Math.round(LIVES.lo * t))}<span className="opacity-50">–</span>{fmt(Math.round(LIVES.hi * t))}
+            </span>
+            <span className="pb-1 font-serif text-2xl lg:text-3xl leading-tight">people a year<br /><span className="italic">from bowel cancer alone</span>
+              <SourceBadge id="bowelStageSurvival" kind="estimate" demo={false} className="ml-2 align-middle" how={LIVES_HOW} />
+            </span>
+          </div>
+          <dl className="mt-12 grid sm:grid-cols-2 gap-8 max-w-2xl">
+            <div className="border-t border-ink/20 pt-3">
+              <dt className="font-sans text-base opacity-70">Bowel cancers a year found before they spread, instead of after</dt>
+              <dd className="mt-1 font-serif text-4xl tabular-nums">{fmt(Math.round(LIVES.found * t))}</dd>
+            </div>
+            <div className="border-t border-ink/20 pt-3">
+              <dt className="font-sans text-base opacity-70">Alive after 5 years: found early, against found after spread</dt>
+              <dd className="mt-1 font-serif text-4xl tabular-nums">{pct(BOWEL_SURV.local)} <span className="text-2xl opacity-60">vs</span> {pct(BOWEL_SURV.spreadWorst)}–{pct(BOWEL_SURV.spreadBest)}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:grid-cols-[220px_minmax(0,1fr)] gap-6 sm:gap-8 items-center">
+          <FinlandMap selected={cid} onSelect={setCid} label="People a year by county"
+            style={(c) => {
+              const r = LIVES.byCounty.find((x) => x.c.id === c.id)!
+              return { fill: r.found > 0 ? scaleColor(0.15 + 0.85 * (r.per100k / LIVES_MAX)) : 'rgba(31,31,31,.12)' }
+            }}
+            tooltip={(c) => {
+              const r = LIVES.byCounty.find((x) => x.c.id === c.id)!
+              return r.found > 0 ? `${r1(r.lo)}–${r1(r.hi)} a year` : 'already early'
+            }} />
+          <div className="min-w-0">
+            <Label>Tap a county</Label>
+            <p className="mt-1 font-serif italic text-3xl leading-tight">{row.c.name}</p>
+            {row.found > 0 ? (
+              <>
+                <p className="mt-3 font-serif text-5xl tabular-nums leading-none">{r1(row.lo)}–{r1(row.hi)}</p>
+                <p className="mt-2 font-sans text-[15px] leading-snug opacity-75">more people a year alive at 5 years. {pct(row.late)} of its bowel cancers are found after spread, against {pct(LIVES.bench)} in the best counties.</p>
+              </>
+            ) : (
+              <p className="mt-3 font-sans text-[15px] leading-snug opacity-75">Already finds bowel cancer as early as the best counties ({pct(row.late)} after spread). Its gap is at another step.</p>
+            )}
+            <div className="mt-6 flex items-center gap-2 font-type text-[11px] uppercase tracking-widest opacity-60">
+              <span>Fewer</span><span className="h-2 w-16 rounded-full" style={{ background: `linear-gradient(90deg, ${scaleColor(0.15)}, ${scaleColor(0.575)}, ${scaleColor(1)})` }} /><span>More, per resident</span>
+            </div>
+            <p className="mt-2 flex items-center gap-2 font-type text-[11px] uppercase tracking-widest opacity-60"><span className="w-3 h-3 rounded-sm bg-ink/10" />Already as early as the best</p>
+          </div>
         </div>
       </div>
     </section>

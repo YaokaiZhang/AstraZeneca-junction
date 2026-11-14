@@ -95,6 +95,12 @@ export const SOURCES: Record<string, Source> = {
     note: 'Breast 50–69 every 2 years; cervical 30–65 every 5 years. Bowel: target group 56–74 every 2 years, reached in 2031; it currently invites ages 60–70 and widens year by year.',
     years: 'rules in force 2026', retrieved: PULLED,
   },
+  bowelStageSurvival: {
+    id: 'bowelStageSurvival', name: 'Bowel cancer survival by stage, Finland (BMC Cancer 2022)', url: 'https://doi.org/10.1186/s12885-022-09460-0',
+    note: 'Olenius T et al. Long-term survival among colorectal cancer patients in Finland, 1991–2015: a nationwide population-based registry study. BMC Cancer 2022;22:356, table 6. 5-year relative survival by Cancer Registry stage, diagnosed 2006–2015: localized 93.6%; after spread 84.2% (locally advanced) down to 14.0% (distant metastasis). The only Finnish survival-by-stage figures we found; the Registry statistics app has no survival by stage.',
+    years: 'diagnosed 2006–2015', retrieved: PULLED,
+    links: [{ label: 'Article (PMC)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8976396/' }],
+  },
   ourModel: { id: 'ourModel', name: 'Our calculation', note: 'Method shown below. Inputs are the published sources named in it.' },
   waitGap: { id: 'waitGap', name: 'No public source', note: 'Finland publishes no referral-to-treatment waiting times for cancer.' },
   mentor: { id: 'mentor', name: 'AstraZeneca mentor interview' },

@@ -1,6 +1,6 @@
 // 3.5 County action brief: biggest gap, where it happens, three ranked actions. Printable.
 import type { ReactNode } from 'react'
-import { Btn, Display, Label, SourceBadge, Stamp, cx } from '../../components/ui'
+import { Btn, Display, Label, SourceBadge, cx } from '../../components/ui'
 import { COUNTIES, type County, type RadarCancerId } from '../../data/counties'
 import { RISK, cancerLabel, fmt, metricValue, national, overloadYear, pct, projection, queueSlope, radarFor, stepInfo, weakestSentence, NAT, type StepId } from './model'
 import { stepBadge } from './Radar'
@@ -139,7 +139,7 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
       { label: `High risk · ${cancerLabel(k)}`, value: fmt(rad.highRisk), badge: stepBadge('risk', k, rad) },
       { label: 'Residents', value: fmt(c.population), badge: <SourceBadge id="statfinPop" kind="direct" /> },
       { label: 'Lung late', value: pct(lungLate), badge: <SourceBadge id="cancerRegistry" kind="direct" /> },
-      { label: 'Lung D/C', value: fmt(metricValue(c, 'lung', 'fatality').v, 2), badge: <SourceBadge id="ourModel" kind="estimate" how="deaths ÷ new cases" /> },
+      { label: 'Lung deaths / case', value: fmt(metricValue(c, 'lung', 'fatality').v, 2), badge: <SourceBadge id="ourModel" kind="estimate" how="deaths ÷ new cases" /> },
       { label: 'Bowel turnout', value: `${c.bowelTurnout}%`, badge: <SourceBadge id="sotkanetScreening" kind="direct" /> },
       { label: 'Cases 2035', value: `+${pct(growth)}`, badge: <SourceBadge id="ourModel" kind="estimate" how="Ageing projection, all four cancers" /> },
     ],
@@ -150,24 +150,15 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
   const hot = new Set(brief.gap.stages)
   return (
     <div className={cx('p-6 sm:p-10', print ? 'text-ink' : 'pt-16')} style={print ? { printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } : undefined}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <Label>County action brief · 2 min</Label>
-          <Display a={county.name} b="in brief" className="!text-4xl sm:!text-5xl mt-2 break-words" />
-        </div>
-        <Stamp tone="terra" rotate={10} className="mt-2">{brief.stamp}</Stamp>
-      </div>
+      <Display a={county.name} b="in brief" className="!text-4xl sm:!text-5xl break-words" />
 
       <div className={cx('mt-8 rounded-lg p-5 bg-terra text-paper', !print && 'shadow-xl -rotate-1')}>
-        <Label className="!opacity-80">Biggest gap</Label>
-        <p className="font-serif text-3xl leading-tight mt-1">{brief.gap.text}</p>
-        <p className="font-type text-[13px] uppercase tracking-wider mt-2 flex flex-wrap items-center gap-2">{brief.gap.why} {brief.gap.badge}</p>
-        <p className="font-type text-xs uppercase tracking-wider mt-2 opacity-80">Detection radar · step {stepInfo(brief.gap.step).n} of 4</p>
+        <p className="font-serif text-3xl leading-tight">{brief.gap.text}</p>
+        <p className="font-type text-[13px] uppercase tracking-wider mt-2 flex flex-wrap items-center gap-2 opacity-90">{brief.gap.why.replace(/^[^:]+:\s*/, '')} {brief.gap.badge}</p>
       </div>
 
       <div className="mt-6">
-        <Label>Where in the pathway</Label>
-        <div className="mt-2 grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1">
           {STRIP.map((s) => (
             <div key={s} className="min-w-0">
               <div className={cx('h-2 rounded-full', hot.has(s) ? 'bg-terra' : 'bg-black/10')} />
@@ -178,15 +169,14 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
       </div>
 
       <div className="tear mt-6 pt-5">
-        <Label>Three actions, ranked</Label>
+        <Label>Do next</Label>
         <ol className="mt-3 space-y-4">
           {brief.actions.map((a, i) => (
             <li key={a.id} className="flex gap-4">
               <span className={cx('w-9 h-9 rounded-full flex items-center justify-center font-serif text-lg shrink-0', i === 0 ? 'bg-ink text-mustard' : 'border border-ink')}>{i + 1}</span>
               <div className="min-w-0">
                 <p className="font-serif text-2xl leading-tight flex items-center gap-2">{a.title} {a.badge}</p>
-                <p className="font-type text-xs mt-1">{a.detail}</p>
-                <p className="font-type text-xs uppercase tracking-wider opacity-60 mt-1">{a.why}</p>
+                <p className="font-type text-xs mt-1 opacity-80">{a.detail}</p>
               </div>
             </li>
           ))}
@@ -202,10 +192,11 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
         ))}
       </div>
 
-      <div className="tear mt-6 pt-4 flex items-center justify-between gap-4">
-        <span className="font-type text-[11px] uppercase tracking-wider opacity-60">Demo values · county totals only</span>
-        {!print && <Btn onClick={() => window.print()}>Print brief</Btn>}
-      </div>
+      {!print && (
+        <div className="tear mt-6 pt-4 flex justify-end">
+          <Btn onClick={() => window.print()}>Print brief</Btn>
+        </div>
+      )}
     </div>
   )
 }

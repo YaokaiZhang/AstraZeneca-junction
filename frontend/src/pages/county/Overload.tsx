@@ -1,9 +1,9 @@
 // 3.3 Overload warning: projected cases 2025 → 2035 from the ageing forecast; flags rising queues.
 import { useMemo, useState } from 'react'
-import { Card, Display, Label, SourceBadge, Stamp, cx } from '../../components/ui'
+import { Card, Display, SourceBadge, cx } from '../../components/ui'
 import { CANCERS, COUNTIES, countyById } from '../../data/counties'
 import { Seg, Slider, Spark, useWidth } from './bits'
-import { YEARS, fmt, overloadYear, pct, projection, queueRising, queueSlope, type ProjCancer } from './model'
+import { YEARS, fmt, overloadYear, projection, queueRising, queueSlope, type ProjCancer } from './model'
 import type { TabProps } from './index'
 
 type SortKey = 'growth' | 'year' | 'queue' | 'name'
@@ -29,7 +29,6 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
       : a.slope - b.slope
     return sort.desc ? -d : d
   })
-  const flagged = rows.filter((r) => r.rising && r.year).length
 
   const [chartRef, cw] = useWidth<HTMLDivElement>()
   const me = rows.find((r) => r.c.id === countyId)!
@@ -53,31 +52,23 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <Display a="Ageing" b="into queues" />
-        <Stamp tone="terra" rotate={-8}>{flagged} counties<br />overload<br />+ queue ↑</Stamp>
-      </div>
+      <Display a="Ageing" b="into queues" />
 
       <div className="mt-6 flex flex-wrap gap-3 items-center">
         <Seg items={[{ id: 'all', label: 'All four' }, ...CANCERS.map((c) => ({ id: c.id, label: c.label }))]}
           value={all ? 'all' : cancer} onChange={(v) => { if (v === 'all') setAll(true); else { setAll(false); setCancer(v) } }} />
       </div>
 
-      <div className="mt-8 grid 2xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-8 items-start">
+      <div className="mt-8 grid xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-8 items-start">
         <Card tone={me.year ? 'terra' : 'stone'} tilt={-0.8} className="relative p-5 sm:p-6 min-w-0">
-          <div className="flex justify-between items-start gap-3">
-            <div>
-              <Label className={me.year ? '!opacity-80' : ''}>{county.name} · new cases / yr</Label>
-              <p className="font-serif text-5xl leading-none mt-2 flex items-baseline gap-2">
-                {fmt(me.s[0])}<span className="text-2xl italic">→ {fmt(me.s[10])}</span>
-                <SourceBadge id="ourModel" kind="estimate" how={HOW(headroom)} />
-              </p>
-              <p className="font-type text-xs uppercase tracking-wider mt-2">+{pct(me.growth)} by 2035</p>
-            </div>
-            <Stamp tone={me.year ? 'paper' : 'ink'} rotate={12} className="!w-20 !h-20 [&>div]:!w-16 [&>div]:!h-16">
-              {me.year ? <>Overload<br />{me.year}</> : <>Within<br />2035</>}
-            </Stamp>
-          </div>
+          <p className="font-serif text-4xl sm:text-5xl leading-none">
+            {me.year ? <>Full by <span className="italic">{me.year}</span></> : <>Fits through <span className="italic">2035</span></>}
+          </p>
+          <p className="font-type text-[13px] uppercase tracking-wider mt-3 flex flex-wrap items-baseline gap-x-2">
+            <span className="font-serif text-2xl normal-case tracking-normal">{fmt(me.s[0])} → {fmt(me.s[10])}</span>
+            <span className="opacity-80">cases / yr</span>
+            <SourceBadge id="ourModel" kind="estimate" how={HOW(headroom)} />
+          </p>
           <div ref={chartRef} className="mt-3">
           <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block max-w-full" role="img" aria-label="Projected cases 2025 to 2035">
             {[0, 2, 4, 6, 8, 10].map((i) => (
@@ -102,7 +93,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
           </svg>
           </div>
           <div className="mt-4">
-            <Slider label="Spare capacity today" value={headroom} min={0.05} max={0.4} step={0.05} onChange={setHeadroom}
+            <Slider label="Spare capacity" value={headroom} min={0.05} max={0.4} step={0.05} onChange={setHeadroom}
               display={`+${Math.round(headroom * 100)}%`} />
           </div>
           <div className="mt-4 flex items-center gap-3 font-type text-[13px] uppercase tracking-wider">
@@ -110,15 +101,15 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
             <Spark values={county.queueTrend} w={70} h={22} mark={3} stroke="currentColor" fill="rgba(0,0,0,.08)" />
             <span>{county.queueTrend[0]} → {county.queueTrend[3]} /10k</span>
             <SourceBadge id="sotkanetQueue" kind="direct" />
-            {me.rising && <span className="px-2 py-0.5 rounded-full bg-ink text-paper">rising</span>}
+            {me.rising && <span className="text-mustard">▲</span>}
           </div>
         </Card>
 
-        <Card tilt={0.6} className="p-4 sm:p-6 min-w-0 2xl:mt-0 sm:mx-4 2xl:mx-0">
+        <Card tilt={0.6} className="p-4 sm:p-6 min-w-0">
           <div className="grid grid-cols-[minmax(0,1fr)_3.2rem_3.2rem_4.5rem] gap-2 items-center pb-2 border-b border-black/10 px-1.5">
             {head('name', 'County')}
             {head('growth', '2035', 'justify-end')}
-            {head('year', 'Over', 'justify-end')}
+            {head('year', 'Full', 'justify-end')}
             {head('queue', 'Queue', 'justify-end')}
           </div>
           <ul>
@@ -127,10 +118,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
                 <button onClick={() => select(r.c.id)}
                   className={cx('w-full grid grid-cols-[minmax(0,1fr)_3.2rem_3.2rem_4.5rem] gap-2 items-center py-1.5 px-1.5 rounded text-left',
                     r.c.id === countyId ? 'bg-mustard' : 'hover:bg-black/5')}>
-                  <span className="flex items-center gap-2 min-w-0">
-                    <span className="hidden sm:inline-flex"><Spark values={r.s} w={44} h={16} domain={[r.s[0] * 0.95, r.s[0] * 1.6]} stroke={r.year ? '#C65D3B' : '#1F1F1F'} fill="rgba(31,31,31,.06)" /></span>
-                    <span className="font-serif text-base leading-tight truncate">{r.c.name}</span>
-                  </span>
+                  <span className="font-serif text-base leading-tight truncate">{r.c.name}</span>
                   <span className="font-type text-xs text-right tabular-nums">+{Math.round(r.growth * 100)}%</span>
                   <span className={cx('font-type text-xs text-right tabular-nums', r.year != null && 'text-terra font-bold')}>{r.year ?? '—'}</span>
                   <span className="flex items-center justify-end gap-1">
@@ -141,10 +129,6 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex justify-between items-center font-type text-xs uppercase tracking-wider opacity-70">
-            <span>▲ queue rising</span>
-            <span className="flex items-center gap-1">Projection <SourceBadge id="statfinPop" kind="estimate" how={HOW(headroom)} /></span>
-          </div>
         </Card>
       </div>
     </div>

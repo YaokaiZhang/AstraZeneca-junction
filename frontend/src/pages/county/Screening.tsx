@@ -1,8 +1,8 @@
 // 3.2 Who misses screening: predicted vs actual turnout per town.
 import { useMemo, useState } from 'react'
-import { Card, Display, EdgeText, Label, SourceBadge, Stamp, cx } from '../../components/ui'
+import { Card, Display, Label, SourceBadge, cx } from '../../components/ui'
 import { countyById } from '../../data/counties'
-import { Seg, Tear } from './bits'
+import { Seg } from './bits'
 import { fmt } from './model'
 import { FEATURES, PROGRAMMES, TOWNS, fitModel, verdict, type Programme, type Town, type Verdict } from './towns'
 import type { TabProps } from './index'
@@ -38,8 +38,15 @@ export function Screening({ countyId, select }: TabProps) {
   const help = listPts.filter((d) => (scope === 'county' ? d.res < 0 : d.v === 'help')).sort((a, b) => a.res - b.res).slice(0, n)
   const copy = listPts.filter((d) => (scope === 'county' ? d.res > 0 : d.v === 'copy')).sort((a, b) => b.res - a.res).slice(0, n)
   const sel = pts.find((d) => d.t.id === townId) ?? null
-  const progInfo = PROGRAMMES.find((p) => p.id === prog)!
   const county = countyById(countyId)!
+
+  const worstMine = pts.filter(inCounty).sort((a, b) => a.res - b.res)[0]
+  const flaggedMine = pts.filter((d) => inCounty(d) && d.v === 'help').length
+  const headline = flaggedMine > 0
+    ? <><span className="italic text-terra">{flaggedMine} town{flaggedMine > 1 ? 's' : ''}</span> in {county.name} miss more than predicted</>
+    : worstMine && worstMine.res < 0
+      ? <><span className="italic text-terra">{worstMine.t.name}</span> misses most, {fmt(Math.abs(worstMine.res), 1)} pts below prediction</>
+      : <>{county.name} turns out <span className="italic">as predicted</span></>
 
   const pick = (t: Town) => { setTownId(t.id); if (t.county !== countyId) select(t.county) }
 
@@ -50,24 +57,21 @@ export function Screening({ countyId, select }: TabProps) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <Display a="Who misses" b="the letter" />
-        <div className="flex gap-2 items-center">
-          <span className="font-type text-xs uppercase tracking-wider opacity-60">R² {fit.r2.toFixed(2)}</span>
-          {fitBadge}
-        </div>
-      </div>
+      <Display a="Who misses" b="the letter" />
 
       <div className="mt-6 flex flex-wrap gap-3 items-center">
         <Seg items={PROGRAMMES.map((p) => ({ id: p.id, label: p.label }))} value={prog} onChange={(p) => setProg(p)} />
-        <span className="font-type text-xs uppercase tracking-wider opacity-60">ages {progInfo.ages} · Sotkanet {progInfo.indicator}</span>
       </div>
 
-      <div className="mt-8 grid xl:grid-cols-[minmax(0,1fr)_260px] gap-6 items-start">
+      <p className="mt-8 font-serif text-3xl sm:text-4xl leading-tight">
+        {headline}
+      </p>
+
+      <div className="mt-5 grid lg:grid-cols-[minmax(0,1fr)_280px] gap-6 items-start">
         <Card tilt={-0.6} className="p-3 sm:p-5 min-w-0">
           <div className="flex flex-wrap justify-between items-center gap-2 mb-2 px-1">
-            <Label>Actual vs predicted turnout, %</Label>
-            <div className="flex gap-3 font-type text-xs uppercase tracking-wider">
+            <span className="flex items-center gap-1.5 font-type text-xs uppercase tracking-wider opacity-70">Turnout % {fitBadge}</span>
+            <div className="flex flex-wrap gap-3 font-type text-xs uppercase tracking-wider">
               {(['help', 'copy'] as Verdict[]).map((v) => (
                 <span key={v} className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: VC[v] }} />{VL[v]}</span>
               ))}
@@ -112,12 +116,11 @@ export function Screening({ countyId, select }: TabProps) {
 
         <div className="space-y-5 min-w-0">
           {sel ? (
-            <Card tone="mustard" tilt={1.5} className="relative p-5 pl-9">
-              <EdgeText>{countyById(sel.t.county)!.name}</EdgeText>
+            <Card tone="mustard" tilt={1.5} className="relative p-5">
               <div className="flex justify-between items-start">
                 <div>
-                  <Label>{progInfo.label} · town</Label>
-                  <p className="font-serif text-3xl leading-none mt-1">{sel.t.name}</p>
+                  <p className="font-serif text-3xl leading-none">{sel.t.name}</p>
+                  {sel.t.county !== countyId && <p className="font-type text-xs uppercase tracking-wider opacity-60 mt-1">{countyById(sel.t.county)!.name}</p>}
                 </div>
                 <button onClick={() => setTownId(null)} aria-label="Close town" className="font-type text-xs w-7 h-7 rounded-full border border-current hover:bg-ink hover:text-mustard">✕</button>
               </div>
@@ -142,18 +145,11 @@ export function Screening({ countyId, select }: TabProps) {
                 ))}
               </dl>
             </Card>
-          ) : (
-            <Card tone="stone" tilt={1} className="p-5">
-              <Label>Tap a dot</Label>
-              <p className="font-serif text-2xl italic mt-1 leading-tight">Town detail</p>
-            </Card>
-          )}
+          ) : null}
 
-          <div className="flex items-center justify-between">
-            <Seg items={[{ id: 'county', label: 'County' }, { id: 'all', label: 'Finland' }]} value={scope} onChange={setScope} />
-          </div>
-          <TownList title="Needs help" tone="terra" items={help} onPick={pick} activeId={townId} empty={scope === 'county' ? '—' : 'None flagged'} />
-          <TownList title="Worth copying" tone="paper" items={copy} onPick={pick} activeId={townId} empty={scope === 'county' ? '—' : 'None flagged'} />
+          <Seg items={[{ id: 'county', label: county.name }, { id: 'all', label: 'Finland' }]} value={scope} onChange={setScope} />
+          {help.length > 0 && <TownList title="Needs help" tone="terra" items={help} onPick={pick} activeId={townId} />}
+          {copy.length > 0 && <TownList title="Worth copying" tone="paper" items={copy} onPick={pick} activeId={townId} />}
         </div>
       </div>
     </div>
@@ -169,28 +165,23 @@ function FeatureRow({ label, value }: { label: string; value: number }) {
   )
 }
 
-function TownList({ title, tone, items, onPick, activeId, empty }: {
-  title: string; tone: 'terra' | 'paper'; items: { t: Town; res: number; a: number; v: Verdict }[]; onPick: (t: Town) => void; activeId: string | null; empty: string
+function TownList({ title, tone, items, onPick, activeId }: {
+  title: string; tone: 'terra' | 'paper'; items: { t: Town; res: number; a: number; v: Verdict }[]; onPick: (t: Town) => void; activeId: string | null
 }) {
   return (
     <Card tone={tone} tilt={tone === 'terra' ? -1 : 0.8} className="relative p-5">
-      <div className="flex justify-between items-start">
-        <Label className={tone === 'terra' ? '!opacity-80' : ''}>{title}</Label>
-        {tone === 'terra' && items.some((d) => d.v === 'help') && <Stamp tone="paper" rotate={-14} className="!w-14 !h-14 -mt-2 -mr-2 [&>div]:!w-11 [&>div]:!h-11 [&_span]:!text-[7px]">Help<br />here</Stamp>}
-      </div>
+      <Label className={tone === 'terra' ? '!opacity-80' : ''}>{title}</Label>
       <ul className="mt-1 space-y-1">
-        {items.length === 0 && <li className="font-type text-xs opacity-60">{empty}</li>}
         {items.map((d) => (
           <li key={d.t.id}>
             <button onClick={() => onPick(d.t)}
               className={cx('w-full flex justify-between items-baseline gap-2 py-1 border-b border-black/15 text-left hover:opacity-70', activeId === d.t.id && 'font-bold')}>
-              <span className="font-serif text-lg leading-tight truncate flex items-center gap-2">{d.t.name}{d.v !== 'ok' && <span className={cx('w-1.5 h-1.5 rounded-full shrink-0', tone === 'terra' ? 'bg-paper' : 'bg-moss')} title="outlier" />}</span>
-              <span className="font-type text-xs tabular-nums shrink-0">{d.res >= 0 ? '+' : '−'}{fmt(Math.abs(d.res), 1)}</span>
+              <span className="font-serif text-lg leading-tight truncate">{d.t.name}</span>
+              <span className="font-type text-xs tabular-nums shrink-0">{d.res >= 0 ? '+' : '−'}{fmt(Math.abs(d.res), 1)} pts</span>
             </button>
           </li>
         ))}
       </ul>
-      {tone === 'paper' && <Tear className="mt-3" left="pts vs predicted" right="↗" />}
     </Card>
   )
 }

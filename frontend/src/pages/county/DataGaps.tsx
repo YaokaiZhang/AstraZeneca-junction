@@ -1,11 +1,10 @@
 // 3.4 Missing-data map and starter plan.
 import { useEffect, useState } from 'react'
-import { Card, Display, EdgeText, Label, SourceBadge, Stamp, TextRing, cx, toast } from '../../components/ui'
+import { Card, Display, Label, SourceBadge, cx, toast } from '../../components/ui'
 import { CANCERS, countyById } from '../../data/counties'
 import { PATHWAY, type StepId } from '../../data/pathway'
 import type { SourceKind } from '../../data/sources'
 import { useStore } from '../../lib/store'
-import { Tear } from './bits'
 import { baseRecords, fmt, pct } from './model'
 import type { TabProps } from './index'
 
@@ -70,31 +69,29 @@ export function DataGaps({ countyId }: TabProps) {
 
       {/* the big gap */}
       <Card tone="terra" tilt={-1} className="clip relative mt-8 p-6 sm:p-8">
-        <TextRing text="no public figure • referral to treatment • " size={220} className="absolute -right-16 -bottom-24 opacity-25 hidden sm:block" />
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div>
-            <Label className="!opacity-80">Biggest gap</Label>
-            <p className="font-serif text-4xl sm:text-5xl leading-[0.95] mt-2">Referral<span className="italic"> → treatment</span></p>
-            <p className="font-type text-xs uppercase tracking-wider mt-3 flex items-center gap-2">waiting time · no public figure <SourceBadge id="waitGap" kind="gap" /></p>
-          </div>
-          <Stamp tone="paper" rotate={-12}>Data<br />gap</Stamp>
-        </div>
+        <p className="font-serif text-4xl sm:text-5xl leading-[0.95]">Referral<span className="italic"> → treatment</span></p>
+        <p className="font-type text-[13px] uppercase tracking-wider mt-3 flex items-center gap-2 opacity-90">No public waiting time <SourceBadge id="waitGap" kind="gap" /></p>
         {/* pathway strip */}
-        <div className="mt-6 grid grid-cols-6 gap-1 sm:gap-2">
+        <div className="mt-8 grid grid-cols-6 gap-1 sm:gap-2">
           {PATHWAY.map((s, i) => {
             const inGap = i > gi && i <= ge
             return (
               <div key={s.id} className="min-w-0">
                 <div className={cx('h-2 rounded-full', inGap ? 'bg-paper/25 border border-dashed border-paper' : 'bg-paper')} />
-                <p className="font-type text-[11px] sm:text-xs uppercase tracking-wider mt-2 truncate">{s.short}</p>
+                <p className={cx('font-type text-[11px] sm:text-xs uppercase tracking-wider mt-2 truncate', !inGap && 'opacity-70')}>{s.short}</p>
               </div>
             )
           })}
         </div>
-        <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 font-type text-xs uppercase tracking-wider">
-          <span className="flex items-center gap-2">Goal 3 target exists <SourceBadge id="strategy" kind="direct" demo={false} /></span>
-          <span className="flex items-center gap-2">Target ≈ {target} d <SourceBadge id="thlTargets" kind="estimate" how={`Sum of step targets scan → treatment: ${PATHWAY.filter((s) => ['scan', 'diagnosis', 'mdt', 'treatment'].includes(s.id)).map((s) => s.targetDays).join(' + ')} days (to verify).`} /></span>
-          <span className="flex items-center gap-2">Measured: 0 d <SourceBadge id="waitGap" kind="gap" /></span>
+        <div className="mt-8 flex flex-wrap gap-x-12 gap-y-4">
+          <div>
+            <Label className="!opacity-80">Target</Label>
+            <p className="font-serif text-4xl leading-none mt-1 flex items-baseline gap-2">≈ {target} d <SourceBadge id="thlTargets" kind="estimate" how={`Sum of step targets scan → treatment: ${PATHWAY.filter((s) => ['scan', 'diagnosis', 'mdt', 'treatment'].includes(s.id)).map((s) => s.targetDays).join(' + ')} days (to verify). Strategy goal 3 sets the target.`} /></p>
+          </div>
+          <div>
+            <Label className="!opacity-80">Measured</Label>
+            <p className="font-serif text-4xl leading-none mt-1 italic">nothing</p>
+          </div>
         </div>
       </Card>
 
@@ -108,19 +105,17 @@ export function DataGaps({ countyId }: TabProps) {
               <Row key={r.stage} stage={r.stage} cells={r.cells} hot={r.stage === 'Referral' || r.stage === 'Treatment' || r.stage === 'Diagnosis' || r.stage === 'Planning'} />
             ))}
           </div>
-          <div className="mt-4 flex flex-wrap gap-3 font-type text-xs uppercase tracking-wider">
+          <div className="mt-5 flex flex-wrap gap-3 font-type text-xs uppercase tracking-wider">
             {(['direct', 'estimate', 'gap'] as const).map((k) => {
               const n = ROWS.flatMap((r) => r.cells).filter((c) => c.k === k).length
-              return <span key={k} className={cx('px-2 py-1 rounded-full', CELL_CLS[k])}>{CELL_TXT[k]} · {n}</span>
+              return <span key={k} className={cx('px-2 py-1 rounded-full', CELL_CLS[k])}>{CELL_TXT[k]} {n}</span>
             })}
           </div>
         </Card>
 
         {/* starter plan */}
-        <Card tone="ink" tilt={-1.2} className="relative p-6 pl-11 pb-12">
-          <EdgeText>Starter plan · {county.name}</EdgeText>
-          <Label className="!opacity-70">Record first</Label>
-          <p className="font-serif text-4xl leading-none mt-1">Three <span className="italic">dates</span></p>
+        <Card tone="ink" tilt={-1.2} className="relative p-6">
+          <p className="font-serif text-4xl leading-none">Record <span className="italic">three dates</span></p>
           <ol className="mt-5 space-y-2">
             {PLAN.map((p, i) => {
               const on = ticked.includes(p.id)
@@ -140,7 +135,7 @@ export function DataGaps({ countyId }: TabProps) {
           </ol>
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
-              <Label className="!opacity-70">Patient records</Label>
+              <Label className="!opacity-70">Shared by patients</Label>
               <p className="font-serif text-4xl leading-none mt-1 flex items-baseline gap-1.5">
                 {fmt(records)} <SourceBadge id="demoPatients" kind="estimate" how="Simulated opt-in records from the patient pathway clock, + 1 if this browser shared its dates for statistics." />
               </p>
@@ -152,9 +147,6 @@ export function DataGaps({ countyId }: TabProps) {
                 {pct(records / yearlyCases, 1)} <SourceBadge id="ourModel" kind="estimate" how={`${fmt(records)} records ÷ ${fmt(yearlyCases)} new lung, bowel, pancreas and liver cases a year`} />
               </p>
             </div>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 px-6 pb-2">
-            <Tear left={`${ticked.length}/3 recorded`} right="patients fill the gap ↑" />
           </div>
         </Card>
       </div>
@@ -168,8 +160,7 @@ function Row({ stage, cells, hot }: { stage: string; cells: Cell[]; hot?: boolea
       <span className={cx('font-serif text-base sm:text-lg leading-tight truncate', hot && 'italic')}>{stage}</span>
       {cells.map((c, i) => (
         <span key={i} className={cx('relative h-9 rounded-md flex items-center justify-center gap-1.5 font-type text-[11px] sm:text-xs uppercase tracking-wider', CELL_CLS[c.k])}>
-          <span className="hidden sm:inline">{CELL_TXT[c.k]}</span>
-          {c.k !== 'na' && c.src && <SourceBadge id={c.src} kind={c.k} how={c.how} className="[&>button]:ring-1 [&>button]:ring-white/70" />}
+          {c.k === 'na' ? '—' : c.src && <SourceBadge id={c.src} kind={c.k} how={c.how} className="[&>button]:ring-1 [&>button]:ring-white/70" />}
         </span>
       ))}
     </>

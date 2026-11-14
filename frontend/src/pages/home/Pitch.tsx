@@ -656,41 +656,122 @@ export function Transparency() {
 
 /* ───────────── 7 · from finding to action ───────────── */
 type Effort = 1 | 2 | 3
-const PLAYBOOK: { finding: string; action: string; who: string; lever: string; effort: Effort; target: string; badge: React.ReactNode }[] = [
+type Icon = 'risk' | 'mail' | 'scan' | 'clock' | 'calendar'
+/** Ordered along the care pathway, left to right. `goal`: a share the target ring fills to, or a glyph. */
+const PLAYBOOK: { step: string; icon: Icon; finding: string; action: string; who: string; effort: Effort; goal: number | string; target: string; badge: React.ReactNode }[] = [
   {
-    finding: 'Few people get screened', action: 'Send a reminder and a second test kit, lowest towns first',
-    who: 'Screening unit', lever: 'Existing screening invitations', effort: 1, target: '80% turnout in every county',
-    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 80% screening turnout in every county. Tracked with THL Sotkanet 6103 / 3621 / 3620, already on the radar." />,
+    step: 'Risk', icon: 'risk', finding: 'Many at higher risk', action: 'Self-check in the app, then a doctor',
+    who: 'Health centre nurse', effort: 2, goal: '↑', target: 'More people at risk reached',
+    badge: <SourceBadge id="plco" kind="estimate" demo={false} how="Lung: PLCOm2012 six-year risk ≥ 1.51% (Tammemägi et al. 2014). Built on US data; not validated in Finland. Lung CT screening is only piloted in Finland. Other cancers: our rough county heuristic. Uses a published lung-risk cut-off." />,
   },
   {
-    finding: 'Waiting time unknown', action: 'Record three dates per patient; a nurse calls anyone running late',
-    who: 'Nurse coordinator', lever: 'The 6-week rule', effort: 1, target: 'Treated within 6 weeks of referral',
+    step: 'Screening', icon: 'mail', finding: 'Few get screened', action: 'Reminder and a second kit, lowest towns first',
+    who: 'Screening unit', effort: 1, goal: 0.8, target: 'Turnout in every county',
+    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 80% screening turnout in every county. Builds on the existing screening invitations. Tracked with THL Sotkanet 6103 / 3621 / 3620, already on the radar." />,
+  },
+  {
+    step: 'Doctor visit', icon: 'scan', finding: 'Found after spread', action: 'Scan straight away for warning signs',
+    who: 'Health centre doctor', effort: 2, goal: 0.7, target: 'Found early',
+    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 70% of cancers found at stage I–II. Uses the urgent referral in the regional care pathway. Warning signs, for example: weight loss with new diabetes, or jaundice (pancreas and liver). Tracked on the radar as the Registry's spread share (step 3)." />,
+  },
+  {
+    step: 'Treatment', icon: 'clock', finding: 'Waiting time unknown', action: 'Record three dates; call anyone running late',
+    who: 'Nurse coordinator', effort: 1, goal: '6 wk', target: 'Referral to treatment',
     badge: <SourceBadge id="thlTargets" kind="direct" demo={false} how="Referral arriving → first treatment within 6 weeks, tests included (STM report 2010:6). Tracked by the hospital off-track list." />,
   },
   {
-    finding: 'Found after spread', action: 'Health centres order a scan straight away for warning signs',
-    who: 'Health centre doctor', lever: 'Urgent referral in the regional care pathway', effort: 2, target: '70% found early',
-    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 70% of cancers found at stage I–II. Warning signs, for example: weight loss with new diabetes, or jaundice (pancreas and liver). Tracked on the radar as the Registry's spread share (step 3)." />,
-  },
-  {
-    finding: 'Many people at higher risk', action: 'A self-check in the app, then a doctor visit',
-    who: 'Health centre nurse', lever: 'A published lung-risk cut-off', effort: 2, target: 'More people at risk reached',
-    badge: <SourceBadge id="plco" kind="estimate" demo={false} how="Lung: PLCOm2012 six-year risk ≥ 1.51% (Tammemägi et al. 2014). Built on US data; not validated in Finland. Lung CT screening is only piloted in Finland. Other cancers: our rough county heuristic." />,
-  },
-  {
-    finding: 'More cases by 2035', action: 'Book scan and specialist time before the overload year',
-    who: 'County', lever: 'Yearly budget and service plan', effort: 3, target: 'Fewer waiting over 6 months',
-    badge: <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how="THL Sotkanet 3336: waited over 6 months for specialist care, per 10 000 residents. Shown with the 2035 projection on the Overload tab." />,
+    step: 'Capacity', icon: 'calendar', finding: 'More cases by 2035', action: 'Book scan and specialist time early',
+    who: 'County', effort: 3, goal: '↓', target: 'Fewer waiting over 6 months',
+    badge: <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how="THL Sotkanet 3336: waited over 6 months for specialist care, per 10 000 residents. Planned in the yearly budget and service plan, using the 2035 projection on the Overload tab." />,
   },
 ]
 const EFFORT = ['', 'Low effort', 'Medium effort', 'High effort']
 
-function EffortDots({ n }: { n: Effort }) {
+function EffortBars({ n }: { n: Effort }) {
   return (
-    <span className="inline-flex items-center gap-2" aria-label={EFFORT[n]}>
-      <span className="flex gap-1">{[1, 2, 3].map((i) => <i key={i} className={cx('w-2 h-2 rounded-full border border-ink', i <= n ? 'bg-ink' : 'bg-transparent')} />)}</span>
-      <span className="font-sans text-sm opacity-70">{EFFORT[n]}</span>
+    <span className="inline-flex items-end gap-1" aria-label={EFFORT[n]} title={EFFORT[n]}>
+      {[1, 2, 3].map((i) => <i key={i} className={cx('w-2 rounded-sm', i <= n ? 'bg-ink' : 'bg-ink/15')} style={{ height: 6 + i * 5 }} />)}
     </span>
+  )
+}
+
+const ICON_PATHS: Record<Icon, React.ReactNode> = {
+  risk: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5" /><path d="M18.5 4.5v4M16.5 6.5h4" /></>,
+  mail: <><rect x="3.5" y="6" width="17" height="12" rx="1.5" /><path d="m4 7 8 6 8-6" /></>,
+  scan: <><circle cx="10.5" cy="10.5" r="6" /><path d="m15 15 5 5" /><path d="M8 10.5h5M10.5 8v5" /></>,
+  clock: <><circle cx="12" cy="12" r="8" /><path d="M12 7.5V12l3 2" /></>,
+  calendar: <><rect x="3.5" y="5.5" width="17" height="15" rx="1.5" /><path d="M3.5 10h17M8 3.5v4M16 3.5v4" /><path d="m9.5 15 2 2 3.5-4" /></>,
+}
+function PlayIcon({ k }: { k: Icon }) {
+  return <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{ICON_PATHS[k]}</svg>
+}
+
+/** Target as a ring: fills to the share for percentage targets, otherwise shows the glyph. */
+function GoalRing({ goal, on, delay }: { goal: number | string; on: boolean; delay: number }) {
+  const r = 26, c = 2 * Math.PI * r
+  const share = typeof goal === 'number' ? goal : 1
+  return (
+    <div className="relative w-20 h-20 shrink-0">
+      <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90" aria-hidden>
+        <circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeOpacity=".12" strokeWidth="5" />
+        <circle cx="32" cy="32" r={r} fill="none" stroke="#C65D3B" strokeWidth="5" strokeLinecap="round"
+          strokeDasharray={c} strokeDashoffset={on ? c * (1 - share) : c}
+          style={{ transition: `stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1) ${delay}ms`, strokeOpacity: typeof goal === 'number' ? 1 : 0.35 }} />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center font-serif text-2xl tabular-nums">
+        {typeof goal === 'number' ? `${Math.round(goal * 100)}%` : goal}
+      </span>
+    </div>
+  )
+}
+
+function Playbook() {
+  const [ref, on] = useInView<HTMLDivElement>(0.25)
+  return (
+    <div ref={ref} className="mt-16 lg:mt-20">
+      {/* the care pathway the actions sit on */}
+      <div className="relative hidden lg:grid grid-cols-5 gap-6 mb-6">
+        <div className="absolute left-[10%] right-[10%] top-[7px] h-px bg-ink origin-left transition-transform duration-[1400ms] ease-out" style={{ transform: `scaleX(${on ? 1 : 0})` }} />
+        {PLAYBOOK.map((r, i) => (
+          <div key={r.step} className="relative flex flex-col items-center gap-3">
+            <span className={cx('w-[15px] h-[15px] rounded-full border-2 border-ink bg-paper transition-colors duration-300', on && 'bg-terra border-terra')} style={{ transitionDelay: `${300 + i * 250}ms` }} />
+            <span className="font-type text-xs uppercase tracking-widest">{r.step}</span>
+          </div>
+        ))}
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 lg:gap-6">
+        {PLAYBOOK.map((r, i) => (
+          <div key={r.step} className={cx('rv rv-up', on && 'in')} style={{ transitionDelay: `${300 + i * 250}ms` }}>
+            <Tilt max={8} className="h-full">
+              <div className="h-full rounded-xl border border-ink/12 bg-paper shadow-[0_10px_30px_-18px_rgba(0,0,0,.35)] p-5 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <span className="w-12 h-12 rounded-full bg-terra/10 text-terra flex items-center justify-center"><PlayIcon k={r.icon} /></span>
+                  <span className="lg:hidden font-type text-xs uppercase tracking-widest opacity-60">{r.step}</span>
+                </div>
+                <div className="mt-4 font-serif italic text-xl leading-tight text-terra lg:min-h-[2.5em]">{r.finding}</div>
+                <div className="my-3 text-2xl leading-none opacity-30" aria-hidden>↓</div>
+                <div className="font-serif text-2xl leading-tight lg:min-h-[5em]">{r.action}</div>
+                <div className="mt-5 flex items-center justify-between gap-3 border-t border-dashed border-ink/20 pt-3">
+                  <span className="flex items-center gap-2 font-sans text-sm leading-tight min-w-0">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5" /></svg>
+                    {r.who}
+                  </span>
+                  <EffortBars n={r.effort} />
+                </div>
+                <div className="mt-auto pt-5 flex items-center gap-3">
+                  <GoalRing goal={r.goal} on={on} delay={600 + i * 250} />
+                  <span className="font-sans text-sm leading-snug flex flex-wrap items-center gap-1.5">{r.target} {r.badge}</span>
+                </div>
+              </div>
+            </Tilt>
+          </div>
+        ))}
+      </div>
+      <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 font-type text-xs uppercase tracking-widest opacity-60">
+        <span className="flex items-center gap-2"><EffortBars n={1} /> Effort</span>
+        <span className="flex items-center gap-2"><span className="w-3 h-3 rounded-full border-2 border-terra" /> Target</span>
+      </div>
+    </div>
   )
 }
 
@@ -713,27 +794,9 @@ export function Actions() {
       <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
         <WordsUp text="A gap found." /><br /><WordsUp text="A step to take." className="italic text-terra" delay={180} />
       </h2>
-      <Lede className="mt-8">Every gap in the data comes with a concrete next step: what to do, who does it, which existing programme or rule it builds on, and the target it moves.</Lede>
+      <Lede className="mt-8">One action for each step of the pathway: what to do, who does it, and the target it moves.</Lede>
 
-      {/* playbook */}
-      <div className="mt-16 lg:mt-20">
-        <div className="hidden lg:grid grid-cols-[1fr_1.6fr_1fr_1.1fr_1.2fr] gap-6 pb-3 border-b border-ink">
-          {['Finding', 'Action', 'Who', 'Uses', 'Target'].map((h) => <span key={h} className="label">{h}</span>)}
-        </div>
-        {PLAYBOOK.map((r, i) => (
-          <Reveal key={r.finding} delay={i * 90}
-            className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr_1fr_1.1fr_1.2fr] gap-x-6 gap-y-2 py-6 border-b border-dashed border-ink/20 lg:items-baseline">
-            <div className="font-serif italic text-xl leading-tight text-terra">{r.finding}</div>
-            <div className="font-serif text-2xl leading-tight">{r.action}</div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 lg:flex-col lg:items-start">
-              <span className="font-sans text-base">{r.who}</span>
-              <EffortDots n={r.effort} />
-            </div>
-            <div className="hidden lg:block font-sans text-[15px] leading-snug opacity-75">{r.lever}</div>
-            <div className="font-sans text-base leading-snug flex items-center gap-2"><span className="lg:hidden opacity-60">Target:</span><span>{r.target}</span>{r.badge}</div>
-          </Reveal>
-        ))}
-      </div>
+      <Playbook />
 
       <div className="mt-20 lg:mt-24 grid lg:grid-cols-[1.3fr_1fr] gap-12 lg:gap-20 items-start">
         {/* real-data hook: any county → its weakest step → its three actions (same engine as the county brief) */}

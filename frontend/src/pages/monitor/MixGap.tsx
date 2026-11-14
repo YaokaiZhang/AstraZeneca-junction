@@ -31,7 +31,7 @@ function takeaway(r: ScreeningRow): { kind: 'service' | 'language' | 'education'
     return {
       kind: 'service',
       text: 'The population mix doesn’t explain this gap.',
-      detail: 'Even with its language and education mix, more people should be returning the kit. The cause is more likely in how the service works, for example people using private or occupational healthcare instead, or tests and colonoscopies done privately and never recorded.',
+      detail: 'Even with its language and education mix, more people should be returning the kit. The cause is more likely in how the service itself works, for example private or occupational healthcare use.',
     }
   }
   const gap = fi - actual
@@ -42,7 +42,6 @@ function takeaway(r: ScreeningRow): { kind: 'service' | 'language' | 'education'
   return { kind: 'part', text: 'The population mix explains part of this gap.', detail: 'Actual kit return is below what the mix predicts, but within 1.5 points of at least one expectation.' }
 }
 
-const ord = (n: number) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`
 
 function Bar({ label, v, badge, strong }: { label: ReactNode; v: number; badge: ReactNode; strong?: boolean }) {
   const lo = 60, hi = 80
@@ -85,9 +84,9 @@ export function MixGap({ r }: { r: ScreeningRow }) {
             : <>In {r.name}, <span className="italic">{t.text.charAt(0).toLowerCase() + t.text.slice(1)}</span></>}
         </p>
         {t.detail && <p className="mt-4 font-sans text-[16px] leading-relaxed opacity-80">{t.detail}</p>}
-        {gap > 0.5 && rank <= 3 && (
+        {gap > 0.5 && rank <= 2 && (
           <p className="mt-3 font-type text-sm uppercase tracking-wider opacity-80">
-            {rank === 1 ? 'The largest gap in Finland' : `The ${ord(rank)} largest gap of ${ranked.length} counties`} between expected and actual kit return
+            One of the two largest unexplained gaps in Finland, with {ranked[rank === 1 ? 1 : 0].name}
           </p>
         )}
       </div>

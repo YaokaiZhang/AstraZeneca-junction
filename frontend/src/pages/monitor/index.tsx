@@ -14,6 +14,7 @@ import { Fixes } from './Fixes'
 import { Bottleneck } from './Bottleneck'
 import { ActionSheet } from './ActionSheet'
 import { LeakMap, Ranking } from './Compare'
+import { SHOW_FULL_STORY } from '../../config'
 
 const OPTIONS = SCREENING.map((r) => ({ id: r.id, name: r.name })).sort((a, b) => a.name.localeCompare(b.name, 'fi'))
 
@@ -68,15 +69,15 @@ export default function MonitorPage() {
 
       {/* 01 · the chain */}
       <section className="mt-8">
-        <Label className="mb-3">Bowel cancer screening · 2024 round · Screening chain monitor</Label>
-        <div className="grid xl:grid-cols-[minmax(0,1fr)_300px] gap-8 items-start">
+        <Label className="mb-3">Bowel cancer screening · 2024 round, ages 60–70 · Screening chain monitor</Label>
+        <div className={cx('grid gap-8 items-start', SHOW_FULL_STORY && 'xl:grid-cols-[minmax(0,1fr)_300px]')}>
           <div className="min-w-0 rise" key={countyId}>
             <p className="font-serif text-3xl sm:text-[2.6rem] leading-[1.1] max-w-4xl">{headline(r)}</p>
             <div className="mt-8"><Chain r={r} /></div>
           </div>
-          <div className="hidden xl:block">
+          {SHOW_FULL_STORY && <div className="hidden xl:block">
             <LeakMap selected={countyId} onSelect={select} />
-          </div>
+          </div>}
         </div>
       </section>
 
@@ -97,13 +98,13 @@ export default function MonitorPage() {
         </div>
       </Section>
 
-      <Section n="05" a="Every county," b="same tool">
+      {SHOW_FULL_STORY ? <Section n="05" a="Every county," b="same tool">
         <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-8 items-start">
           <Ranking selected={countyId} onSelect={(id) => { select(id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
           <div className="xl:hidden"><LeakMap selected={countyId} onSelect={select} className="max-w-md mx-auto" /></div>
           <About />
         </div>
-      </Section>
+      </Section> : <SourcesFooter />}
 
       <Drawer open={sheet} onClose={() => setSheet(false)} label="County action sheet">
         <div className="p-6 pt-16">
@@ -119,6 +120,34 @@ export default function MonitorPage() {
 
       {createPortal(<div id="monitor-print"><ActionSheet r={r} plan={plan} res={res} /></div>, document.body)}
     </div>
+  )
+}
+
+const FOOTER_SOURCES: [string, string][] = [
+  ['Finnish Cancer Registry, bowel cancer screening statistics, 2024 round (published 20 May 2026), and the 2022 and 2023 rounds', 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html'],
+  ['Finnish Cancer Registry, bowel cancer screening programme: everyone aged 56–74 from 2031', 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/'],
+  ['Statistics Finland, population by age and language, 2025 (vaerak/11rz), municipalities rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/'],
+  ['Statistics Finland, education by age, 2025 (vkour/12bq), municipalities rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vkour/statfin_vkour_pxt_12bq.px/'],
+  ['Interventions to raise colonoscopy after a positive stool test, meta-analysis. JAMA Intern Med 2026. PMID 42832233', 'https://pubmed.ncbi.nlm.nih.gov/42832233/'],
+  ['Dougherty et al. Interventions to raise colorectal screening uptake. JAMA Intern Med 2018. PMID 30326005', 'https://pubmed.ncbi.nlm.nih.gov/30326005/'],
+]
+
+/** Small sources footer, shown instead of section 05 while the full story is switched off. */
+function SourcesFooter() {
+  return (
+    <footer className="mt-20 pt-5 border-t border-black/15 font-sans text-[13px] leading-snug opacity-75">
+      <Label className="mb-2">Sources</Label>
+      <ul className="space-y-1">
+        {FOOTER_SOURCES.map(([t, u]) => (
+          <li key={u + t}>{t}. <a className="underline underline-offset-2 break-all hover:text-terra" href={u} target="_blank" rel="noreferrer">{u.replace(/^https:\/\//, '')}</a></li>
+        ))}
+      </ul>
+      <p className="mt-3">
+        <b>Caveats.</b> Waits read from a chart (± 0.1 month). Group figures are national only. &quot;No colonoscopy&quot; may include private colonoscopies not reported to the register.
+        Effects come from mostly US studies. The queue model and the 2031 estimate are our calculations (badge E); 2031 ignores ageing and lower positivity in younger people.
+        No number here is written by a language model.
+      </p>
+    </footer>
   )
 }
 

@@ -94,7 +94,7 @@ function Year2031({ r, res }: { r: ScreeningRow; res: Result }) {
           </p>
         </div>
       ) : (
-        <p className="mt-2 font-sans text-[15px] opacity-70">Screening widens from ages 60–72 today to everyone aged 56–74 by 2031. Turn on to see the colonoscopies a week {r.name} will need.</p>
+        <p className="mt-2 font-sans text-[15px] opacity-70">Screening invites ages 60–72 today, and everyone aged 56–74 from 2031. Turn on to see the colonoscopies a week {r.name} will need.</p>
       )}
     </Card>
   )

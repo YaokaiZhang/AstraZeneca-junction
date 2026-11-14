@@ -102,7 +102,7 @@ export const SOURCES: Record<string, Source> = {
   },
   screeningRules: {
     id: 'screeningRules', name: 'National screening programme ages', url: 'https://cancerregistry.fi/screening/',
-    note: 'Breast 50–69 every 2 years; cervical 30–65 every 5 years. Bowel: target group 56–74 every 2 years, reached in 2031; it currently invites ages 60–70 and widens year by year.',
+    note: 'Breast 50–69 every 2 years; cervical 30–65 every 5 years. Bowel: every 2 years, ages 60–72 today (60–70 in the 2024 round), widening to everyone aged 56–74 from 2031.',
     years: 'rules in force 2026', retrieved: PULLED,
   },
   bowelStageSurvival: {

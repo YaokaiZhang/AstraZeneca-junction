@@ -37,7 +37,7 @@ export function ActionSheet({ r, plan, res }: { r: ScreeningRow; plan: Plan; res
           <p className="font-type uppercase tracking-widest text-[12px] opacity-70">County action sheet · bowel cancer screening</p>
           <h1 className="font-serif text-5xl leading-none mt-1">{r.name}</h1>
         </div>
-        <p className="font-type text-[12px] uppercase tracking-wider opacity-70 text-right">{date}<br />2024 screening round</p>
+        <p className="font-type text-[12px] uppercase tracking-wider opacity-70 text-right">{date}<br />2024 screening round, ages 60–70</p>
       </header>
 
       <section className="mt-4">

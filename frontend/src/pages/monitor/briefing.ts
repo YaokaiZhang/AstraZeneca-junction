@@ -73,7 +73,6 @@ export function buildFacts(r: ScreeningRow, plan: Plan, res: Result): Facts {
     screening_ages_from_2031: '56 to 74',
     about_invites_growth_by_2031_pct: Math.round((y.growth - 1) * 100),
     about_extra_colonoscopies_per_week_by_2031: aboutNum(y.extraWithFixesWeek),
-    caveat: 'The effects come mostly from studies in the United States, the 2031 figure assumes today’s rates, and some 2024 follow-up colonoscopies may not have been reported yet.',
   }
   if (q.extraPerWeek >= 0.5) facts.about_wait_in_a_year_if_not_added_months = aboutNum(q.waitIn12m)
   if (p.plan.catchUp && q.catchUp >= 0.5) {
@@ -84,27 +83,39 @@ export function buildFacts(r: ScreeningRow, plan: Plan, res: Result): Facts {
   return facts
 }
 
+/** The four labels of the briefing, in order. Each line of the text is "Label: one short sentence." */
+export const BRIEFING_LABELS = ['Problem', 'Do this', 'Result', 'Capacity'] as const
+
+/** Split a briefing into its four labelled lines; null if it is not in that shape. */
+export function briefingLines(text: string): { label: string; text: string }[] | null {
+  const lines = text.split(/\n+/).map((l) => l.trim()).filter(Boolean)
+  if (lines.length !== BRIEFING_LABELS.length) return null
+  const out = lines.map((l, i) => {
+    const m = l.replace(/^\*+|\*+(?=:)/g, '').match(/^([^:]{2,12}):\s*(.+)$/)
+    return m && m[1].trim().toLowerCase() === BRIEFING_LABELS[i].toLowerCase() ? { label: BRIEFING_LABELS[i], text: m[2].replace(/\*+/g, '').trim() } : null
+  })
+  return out.every(Boolean) ? (out as { label: string; text: string }[]) : null
+}
+
 /** The briefing written from the facts by a fixed template. Used when the AI is off, fails or adds a number. */
 export function templateBriefing(x: Facts): string {
-  const s: string[] = []
   const problem = String(x.main_problem)
-  if (Number(x.steps_falling_behind) === 0) s.push(`${x.county} is on track at every step of bowel cancer screening.`)
-  else if (problem.startsWith('people with a positive test')) s.push(`In ${x.county}, ${x.positive_tests_without_colonoscopy} people with a positive test in ${x.data_year} never had the follow-up colonoscopy (${n1(Number(x.followup_colonoscopy_pct))}% were followed up, against ${n1(Number(x.followup_colonoscopy_finland_pct))}% in Finland).`)
-  else if (problem.startsWith('the wait')) s.push(`In ${x.county}, people wait ${n1(Number(x.wait_months))} months for a colonoscopy after a positive test, against ${n1(Number(x.wait_finland_months))} months in Finland.`)
-  else s.push(`In ${x.county}, ${n1(Number(x.kit_return_pct))}% of invited people sent the test kit back in ${x.data_year}, against ${n1(Number(x.kit_return_finland_pct))}% in Finland.`)
-  if (x.action !== 'no change') {
-    s.push(`${x.action_is === 'the recommended first step' ? 'The recommended first step is' : x.action_is === 'a step to do even better' ? 'To do even better, the next step would be' : 'The chosen plan is'} to ${x.action}.`)
-    if (Number(x.action_about_extra_colonoscopies_per_year) > 0) {
-      const c = Number(x.action_about_cancers_found_earlier)
-      s.push(`That means about ${x.action_about_extra_colonoscopies_per_year} more colonoscopies a year${c >= 1 ? ` and about ${c} ${c === 1 ? 'cancer' : 'cancers'} found earlier` : ''}.`)
-    }
-    else if (x.about_catch_up_colonoscopies_total) s.push(`That takes about ${x.about_catch_up_colonoscopies_total} extra colonoscopies over ${x.catch_up_weeks} weeks to bring the wait to about ${x.target_wait_months} months.`)
-  }
-  s.push(Number(x.about_extra_colonoscopies_per_week_now) > 0
-    ? `To keep the wait from growing, the county needs about ${x.about_extra_colonoscopies_per_week_now} more colonoscopies a week now, and about ${x.about_extra_colonoscopies_per_week_by_2031} more by ${x.year_screening_widens}, when everyone aged ${x.screening_ages_from_2031} is invited.`
-    : `By ${x.year_screening_widens}, when everyone aged ${x.screening_ages_from_2031} is invited, the county will need about ${x.about_extra_colonoscopies_per_week_by_2031} more colonoscopies a week than today.`)
-  s.push(String(x.caveat))
-  return s.join(' ')
+  const ok = Number(x.steps_falling_behind) === 0
+  const line1 = ok ? `Every step of bowel cancer screening is on track in ${x.county}.`
+    : problem.startsWith('people with a positive test') ? `${x.positive_tests_without_colonoscopy} people with a positive test never had the follow-up colonoscopy (${n1(Number(x.followup_colonoscopy_pct))}% followed up; Finland ${n1(Number(x.followup_colonoscopy_finland_pct))}%).`
+    : problem.startsWith('the wait') ? `People wait ${n1(Number(x.wait_months))} months for a colonoscopy after a positive test (Finland ${n1(Number(x.wait_finland_months))}).`
+    : `Only ${n1(Number(x.kit_return_pct))}% of invited people sent the test kit back (Finland ${n1(Number(x.kit_return_finland_pct))}%).`
+  const act = String(x.action)
+  const line2 = act === 'no change' ? 'Keep the current way of working.' : `${act.charAt(0).toUpperCase()}${act.slice(1)}.`
+  const c = Number(x.action_about_cancers_found_earlier)
+  const line3 = Number(x.action_about_extra_colonoscopies_per_year) > 0
+    ? `About ${x.action_about_extra_colonoscopies_per_year} more colonoscopies a year${c >= 1 ? `, about ${c} ${c === 1 ? 'cancer' : 'cancers'} found earlier` : ''}.`
+    : x.about_catch_up_colonoscopies_total ? `About ${x.about_catch_up_colonoscopies_total} extra colonoscopies over ${x.catch_up_weeks} weeks bring the wait to about ${x.target_wait_months} months.`
+    : 'No change from today.'
+  const line4 = Number(x.about_extra_colonoscopies_per_week_now) > 0
+    ? `About ${x.about_extra_colonoscopies_per_week_now} more colonoscopies a week now, about ${x.about_extra_colonoscopies_per_week_by_2031} more by ${x.year_screening_widens}.`
+    : `About ${x.about_extra_colonoscopies_per_week_by_2031} more colonoscopies a week by ${x.year_screening_widens}, when ages ${x.screening_ages_from_2031} are invited.`
+  return [line1, line2, line3, line4].map((t, i) => `${BRIEFING_LABELS[i]}: ${t}`).join('\n')
 }
 
 /** Every number in the text must match a number in the facts (or inside a fact's words), allowing the usual rounding. */

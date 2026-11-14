@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ScreeningRow } from './data'
 import type { Plan, Result } from './model'
 import type { Briefing } from './ActionSheet'
-import { buildFacts, numbersMatch, templateBriefing } from './briefing'
+import { briefingLines, buildFacts, numbersMatch, templateBriefing } from './briefing'
 
 function errorNote(status: number, error: unknown): string {
   const e = String(error ?? '')
@@ -37,8 +37,8 @@ export function useAiBriefing(r: ScreeningRow, plan: Plan, res: Result) {
     try {
       const resp = await fetch('/api/briefing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ facts }) })
       const body = await resp.json().catch(() => ({}))
-      if (resp.ok && typeof body.text === 'string' && numbersMatch(body.text, facts)) { setAi({ key: k, text: body.text }); setNote(null) }
-      else setNote({ key: k, note: resp.ok ? 'The AI text used a number we could not match, so it was not used.' : errorNote(resp.status, body.error) })
+      if (resp.ok && typeof body.text === 'string' && briefingLines(body.text) && numbersMatch(body.text, facts)) { setAi({ key: k, text: body.text }); setNote(null) }
+      else setNote({ key: k, note: resp.ok ? 'AI text not used: it did not match our numbers.' : errorNote(resp.status, body.error) })
     } catch {
       setNote({ key: k, note: 'The AI could not be reached.' })
     } finally {

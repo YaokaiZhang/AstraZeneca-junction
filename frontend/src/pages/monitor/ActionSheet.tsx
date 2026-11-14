@@ -1,5 +1,6 @@
 // County action sheet: one printable page. Template text; every number comes from model.ts.
 import { SCREENING_FI, type ScreeningRow } from './data'
+import { briefingLines } from './briefing'
 import { DETECTION_FIXES, GROUP_FACTS, flags, in2031, losses, n0, n1, signed, type Plan, type Result, type Step, STEP_META } from './model'
 
 const SOURCES = [
@@ -41,17 +42,21 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
           <p className="font-type uppercase tracking-widest text-[12px] opacity-70">County action sheet · bowel cancer screening</p>
           <h1 className="font-serif text-5xl leading-none mt-1">{r.name}</h1>
         </div>
-        <p className="font-type text-[12px] uppercase tracking-wider opacity-70 text-right">{date}<br />2024 screening round, ages 60–70</p>
+        <p className="font-type text-[12px] uppercase tracking-wider opacity-70 text-right">{date}<br />2024 data · ages 60–70</p>
       </header>
 
       {briefing && (
-        <section className="mt-4 border-l-4 border-terra pl-3">
-          <h2 className="font-type uppercase tracking-widest text-[12px] opacity-70 mb-1">Briefing</h2>
-          <p className="text-[14px] leading-snug">{briefing.text}</p>
-          <p className="text-[11px] opacity-60 mt-1 italic">
-            {briefing.source === 'ai'
-              ? 'Written by AI from the numbers below. Numbers come from our calculations, not the AI.'
-              : `Template briefing, built from the numbers below.${briefing.note ? ` ${briefing.note}` : ''}`}
+        <section className="mt-5">
+          <dl className="grid sm:grid-cols-[6.5rem_minmax(0,1fr)] gap-x-4 gap-y-1 sm:gap-y-2.5">
+            {(briefingLines(briefing.text) ?? [{ label: 'Briefing', text: briefing.text }]).map((l) => (
+              <div key={l.label} className="contents">
+                <dt className="font-type uppercase tracking-widest text-[11px] opacity-60 pt-2 sm:pt-1">{l.label}</dt>
+                <dd className={l.label === 'Do this' ? 'text-[16px] leading-snug font-medium' : 'text-[16px] leading-snug'}>{l.text}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-[11px] opacity-50 mt-2">
+            {briefing.source === 'ai' ? 'Worded by AI · every number checked against our calculations' : briefing.note ?? 'From our calculations'}
           </p>
         </section>
       )}

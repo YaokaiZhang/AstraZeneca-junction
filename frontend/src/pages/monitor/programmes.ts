@@ -149,6 +149,8 @@ export function breastView(id: string): ProgrammeView | null {
   const w = onTrack ? 0 : pick(tiles)
   let start: ProgrammeView['start']
   let verdict: string
+  /** 'most likely' / 'possibly' when the start card says results may not be reaching the register; passed to the briefing */
+  let reportingGap = ''
   if (w === 0) {
     const extra = r.invited * (SMS.absolutePp! / 100)
     const cancers = extra * (r.cancers / r.attended)
@@ -179,6 +181,7 @@ export function breastView(id: string): ProgrammeView | null {
       measure: 'Referred women with no result on record; months from referral to the result reaching the register.',
       takes: 'No extra appointments: a monthly check of the referral list against the register.',
     }
+    reportingGap = r.noHistologyPct >= 20 ? 'most likely' : 'possibly'
     verdict = `In ${r.name}, ${n0(r.noHistology)} women referred after a mammogram have no result on record (${n1(r.noHistologyPct)}%, against ${n1(fi.noHistologyPct)}% in Finland). That is ${r.noHistologyPct >= 20 ? 'most likely' : 'possibly'} a reporting gap: check the data reaches the register before anything else.`
   } else {
     start = {
@@ -206,6 +209,7 @@ export function breastView(id: string): ProgrammeView | null {
       wait_days: r.medianMonthsToExam != null ? days(r.medianMonthsToExam) : '', wait_finland_days: days(fi.medianMonthsToExam!),
       action: start.title, action_detail: start.text, action_ids: w === 0 ? 'sms-reminder' : w === 1 ? 'reporting' : 'catch-up',
       result: start.result, takes: start.takes,
+      ...(reportingGap ? { reporting_gap: reportingGap } : {}),
     },
   }
 }
@@ -258,6 +262,7 @@ export function cervicalView(id: string): ProgrammeView | null {
   let start: ProgrammeView['start']
   let verdict: string
   let list: ListWording | undefined
+  let reportingGapNote = ''
   const listWording: ListWording = {
     personLabel: 'Woman', event: 'referral to colposcopy', bookedColumn: 'Colposcopy booked?',
     perYear: r.referredColposcopy, perYearLabel: 'referred to colposcopy', missedPerYear: Math.max(0, r.referredColposcopy - r.colposcopyDone),
@@ -275,6 +280,7 @@ export function cervicalView(id: string): ProgrammeView | null {
       measure: 'Referred women with a colposcopy on record; months from referral to the result reaching the register.',
       takes: 'No extra appointments: fixing how results are sent to the register.',
     }
+    reportingGapNote = 'most likely'
     verdict = `In ${r.name}, colposcopies are almost entirely missing from the register (${r.colposcopyDone} of ${n0(r.referredColposcopy)} referred women). That is most likely a reporting gap: check the data reaches the register before anything else.`
   } else if (w === 0) {
     const non = r.invited - r.participated
@@ -301,6 +307,7 @@ export function cervicalView(id: string): ProgrammeView | null {
     const toNational = Math.max(0, r.referredColposcopy * fi.colposcopyOfReferredPct / 100 - r.colposcopyDone)
     // when many of the missing women have no follow-up information at all, say it may be reporting (same rule as breast)
     const unknownShare = r.referredColposcopy ? r.noFollowupInfo / r.referredColposcopy * 100 : 0
+    if (unknownShare >= 20) reportingGapNote = 'possibly, in part'
     const maybeReporting = unknownShare >= 20
       ? ` For ${n0(r.noFollowupInfo)} of them the register has no follow-up information at all, so part of this is possibly a reporting gap: check the data reaches the register too.`
       : ''
@@ -345,6 +352,7 @@ export function cervicalView(id: string): ProgrammeView | null {
       wait_months: r.medianMonthsToColposcopyApprox ?? '', wait_finland_months: fi.medianMonthsToColposcopyApprox!,
       action: start.title, action_detail: start.text, action_ids: reportingGap ? 'reporting' : w === 0 ? 'self-sampling' : w === 1 ? 'navigation' : 'catch-up',
       result: start.result, takes: start.takes,
+      ...(reportingGapNote ? { reporting_gap: reportingGapNote } : {}),
     },
   }
 }

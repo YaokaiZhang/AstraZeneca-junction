@@ -136,6 +136,10 @@ export function ProgrammeSheet({ v, county, briefing, applied, onShowList }: { v
           <li>{v.start.basis}</li>
           <li>&quot;Falling behind&quot; is our own warning line ({v.warningLines}); waits were read from a published chart.</li>
           {v.caveat && <li>{v.caveat}</li>}
+          {grounded && (briefing.limitations ?? []).slice(0, 2).map((l) => {
+            const cites = [...l.matchAll(/\[(\d{1,2})\]/g)].map((m) => m[1])
+            return <li key={l}>{l.replace(/\s*\[\d{1,2}\]/g, '')}{cites.length > 0 && <sup className="font-type text-[9px] opacity-60 ml-0.5">{cites.join(',')}</sup>}</li>
+          })}
           {briefing.source === 'ai' && <li>The briefing is written by AI; it adds no numbers of its own, and every number and citation is checked.</li>}
         </ul>
       </footer>

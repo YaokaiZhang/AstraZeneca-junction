@@ -144,3 +144,12 @@ test('cervical: Pohjois-Pohjanmaa follow-up gap mentions a possible reporting ga
   assert.match(v.verdict, /39 of them the register has no follow-up information/)
   assert.match(v.start.result, /possibly a reporting gap/)
 })
+
+test('briefing facts carry the reporting-gap flag whenever the start card says it', () => {
+  assert.equal(cervicalView('pohjois-pohjanmaa')!.facts.reporting_gap, 'possibly, in part')
+  assert.equal(cervicalView('varsinais-suomi')!.facts.reporting_gap, 'most likely')
+  assert.equal(breastView('satakunta')!.facts.reporting_gap, 'most likely')
+  assert.equal(breastView('varsinais-suomi')!.facts.reporting_gap, 'possibly')
+  assert.equal(cervicalView('pohjois-savo')!.facts.reporting_gap, undefined)
+  assert.equal(breastView('helsinki')!.facts.reporting_gap, undefined)
+})

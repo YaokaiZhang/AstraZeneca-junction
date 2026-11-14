@@ -202,3 +202,14 @@ test('numbers with thousands separators inside a fact text are matched whole (2,
   assert.equal(numbersMatch('About 2050 more women screened a year.', f), true)
   assert.equal(numbersMatch('About 50 more women screened a year.', f), false)
 })
+
+test('when the facts flag a possible reporting gap, the briefing must mention it', () => {
+  const f = { ...facts, reporting_gap: 'possibly, in part' }
+  const plain = validateAnswer(good(), pack, f)
+  assert.equal(plain.ok, false)
+  if (!plain.ok) assert.ok(plain.errors.includes('reporting gap not mentioned'))
+  const a = good()
+  a.limitations = [{ text: 'Part of the gap is possibly a reporting gap; check the data reaches the register.', citations: [FI] }]
+  assert.equal(validateAnswer(a, pack, f).ok, true)
+  assert.equal(validateAnswer(good(), pack, facts).ok, true)
+})

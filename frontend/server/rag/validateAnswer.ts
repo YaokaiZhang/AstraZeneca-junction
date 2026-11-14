@@ -115,6 +115,10 @@ export function validateAnswer(raw: unknown, pack: EvidencePack, facts: Record<s
 
   for (const k of LINE_KEYS) if (OVERCLAIM.test(outLines[k])) errors.push(`${k}: overclaim`)
   if (limitations.some((l) => OVERCLAIM.test(l))) errors.push('limitations: overclaim')
+  // when the page says the gap may be reporting, the briefing must say so too (else the template, which does)
+  if (typeof facts.reporting_gap === 'string' && facts.reporting_gap && ![...LINE_KEYS.map((k) => outLines[k]), ...limitations].some((t) => /\breport|\bregist/i.test(t))) {
+    errors.push('reporting gap not mentioned')
+  }
   for (const k of LINE_KEYS) if (!numbersMatch(outLines[k], facts)) errors.push(`${k}: number not in facts`)
   if (!limitations.every((l) => numbersMatch(l, facts))) errors.push('limitations: number not in facts')
 

@@ -205,6 +205,7 @@ Wording:
 - Use the programme's own words. Bowel: a positive stool test, then a follow-up colonoscopy. Breast: a mammogram, then further tests for women called back. Cervical: an HPV or Pap test, then a colposcopy.
 - People with no follow-up in the register have "no recorded follow-up colonoscopy", "no result on record" or "no colposcopy on record" (some are never reported). Never say they never had one or were never followed up.
 - When pathway_step is reporting, the problem is that results are not reaching the register: call it a likely reporting gap, and do not say women missed care.
+- When the facts have reporting_gap (most likely, possibly, or possibly in part), say in the problem line or a limitation that this is that kind of reporting gap, using those words, and that the data should be checked in the register.
 - Cancers in the facts are an estimate for this scenario: say "an estimated ... more cancers detected". Never say cancers are found or caught earlier, and never promise lives saved.
 
 Style:

@@ -54,7 +54,8 @@ function Bar({ row, max, threshold }: { row: Row; max: number; threshold: number
   )
 }
 
-const COLS = 'md:grid-cols-[minmax(9rem,1.2fr)_4rem_minmax(4rem,0.7fr)_minmax(0,1.6fr)_5.5rem]'
+// reason and status share the last cell: the reason wraps, the status keeps its own width, nothing overlaps
+const COLS = 'md:grid-cols-[minmax(8.5rem,1.2fr)_4rem_minmax(3rem,0.7fr)_minmax(0,2fr)]'
 
 export function OffTrackList({ rows, threshold, onOpen }: { rows: Row[]; threshold: number; onOpen: (id: string) => void }) {
   const max = Math.max(21, threshold + 4, ...rows.map((r) => r.overdue))
@@ -70,7 +71,7 @@ export function OffTrackList({ rows, threshold, onOpen }: { rows: Row[]; thresho
   return (
     <div role="table" className="text-sm">
       <div role="row" className={cx('hidden md:grid gap-4 px-3 pb-2 border-b border-black/15', COLS)}>
-        {['Patient', 'Late', '', 'Reason', ''].map((h, i) => <span key={i} className="label">{h}</span>)}
+        {['Patient', 'Late', '', 'Reason'].map((h, i) => <span key={i} className="label">{h}</span>)}
       </div>
       <ul>
         {rows.map((r, i) => (
@@ -89,8 +90,10 @@ export function OffTrackList({ rows, threshold, onOpen }: { rows: Row[]; thresho
                 </span>
                 <span><Days row={r} threshold={threshold} /></span>
                 <Bar row={r} max={max} threshold={threshold} />
-                <span className="min-w-0"><ReasonChip row={r} quiet /></span>
-                <span className="min-w-0 text-right"><RowStatus row={r} /></span>
+                <span className="min-w-0 flex items-center justify-between gap-3">
+                  <span className="min-w-0"><ReasonChip row={r} quiet /></span>
+                  <span className="shrink-0 max-w-[45%] text-right"><RowStatus row={r} /></span>
+                </span>
               </div>
               {/* mobile card */}
               <div className="md:hidden flex items-center gap-4">

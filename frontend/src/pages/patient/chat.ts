@@ -4,12 +4,12 @@
 //    returns a short reply + structured symptom tags / start date / kg / smoking. Urgency still comes from
 //    logic.ts assess(); the app adds its own two-week and 112 notes.
 //  - Scripted path (no LLM): keyword extraction + follow-up questions. Used for chip taps, check-in answers
-//    and whenever the AI is off or the request fails.
+//    and whenever the AI is off. One failed or slow (>8 s) AI reply switches the rest of the session to it.
 // Transcript lives in a small local persisted store; diary entries go to the shared store so the hospital page can read them.
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useStore, uid, type DiaryEntry } from '../../lib/store'
-import { today } from '../../data/pathway'
+import { daysBetween, today } from '../../data/pathway'
 import { assess, checkinSubject, extractTags, SYMPTOM_KEYS, parseKg, parseSmoking, parseWhen, packYears, minusDays, type SmokeInfo } from './logic'
 import { fmtDate, tr, type Key, type Vars } from './i18n'
 import type { Lang } from '../../lib/store'
@@ -50,7 +50,7 @@ export function msgText(lang: Lang, m: Msg): string {
   if (!m.key) return m.text ?? ''
   const vars: Record<string, string | number> = {}
   for (const [k, v] of Object.entries(m.vars ?? {})) {
-    if (k === 'date') vars[k] = fmtDate(String(v), lang, { day: 'numeric', month: 'long' })
+    if (k === 'date') vars[k] = fmtDate(String(v), lang, { day: 'numeric', month: 'long', ...(String(v).slice(0, 4) !== today().slice(0, 4) ? { year: 'numeric' } : {}) })
     else if (k === 'ago') vars[k] = Number(v) <= 0 ? tr(lang, 'ago.today') : tr(lang, 'ago.days', { n: v })
     else if (typeof v === 'string' && v.startsWith('@')) vars[k] = v.split(',').map((x) => tr(lang, `sym.${x.slice(1)}`).toLowerCase()).join(', ')
     else vars[k] = v
@@ -118,6 +118,18 @@ function saveSmoking(info: SmokeInfo, out: Msg[]) {
   out.push(bot('bot.smokeSaved', vars))
 }
 
+/** Smoking details mentioned in passing: save when complete, otherwise remember what was said. */
+function storeSmoking(info: SmokeInfo, out: Msg[]) {
+  const st = useChat.getState()
+  if (info.status === 'never') st.set({ smoke: { status: 'never' } })
+  else if (info.cpd && info.years) saveSmoking(info, out)
+  else st.set({ smoke: { ...st.smoke, ...info } })
+}
+
+/** A symptom start date we believe: not in the future and not more than ~2 years back. */
+const MAX_ONSET_DAYS = 730
+export const plausibleOnset = (date: string, now = today()) => date <= now && daysBetween(date, now) <= MAX_ONSET_DAYS
+
 /** Handle one user turn. `value` is set when a chip was tapped; `label` is what to echo. */
 function sendScripted(label: string, value?: string, echoed = false) {
   const st = useChat.getState()
@@ -144,11 +156,27 @@ function sendScripted(label: string, value?: string, echoed = false) {
 
   if (p?.kind === 'date') {
     let date: string | null = null
+    let reask = false
     if (value?.startsWith('d:')) date = minusDays(today(), +value.slice(2))
-    else date = parseWhen(text) ?? today()
-    addEntry(p.text, p.tags, date, p.source)
-    out.push(bot('bot.saved', { date }))
-    finish(p.source)
+    else if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) date = value // picked in the calendar: trust it
+    else {
+      // "I smoke 20 a day for 30 years" answers smoking, not "since when?": keep it and ask again
+      const smokeInfo = extractTags(text).includes('smoking') ? parseSmoking(text) : null
+      if (smokeInfo) storeSmoking(smokeInfo, out)
+      const parsed = parseWhen(text, today(), !smokeInfo)
+      if (parsed && !plausibleOnset(parsed)) reask = true
+      else if (parsed) date = parsed
+      else if (smokeInfo) reask = true
+      else date = today()
+    }
+    if (reask || !date) {
+      out.push(bot('bot.since', undefined, { chips: DATE_CHIPS, datePicker: true }))
+      pending = p
+    } else {
+      addEntry(p.text, p.tags, date, p.source)
+      out.push(bot('bot.saved', { date }))
+      finish(p.source)
+    }
   } else if (p?.kind === 'blood') {
     const where = value ?? (/(cough|ysk|host)/i.test(text) ? 'cough' : /(stool|ulost|avför)/i.test(text) ? 'stool' : 'other')
     const tag = where === 'cough' ? 'blood-cough' : where === 'stool' ? 'blood-stool' : 'blood'
@@ -187,7 +215,8 @@ function sendScripted(label: string, value?: string, echoed = false) {
     const tags = extractTags(text)
     const symptomTags = tags.filter((t) => t !== 'smoking')
     const smokeInfo = tags.includes('smoking') ? parseSmoking(text) : null
-    const date = parseWhen(text, today(), !smokeInfo)
+    const when = parseWhen(text, today(), !smokeInfo)
+    const date = when && plausibleOnset(when) ? when : null
     if (symptomTags.length) {
       out.push(bot('bot.noted', { syms: syms(symptomTags) }))
       if (date) { addEntry(text, symptomTags, date, 'chat'); out.push(bot('bot.saved', { date })) }
@@ -214,7 +243,7 @@ let healthCheck: Promise<void> | null = null
 /** Ask the server once whether AI replies are available (GET /api/health). */
 export function checkAi(force = false) {
   if (healthCheck && !force) return healthCheck
-  healthCheck = fetch('/api/health', { headers: { Accept: 'application/json' } })
+  healthCheck = fetch('/api/health', { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(3_000) })
     .then(async (r) => { const j = r.ok ? await r.json() : null; useAi.getState().set({ server: j?.ai ? 'on' : 'off' }) })
     .catch(() => useAi.getState().set({ server: 'off' }))
   return healthCheck
@@ -247,6 +276,8 @@ export function send(label: string, value?: string) {
   void sendAi(label)
 }
 
+const AI_TIMEOUT_MS = 8_000
+
 async function sendAi(label: string) {
   const st = useChat.getState()
   const lang = useStore.getState().lang
@@ -266,12 +297,13 @@ async function sendAi(label: string) {
   }
   let result: AiResult | null = null
   try {
-    const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(40_000) })
+    const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(AI_TIMEOUT_MS) })
     if (res.ok) result = (await res.json()) as AiResult
-    else if (res.status === 503 || res.status === 404) useAi.getState().set({ server: 'off' })
   } catch { /* network error / timeout: fall back */ }
-  useAi.getState().set({ busy: false })
-  if (!result || typeof result.reply !== 'string') return sendScripted(label, undefined, true)
+  const ok = !!result && typeof result.reply === 'string'
+  // one slow or failed reply and the rest of this session stays on the instant scripted bot
+  useAi.getState().set(ok ? { busy: false } : { busy: false, server: 'off' })
+  if (!ok || !result) return sendScripted(label, undefined, true)
   applyAi(label, result, pend, before)
 }
 
@@ -283,17 +315,22 @@ function applyAi(label: string, r: AiResult, pend: Pending | null, flagBefore: b
   let kgUsed = false
   const symptoms = r.symptoms.filter((t) => t !== 'smoking' && (SYMPTOM_KEYS as readonly string[]).includes(t))
 
+  const smokingSaid = !!(r.smoking?.status || r.smoking?.cigarettesPerDay || r.smoking?.yearsSmoked) || extractTags(label).includes('smoking')
+  const started = r.started && plausibleOnset(r.started) ? r.started : null
   if (pend?.kind === 'date') {
     // the app had asked "since when?" for symptoms already noted
-    const date = r.started ?? parseWhen(label) ?? today()
-    const text = pend.tags.includes('weight-loss') ? withKg(pend.text, kg) : pend.text
-    kgUsed ||= text !== pend.text
-    addEntry(text, [...new Set([...pend.tags, ...symptoms])], date, pend.source)
-    out.push(bot('bot.saved', { date }))
+    const parsed = parseWhen(label, today(), !smokingSaid)
+    const date = started ?? (parsed && plausibleOnset(parsed) ? parsed : null) ?? (smokingSaid || r.started || parsed ? null : today())
+    if (date) {
+      const text = pend.tags.includes('weight-loss') ? withKg(pend.text, kg) : pend.text
+      kgUsed ||= text !== pend.text
+      addEntry(text, [...new Set([...pend.tags, ...symptoms])], date, pend.source)
+      out.push(bot('bot.saved', { date }))
+    } else pending = pend
   } else if (symptoms.length) {
     const text = symptoms.includes('weight-loss') ? withKg(label, kg) : label
     kgUsed ||= text !== label || (kg !== null && parseKg(label) !== null)
-    if (r.started) { addEntry(text, symptoms, r.started, 'chat'); out.push(bot('bot.saved', { date: r.started })) }
+    if (started) { addEntry(text, symptoms, started, 'chat'); out.push(bot('bot.saved', { date: started })) }
     else pending = { kind: 'date', text, tags: symptoms, source: 'chat' }
   }
   if (kg && !kgUsed) {
@@ -321,7 +358,8 @@ function applyAi(label: string, r: AiResult, pend: Pending | null, flagBefore: b
   // the two-week note comes from the app's own rule, never from the model
   if (!flagBefore && assess(useStore.getState().diary).flag) out.push(bot('bot.flag'))
 
-  if (pending) out.push(r.followUp ? aiMsg(r.followUp, { chips: DATE_CHIPS, datePicker: true }) : bot('bot.since', undefined, { chips: DATE_CHIPS, datePicker: true }))
+  if (pending && pending === pend) out.push(bot('bot.since', undefined, { chips: DATE_CHIPS, datePicker: true }))
+  else if (pending) out.push(r.followUp ? aiMsg(r.followUp, { chips: DATE_CHIPS, datePicker: true }) : bot('bot.since', undefined, { chips: DATE_CHIPS, datePicker: true }))
   else if (r.followUp) out.push(aiMsg(r.followUp))
 
   const now = useChat.getState()

@@ -135,7 +135,8 @@ let client: Anthropic | null = null
 export async function chat(q: ChatRequest): Promise<{ ok: true; result: ChatResult } | { ok: false; status: number; error: string }> {
   const apiKey = process.env.LLM_KEY
   if (!apiKey) return { ok: false, status: 503, error: 'ai_off' }
-  client ??= new Anthropic({ apiKey, maxRetries: 1, timeout: 30_000 })
+  // no retries and a short timeout: the browser gives up after 8 s and falls back to the scripted bot
+  client ??= new Anthropic({ apiKey, maxRetries: 0, timeout: 7_000 })
   try {
     const res = await client.messages.create({
       model: MODEL,

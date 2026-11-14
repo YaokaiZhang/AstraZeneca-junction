@@ -19,6 +19,7 @@ const ALIAS: Record<string, TabId> = { risk: 'check', screening: 'check' }
 export default function PatientPage() {
   const { t, lang } = useT()
   const set = useStore((s) => s.set)
+  const empty = useStore((s) => s.diary.length === 0)
   const params = useParams()
   const navigate = useNavigate()
   const seg = (params['*'] ?? '').split('/')[0]
@@ -41,7 +42,8 @@ export default function PatientPage() {
             ))}
           </div>
           <button onClick={() => { seedDemo(); setGen((g) => g + 1); toast(t('m.seeded')) }}
-            className="font-type text-sm uppercase tracking-widest opacity-60 hover:opacity-100 hover:text-terra border border-dashed border-current rounded-full px-2.5 py-1">
+            className={cx('font-type text-sm uppercase tracking-widest rounded-full px-2.5 py-1 transition-colors',
+              empty ? 'bg-ink text-paper border border-ink hover:bg-terra hover:border-terra' : 'opacity-60 hover:opacity-100 hover:text-terra border border-dashed border-current')}>
             {t('m.seed')}
           </button>
         </div>

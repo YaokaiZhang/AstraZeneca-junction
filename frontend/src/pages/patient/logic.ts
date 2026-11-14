@@ -64,6 +64,14 @@ const UNITS: [RegExp, number][] = [
   [/^(?:years?|vuo\S*|år)$/i, 365],
 ]
 
+const SEASON_CTX = '(?:since|last|this|past|from|in|viime|förra|sedan|i)\\s+(?:the\\s+)?'
+const SEASONS: [RegExp, number][] = [
+  [new RegExp(`${SEASON_CTX}(?:spring|vår(?:en)?|våras)(?![a-zåäö])|kevä(?:ällä|äst|ästä)|viime kevää`), 2],
+  [new RegExp(`${SEASON_CTX}(?:summer|sommar(?:en)?|somras)(?![a-zåäö])|kesä(?:llä|stä|nä)(?![a-zåäö])`), 5],
+  [new RegExp(`${SEASON_CTX}(?:autumn|höst(?:en)?|hösta?s)(?![a-zåäö])|(?:since|last|this|past|from|in)\\s+(?:the\\s+)?fall(?![a-zåäö])|syksy(?:llä|stä|nä)(?![a-zåäö])`), 8],
+  [new RegExp(`${SEASON_CTX}(?:winter|vinter(?:n)?|vintras)(?![a-zåäö])|talve(?:lla|sta|na)(?![a-zåäö])`), 11],
+]
+
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 const minusDays = (now: string, n: number) => iso(new Date(new Date(now + 'T12:00:00').getTime() - n * DAY))
 
@@ -91,6 +99,8 @@ export function parseWhen(text: string, now: string = today(), allowYears = true
   for (let i = 0; i < 12; i++) {
     if (new RegExp(`(?:since|from|sedan|från|alkaen|lähtien)\\s+${MONTH_ALT[i]}|${FI[i]}kuusta`, 'i').test(s)) return mk(1, i)
   }
+  // "since last summer", "viime syksynä", "sedan i våras" -> first day of the most recent such season
+  for (const [rx, mo] of SEASONS) if (rx.test(s)) return mk(1, mo)
   if (/yesterday|eilen|igår|i går/.test(s)) return minusDays(now, 1)
   if (/last week|viime viikolla|förra veckan/.test(s)) return minusDays(now, 7)
   if (/last month|viime kuussa|förra månaden/.test(s)) return minusDays(now, 30)

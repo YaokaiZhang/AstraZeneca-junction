@@ -231,16 +231,32 @@ export function Stat({ label, value, unit, badge, className, big }: { label: Rea
 }
 
 /** Slide-in panel from the right; used for details (county brief, patient detail). */
-export function Drawer({ open, onClose, children, tone = 'paper' }: { open: boolean; onClose: () => void; children: ReactNode; tone?: Tone }) {
+export function Drawer({ open, onClose, children, tone = 'paper', label }: { open: boolean; onClose: () => void; children: ReactNode; tone?: Tone; label?: string }) {
+  const panel = useRef<HTMLElement>(null)
+  const close = useRef(onClose)
+  useEffect(() => { close.current = onClose })
+  // modal while open: Escape closes, Tab stays inside, focus moves in and goes back where it came from
   useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    if (!open) return
+    const back = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    panel.current?.focus({ preventScroll: true })
+    const k = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); close.current(); return }
+      if (e.key !== 'Tab' || !panel.current) return
+      const items = [...panel.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+      if (!items.length) { e.preventDefault(); return }
+      const first = items[0], last = items[items.length - 1], cur = document.activeElement
+      if (e.shiftKey && (cur === first || cur === panel.current)) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && (cur === last || !panel.current.contains(cur))) { e.preventDefault(); first.focus() }
+    }
     window.addEventListener('keydown', k)
-    return () => window.removeEventListener('keydown', k)
-  }, [onClose])
+    return () => { window.removeEventListener('keydown', k); back?.focus({ preventScroll: true }) }
+  }, [open])
   return (
     <div className={cx('fixed inset-0 z-40 transition', open ? 'pointer-events-auto' : 'pointer-events-none')}>
       <div onClick={onClose} className={cx('absolute inset-0 bg-ink/30 transition-opacity', open ? 'opacity-100' : 'opacity-0')} />
-      <aside className={cx('paper-texture absolute right-0 top-0 h-full w-full sm:w-[480px] shadow-2xl overflow-y-auto transition-transform duration-500', TONE[tone], open ? 'translate-x-0' : 'translate-x-full')}>
+      <aside ref={panel} role="dialog" aria-modal="true" aria-label={label} aria-hidden={!open} inert={!open} tabIndex={-1}
+        className={cx('paper-texture absolute right-0 top-0 h-full w-full sm:w-[480px] shadow-2xl overflow-y-auto transition-transform duration-500 outline-none', TONE[tone], open ? 'translate-x-0' : 'translate-x-full')}>
         <button onClick={onClose} aria-label="Close" className="absolute top-5 right-5 z-10 w-9 h-9 rounded-full border border-current flex items-center justify-center hover:bg-ink hover:text-paper">✕</button>
         {children}
       </aside>

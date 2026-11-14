@@ -15,7 +15,7 @@ const PROBLEM: Record<Step, string> = {
 }
 
 /** What the plan does: the fixes applied on the page, or else the recommended one for the weakest step. */
-function planFor(r: ScreeningRow, plan: Plan, res: Result) {
+export function planFor(r: ScreeningRow, plan: Plan, res: Result) {
   const applied = res.total.colonoscopies > 0.5 || plan.catchUp
   if (applied) return { plan, res, recommended: false }
   const w = weakestStep(r)

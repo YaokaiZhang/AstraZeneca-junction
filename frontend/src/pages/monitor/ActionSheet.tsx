@@ -3,11 +3,13 @@
 // Every number comes from buildFacts() (the same rounded facts the briefing is written from), so the sheet and the
 // briefing never disagree. No calculation lives here.
 import type { ReactNode } from 'react'
-import { SCREENING_FI, type ScreeningRow } from './data'
+import { type ScreeningRow } from './data'
 import { buildFacts, type BriefingLine } from './briefing'
 import { sourceBadge, type EvidenceLevel, type EvidenceRef } from './evidence'
-import { flags, n0, n1, type Plan, type Result } from './model'
+import { n0, type Plan, type Result } from './model'
 import { Verdict } from './Simple'
+import { Bars, Measures, StepsStrip } from './PlanGlance'
+import { bowelGlance } from './bowelGlance'
 
 export interface Briefing {
   text: string
@@ -51,7 +53,7 @@ function Block({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0 border-t border-black/20 pt-2">
       <p className="font-type uppercase tracking-widest text-[11px] opacity-60">{label}</p>
-      <div className="mt-1 text-[14px] leading-snug">{children}</div>
+      <div className="mt-1 text-[13px] leading-snug">{children}</div>
     </div>
   )
 }
@@ -60,13 +62,12 @@ export function ActionSheet({ r, plan, res, briefing, onShowList }: { r: Screeni
   const x = buildFacts(r, plan, res)
   const ids = String(x.action_ids ?? '').split(',').filter(Boolean)
   const own = ownership(ids)
-  const f = flags(r)
+  const glance = bowelGlance(r, plan, res)
   const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const grounded = briefing?.source === 'ai' && !!briefing.evidence?.length && !!briefing.lines
   const colsYear = Number(x.action_about_extra_colonoscopies_per_year)
   const cancers = Number(x.action_estimated_extra_cancers_detected)
   const now = Number(x.about_extra_colonoscopies_per_week_now)
-  const by2031 = Number(x.about_extra_colonoscopies_per_week_by_2031)
   const actionLabel = x.action_is === 'the plan chosen on the monitor' ? 'Do this (chosen plan)' : x.action_is === 'a step to do even better' ? 'Do this (to do even better)' : 'Do this (recommended first step)'
   const wrap = { overflowWrap: 'anywhere' as const }
 
@@ -80,12 +81,13 @@ export function ActionSheet({ r, plan, res, briefing, onShowList }: { r: Screeni
         <p className="font-type text-[12px] uppercase tracking-wider opacity-70 text-right shrink-0">{date}<br />2024 screening round</p>
       </header>
 
-      <p className="mt-3 font-serif text-[22px] leading-snug"><Verdict r={r} /></p>
+      <p className="mt-3 font-serif text-[19px] leading-snug"><Verdict r={r} /></p>
+      <section className="mt-3 py-2.5 border-y border-black/15"><StepsStrip steps={glance.steps} county={r.name} /></section>
 
       {briefing && (
         <section className="mt-3 border-l-4 border-terra pl-3">
           <p className="font-type uppercase tracking-widest text-[11px] opacity-60">Briefing</p>
-          <p className="mt-1 text-[14px] leading-snug">
+          <p className="mt-1 text-[13.5px] leading-snug">
             {grounded
               ? briefing.lines!.map((l, i) => (
                 <span key={l.label}>
@@ -103,7 +105,7 @@ export function ActionSheet({ r, plan, res, briefing, onShowList }: { r: Screeni
         </section>
       )}
 
-      <section className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3">
+      <section className="mt-4 grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-x-5 gap-y-3">
         <Block label={actionLabel}>
           <p>{x.action === 'no change' ? 'No action chosen yet.' : sentence(String(x.action))}</p>
           {own.map((o) => <p key={o.who} className="mt-1 opacity-80"><b className="font-medium">Who:</b> {o.who}</p>)}
@@ -111,35 +113,29 @@ export function ActionSheet({ r, plan, res, briefing, onShowList }: { r: Screeni
             <button onClick={onShowList} className="print:hidden mt-1 text-[12px] underline underline-offset-2 hover:text-terra">See what the nurse&apos;s list looks like</button>
           )}
         </Block>
-        <Block label="What it achieves (estimate)">
-          {colsYear > 0
-            ? <p>About <b>{n0(colsYear)}</b> more colonoscopies a year{cancers >= 1 ? <>, and an estimated <b>{n0(cancers)}</b> more {cancers === 1 ? 'cancer' : 'cancers'} detected</> : null}.</p>
-            : x.about_catch_up_colonoscopies_total
-              ? <p>The wait comes down to about <b>{n1(Number(x.target_wait_months))} months</b> (Finland {n1(SCREENING_FI.medianMonths)}).</p>
-              : <p>No change in this plan.</p>}
-          <p className="mt-1 text-[12px] opacity-70">Effects measured in other programmes, applied to {r.name}&apos;s 2024 numbers. A scenario, not a promise.</p>
+        <Block label={glance.change?.kind === 'target' ? 'What it achieves (target)' : 'What it achieves (estimate)'}>
+          {glance.change ? <>
+            <p className="text-[11px] opacity-70 mb-1">{glance.change.title}</p>
+            <Bars bars={glance.change.bars} unit={glance.change.unit} label={glance.change.title} />
+            {colsYear > 0 && <p className="mt-1 text-[12px]">About <b>{n0(colsYear)}</b> more colonoscopies a year{cancers >= 1 ? <>, an estimated <b>{n0(cancers)}</b> more {cancers === 1 ? 'cancer' : 'cancers'} detected</> : null}.</p>}
+            <p className="mt-0.5 text-[11px] opacity-65">{glance.change.kind === 'estimate' ? 'Effects from other programmes, applied to 2024 numbers: a scenario, not a promise.' : 'A target from our queue model, not a study result.'}</p>
+          </> : <p>No change in this plan.</p>}
         </Block>
         <Block label="What it takes">
-          {x.about_catch_up_colonoscopies_total
-            ? <p>About <b>{n0(Number(x.about_catch_up_colonoscopies_total))}</b> extra colonoscopies over {String(x.catch_up_weeks)} weeks.</p>
-            : null}
-          {now > 0
-            ? <p>About <b>{n0(now)}</b> more colonoscopies a week now{x.about_wait_in_a_year_if_not_added_months ? <>; without them the wait grows to about {n0(Number(x.about_wait_in_a_year_if_not_added_months))} months in a year</> : null}.</p>
-            : !x.about_catch_up_colonoscopies_total && <p>No extra colonoscopies needed now.</p>}
-          <p className="mt-1">By 2031, when everyone aged 56–74 is invited: about <b>{n0(by2031)}</b> more a week than today.</p>
+          {glance.takes && <>
+            <p className="text-[11px] opacity-70 mb-1">{glance.takes.title}</p>
+            <Bars bars={glance.takes.bars} unit={glance.takes.unit} label={glance.takes.title} />
+          </>}
+          {x.about_catch_up_colonoscopies_total ? <p className="mt-1 text-[12px]">Plus about <b>{n0(Number(x.about_catch_up_colonoscopies_total))}</b> one-off colonoscopies over {String(x.catch_up_weeks)} weeks.</p> : null}
+          {now > 0 && x.about_wait_in_a_year_if_not_added_months ? <p className="mt-1 text-[11px] opacity-70">Without them, the wait grows to about {n0(Number(x.about_wait_in_a_year_if_not_added_months))} months in a year.</p> : null}
         </Block>
-        <Block label="How you'll know it works">
-          {own.length ? own.map((o) => <p key={o.measure}>{o.measure}</p>) : <p>Kit return, follow-up and wait, compared with this page, every month.</p>}
-        </Block>
+        <Block label="How you’ll know it works"><Measures items={glance.measures} /></Block>
       </section>
 
       <footer className="mt-5 pt-2 border-t border-black/30 text-[10.5px] leading-snug opacity-85">
         <p className="font-type uppercase tracking-widest text-[10px] opacity-70">Sources and caveats</p>
 
-        <p className="mt-1">
-          <b className="font-medium">{r.name} in 2024:</b> kit returned {n1(r.participationPct)}% (Finland {n1(SCREENING_FI.participationPct)}%) · positive tests with a recorded colonoscopy {n1(r.colonoscopyOfPositivesPct)}% ({n1(SCREENING_FI.colonoscopyOfPositivesPct)}%), {n0(r.noColonoscopy)} without · median wait {n1(r.medianMonths)} months ({n1(SCREENING_FI.medianMonths)}).
-          {' '}Behind our warning line: {[f.detection && 'kit return', f.referral && 'follow-up', f.capacity && 'wait'].filter(Boolean).join(', ') || 'none'}. The official target is 80% kit return (National Cancer Strategy, Goal 2).
-        </p>
+        <p className="mt-1">&quot;Behind&quot; is our own warning line (kit return below 72%, follow-up below 70%, wait over 2.5 months); the only official target is 80% kit return (National Cancer Strategy, Goal 2). {r.name} has {n0(r.noColonoscopy)} positive tests with no recorded colonoscopy (2024).</p>
 
         {grounded && (
           <ol className="mt-1.5 space-y-0.5">

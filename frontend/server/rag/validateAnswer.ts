@@ -58,6 +58,9 @@ function cleanLine(s: string) {
   return stripMarkers(s).replace(LABEL, '').replace(/[*`#]/g, '').replace(/\s+/g, ' ').replace(/\s+([.,;:!?])/g, '$1').trim()
 }
 
+/** Claims the data cannot support: the register only shows recorded colonoscopies, and the cancer count is a scenario. */
+const OVERCLAIM = /\bnever (had|got|received|followed)\b|\bnever been followed\b|\b(find|finds|finding|found|catch|catches|catching|caught|detect\w*|diagnos\w*)\b[^.;]{0,40}?\bearlier\b|\blives? saved\b|\bsav(e|es|ing) lives\b/i
+
 export type Validation = { ok: true; answer: ValidAnswer } | { ok: false; errors: string[] }
 
 export function validateAnswer(raw: unknown, pack: EvidencePack, facts: Record<string, number | string>): Validation {
@@ -105,6 +108,8 @@ export function validateAnswer(raw: unknown, pack: EvidencePack, facts: Record<s
   if (limitations.length > MAX_LIMITATIONS) errors.push('limitations: too many')
   if (limitations.some((l) => words(l) > MAX_LIMITATION_WORDS)) errors.push('limitations: too long')
 
+  for (const k of LINE_KEYS) if (OVERCLAIM.test(outLines[k])) errors.push(`${k}: overclaim`)
+  if (limitations.some((l) => OVERCLAIM.test(l))) errors.push('limitations: overclaim')
   for (const k of LINE_KEYS) if (!numbersMatch(outLines[k], facts)) errors.push(`${k}: number not in facts`)
   if (!limitations.every((l) => numbersMatch(l, facts))) errors.push('limitations: number not in facts')
 

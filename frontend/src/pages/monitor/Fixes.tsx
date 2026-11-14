@@ -74,7 +74,7 @@ export function Fixes({ r, plan, setPlan, res }: { r: ScreeningRow; plan: Plan; 
           const add = alone(fx.id)
           return (
             <Row key={fx.id} name={fx.name} what={PLAIN[fx.id]} on={plan.referral.includes(fx.id)} onChange={(v) => toggleRef(fx.id, v)}
-              result={<>About {about(add)} more colonoscopies a year, about {about(add * b.yieldCancer)} cancers found earlier</>}
+              result={<>About {about(add)} more colonoscopies a year, an estimated {about(add * b.yieldCancer)} more cancers detected</>}
               label="Proven in other programmes"
               how={<>In studies, {Math.round((fx.rr! - 1) * 100)}% more people with a positive test went on to have the colonoscopy (risk ratio {fx.rr}). {fx.caveat}.
                 <br />For {r.name}: {n0(r.testPositive)} positive tests × ({n1(Math.min(b.c * fx.rr!, Math.max(b.c, 0.95)) * 100)}% − {n1(b.c * 100)}% followed up) = {n0(add)} colonoscopies a year; cancers at {r.name}&apos;s 2024 rate of {r.cancers} per {n0(r.colonoscopyDone)} colonoscopies.<br />{src(fx)}</>} />
@@ -155,7 +155,7 @@ export function Fixes({ r, plan, setPlan, res }: { r: ScreeningRow; plan: Plan; 
       )}
       {total > 0.5 && (
         <p className="mt-8 p-5 rounded-lg bg-ink text-paper font-serif text-2xl leading-snug">
-          With what you&apos;ve applied: about <span className="text-mustard">{about(total)} more colonoscopies a year</span> and about <span className="text-mustard">{about(res.total.cancers)} cancers found earlier</span>.
+          With what you&apos;ve applied: about <span className="text-mustard">{about(total)} more colonoscopies a year</span> and an estimated <span className="text-mustard">{about(res.total.cancers)} more cancers detected</span>.
         </p>
       )}
     </div>

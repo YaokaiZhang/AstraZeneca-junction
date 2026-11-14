@@ -201,6 +201,10 @@ result: what the action achieves.
 capacity: the extra colonoscopies a week needed now (if any) and by 2031.
 limitations: one to three short plain sentences on what the evidence does not show (for example where it comes from, or that it was not tested in Finland), each citing the passage ids it rests on. Do not mention a study or review in a limitation unless you cite it.
 
+Wording:
+- People with a positive test and no colonoscopy in the register have "no recorded follow-up colonoscopy" (some private colonoscopies are never reported). Never say they never had one or were never followed up.
+- Cancers in the facts are an estimate for this scenario: say "an estimated ... more cancers detected". Never say cancers are found or caught earlier, and never promise lives saved.
+
 Style:
 - Plain words for a non-specialist: no jargon, no abbreviations, no statistics terms. Say "follow-up colonoscopy", not "referral".
 - Stay with the data and the action. Do not single out or describe any group of people by language, origin or background.

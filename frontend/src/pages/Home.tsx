@@ -13,11 +13,11 @@ import { GROUP_FACTS, n0, n1 } from './monitor/model'
 
 /** Short intro shown when the full story is switched off: one line, three facts, a way in. Numbers from the monitor's data. */
 function ShortIntro() {
-  const hki = screeningById('helsinki')!
-  const hki2023 = ROUNDS.find((x) => x.id === 'helsinki' && x.year === 2023)!
+  const c = screeningById('pohjois-savo')!
+  const c2023 = ROUNDS.find((x) => x.id === c.id && x.year === 2023)!
   const facts = [
-    { big: n0(hki.noColonoscopy), unit: 'people', text: <>in Helsinki tested positive in 2024 and had no colonoscopy. In 2023 it was {n0(hki2023.noColonoscopy)}.</> },
-    { big: n1(hki.medianMonths), unit: 'months', text: <>is about how long Helsinki waits from a positive test to colonoscopy, against {n1(SCREENING_FI.medianMonths)} nationally.</> },
+    { big: n0(c.noColonoscopy), unit: 'people', text: <>in {c.name} tested positive in 2024 and have no recorded follow-up colonoscopy. In 2023 it was {n0(c2023.noColonoscopy)}.</> },
+    { big: n1(c.medianMonths), unit: 'months', text: <>is about how long people in {c.name} wait from a positive test to colonoscopy, against {n1(SCREENING_FI.medianMonths)} nationally.</> },
     { big: `${Math.round(GROUP_FACTS.skipped.pct)}%`, unit: '', text: <>of people who skip one screening round come back the next time.</> },
   ]
   return (

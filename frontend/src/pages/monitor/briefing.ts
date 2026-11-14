@@ -9,7 +9,7 @@ import { aboutNum, weakestStep } from './plain'
 export type Facts = Record<string, number | string>
 
 const PROBLEM: Record<Step, string> = {
-  referral: 'people with a positive test who never had the follow-up colonoscopy',
+  referral: 'people with a positive test and no recorded follow-up colonoscopy',
   capacity: 'the wait for a colonoscopy after a positive test',
   detection: 'people who do not send the test kit back',
 }
@@ -70,7 +70,7 @@ export function buildFacts(r: ScreeningRow, plan: Plan, res: Result): Facts {
     kit_return_finland_pct: SCREENING_FI.participationPct,
     followup_colonoscopy_pct: r.colonoscopyOfPositivesPct,
     followup_colonoscopy_finland_pct: SCREENING_FI.colonoscopyOfPositivesPct,
-    positive_tests_without_colonoscopy: r.noColonoscopy,
+    positive_tests_without_recorded_colonoscopy: r.noColonoscopy,
     wait_months: r.medianMonths,
     wait_finland_months: SCREENING_FI.medianMonths,
     pathway_step: behind.length ? weakestStep(r) : 'none',
@@ -78,7 +78,7 @@ export function buildFacts(r: ScreeningRow, plan: Plan, res: Result): Facts {
     action_ids: actionIds(p.plan, p.res),
     action_is: !p.recommended ? 'the plan chosen on the monitor' : behind.length ? 'the recommended first step' : 'a step to do even better',
     action_about_extra_colonoscopies_per_year: aboutNum(p.res.total.colonoscopies),
-    action_about_cancers_found_earlier: aboutNum(p.res.total.cancers),
+    action_estimated_extra_cancers_detected: aboutNum(p.res.total.cancers),
     about_colonoscopies_per_week_today: aboutNum(q.arrivalsWeek),
     about_extra_colonoscopies_per_week_now: aboutNum(q.extraPerWeek),
     year_screening_widens: 2031,
@@ -127,14 +127,14 @@ export function templateBriefing(x: Facts): string {
   const s: string[] = []
   const problem = String(x.main_problem)
   if (Number(x.steps_falling_behind) === 0) s.push(`${x.county} is on track at every step of bowel cancer screening.`)
-  else if (problem.startsWith('people with a positive test')) s.push(`In ${x.county}, ${x.positive_tests_without_colonoscopy} people with a positive test in ${x.data_year} never had the follow-up colonoscopy (${n1(Number(x.followup_colonoscopy_pct))}% were followed up, against ${n1(Number(x.followup_colonoscopy_finland_pct))}% in Finland).`)
+  else if (problem.startsWith('people with a positive test')) s.push(`In ${x.county}, ${x.positive_tests_without_recorded_colonoscopy} people with a positive test in ${x.data_year} have no recorded follow-up colonoscopy (${n1(Number(x.followup_colonoscopy_pct))}% have one recorded, against ${n1(Number(x.followup_colonoscopy_finland_pct))}% in Finland).`)
   else if (problem.startsWith('the wait')) s.push(`In ${x.county}, people wait ${n1(Number(x.wait_months))} months for a colonoscopy after a positive test, against ${n1(Number(x.wait_finland_months))} months in Finland.`)
   else s.push(`In ${x.county}, ${n1(Number(x.kit_return_pct))}% of invited people sent the test kit back in ${x.data_year}, against ${n1(Number(x.kit_return_finland_pct))}% in Finland.`)
   if (x.action !== 'no change') {
     s.push(`${x.action_is === 'the recommended first step' ? 'The recommended first step is' : x.action_is === 'a step to do even better' ? 'To do even better, the next step would be' : 'The chosen plan is'} to ${x.action}.`)
     if (Number(x.action_about_extra_colonoscopies_per_year) > 0) {
-      const c = Number(x.action_about_cancers_found_earlier)
-      s.push(`That means about ${x.action_about_extra_colonoscopies_per_year} more colonoscopies a year${c >= 1 ? ` and about ${c} ${c === 1 ? 'cancer' : 'cancers'} found earlier` : ''}.`)
+      const c = Number(x.action_estimated_extra_cancers_detected)
+      s.push(`That means about ${x.action_about_extra_colonoscopies_per_year} more colonoscopies a year${c >= 1 ? ` and an estimated ${c} more ${c === 1 ? 'cancer' : 'cancers'} detected` : ''}.`)
     }
     else if (x.about_catch_up_colonoscopies_total) s.push(`That takes about ${x.about_catch_up_colonoscopies_total} extra colonoscopies over ${x.catch_up_weeks} weeks to bring the wait to about ${x.target_wait_months} months.`)
   }

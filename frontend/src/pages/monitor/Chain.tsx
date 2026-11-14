@@ -50,7 +50,7 @@ export function headline(r: ScreeningRow): ReactNode {
   const f = flags(r)
   const l = losses(r)
   const parts: ReactNode[] = []
-  if (f.referral) parts.push(<><span className="italic text-terra">{n0(r.noColonoscopy)} people</span> tested positive and never had a colonoscopy.</>)
+  if (f.referral) parts.push(<><span className="italic text-terra">{n0(r.noColonoscopy)} people</span> tested positive and have no recorded colonoscopy.</>)
   if (f.capacity) parts.push(<>{f.referral ? 'Those who did waited' : 'People who test positive wait'} <span className="italic text-terra">{n1(r.medianMonths)} months</span>, against {n1(SCREENING_FI.medianMonths)} nationally.</>)
   if (f.detection) parts.push(<><span className="italic text-terra">{n0(l.detection.lost)}</span> of {n0(r.invited)} invited never sent the kit back.</>)
   if (!parts.length) {
@@ -88,7 +88,7 @@ function StepCard({ step, r }: { step: Step; r: ScreeningRow }) {
   const nat = step === 'detection' ? fi.participationPct : step === 'referral' ? fi.colonoscopyOfPositivesPct : fi.medianMonths
   const unit = step === 'capacity' ? 'months' : '%'
   const lostText = step === 'detection' ? 'invited never returned the kit'
-    : step === 'referral' ? 'positives never had a colonoscopy'
+    : step === 'referral' ? 'positives with no recorded colonoscopy'
     : 'people waiting at any time (est.)'
   const vsText = step === 'capacity' ? `more than a ${n1(fi.medianMonths)}-month wait would hold` : 'more than at the national rate'
   return (

@@ -53,7 +53,7 @@ export function Ranking({ selected, onSelect }: { selected: string; onSelect: (i
         <Seg items={METRICS} value={m} onChange={setM} />
       </div>
       <p className="font-sans text-[14px] opacity-70 mb-3">
-        {m === 'capacity' ? 'Median months from positive test to colonoscopy.' : `People lost beyond the national rate, 2024. ${m === 'referral' ? 'Positives who never had a colonoscopy.' : 'Invited who never returned the kit.'}`}
+        {m === 'capacity' ? 'Median months from positive test to colonoscopy.' : `People lost beyond the national rate, 2024. ${m === 'referral' ? 'Positives with no recorded colonoscopy.' : 'Invited who never returned the kit.'}`}
       </p>
       <ol className="space-y-0.5">
         {rows.map((r, i) => {

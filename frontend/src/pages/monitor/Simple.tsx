@@ -27,7 +27,7 @@ export function Verdict({ r }: { r: ScreeningRow }) {
     return <>{r.name} is on track at every step of bowel cancer screening. The step closest to slipping is {w === 'detection' ? 'getting kits sent back' : w === 'referral' ? 'the follow-up colonoscopy' : 'the wait for a colonoscopy'}.</>
   }
   const main = w === 'referral'
-    ? <>{n === 3 ? 'The biggest loss: ' : `${r.name}'s biggest problem is follow-up: `}{hl(`${n0(r.noColonoscopy)} people`)} with a positive test never had the follow-up colonoscopy.</>
+    ? <>{n === 3 ? 'The biggest loss: ' : `${r.name}'s biggest problem is follow-up: `}{hl(`${n0(r.noColonoscopy)} people`)} with a positive test have no recorded follow-up colonoscopy.</>
     : w === 'capacity'
       ? <>{n === 3 ? 'The biggest problem is the wait: ' : `${r.name}'s problem is the wait: `}people wait {hl(`${n1(r.medianMonths)} months`)} for a colonoscopy, {waitWords(r)}.</>
       : <>{n === 3 ? 'The biggest loss: ' : `${r.name}'s problem is the first step: `}{hl(n0(r.invited - r.participated))} of {n0(r.invited)} people invited never sent the kit back.</>
@@ -35,7 +35,7 @@ export function Verdict({ r }: { r: ScreeningRow }) {
   const other = (['referral', 'capacity', 'detection'] as Step[]).find((s) => s !== w && f[s])
   const second = n === 2 && other
     ? other === 'capacity' ? <> People also wait {n1(r.medianMonths)} months for a colonoscopy, {waitWords(r)}.</>
-      : other === 'referral' ? <> And {n0(r.noColonoscopy)} people with a positive test were never followed up.</>
+      : other === 'referral' ? <> And {n0(r.noColonoscopy)} people with a positive test have no recorded follow-up colonoscopy.</>
       : <> And {n0(r.invited - r.participated)} invited people never sent the kit back.</>
     : null
   return <>{n === 3 && <>{r.name} loses people at every step. </>}{main}{second}</>
@@ -54,7 +54,7 @@ function Tile({ step, r }: { step: Step; r: ScreeningRow }) {
   const big = step === 'detection' ? `${n1(r.participationPct)}%` : step === 'referral' ? `${n1(r.colonoscopyOfPositivesPct)}%` : `${n1(r.medianMonths)} months`
   const vs = step === 'detection' ? `${n1(fi.participationPct)}%` : step === 'referral' ? `${n1(fi.colonoscopyOfPositivesPct)}%` : `${n1(fi.medianMonths)} months`
   const line = step === 'detection' ? <>{n0(l.detection.lost)} people did not send it back</>
-    : step === 'referral' ? <>{n0(r.noColonoscopy)} people not followed up</>
+    : step === 'referral' ? <>{n0(r.noColonoscopy)} people with no recorded follow-up</>
     : waitRatio(r) >= 1.15 ? <>{waitRatio(r) >= 1.75 && waitRatio(r) <= 2.25 ? 'About twice' : `About ${n1(waitRatio(r))} times`} as long as the national wait</>
     : waitRatio(r) <= 0.85 ? <>Shorter than the national wait</>
     : <>Close to the national wait</>
@@ -93,7 +93,7 @@ export function Recommend({ r, plan, setPlan, res, otherOptions }: {
     const alone = evaluate(r, { ...EMPTY_PLAN, referral: ['navigation'] }).referral
     title = 'Follow up every positive test'
     text = <>Give the screening nurse a daily list of everyone with a positive test who hasn&apos;t booked a colonoscopy, and call them. Every county already has screening nurses; this gives them the list.</>
-    result = <>About {about(alone.colonoscopies)} more colonoscopies a year, about {about(alone.cancers)} cancers found earlier.</>
+    result = <>About {about(alone.colonoscopies)} more colonoscopies a year, an estimated {about(alone.cancers)} more cancers detected.</>
     on = plan.referral.includes('navigation')
     set = (v) => setPlan({ ...plan, referral: v ? [...plan.referral.filter((x) => x !== 'navigation'), 'navigation'] : plan.referral.filter((x) => x !== 'navigation') })
   } else if (w === 'detection') {

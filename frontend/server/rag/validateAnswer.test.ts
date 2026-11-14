@@ -13,7 +13,7 @@ const corpus = loadCorpusFrom(FIXTURE)
 
 const facts = {
   county: 'Testmaa', data_year: 2024, pathway_step: 'referral', action_ids: 'navigation',
-  positive_tests_without_colonoscopy: 120, followup_colonoscopy_pct: 64.2, followup_colonoscopy_finland_pct: 78.1,
+  positive_tests_without_recorded_colonoscopy: 120, followup_colonoscopy_pct: 64.2, followup_colonoscopy_finland_pct: 78.1,
   about_extra_colonoscopies_per_week_now: 3, about_extra_colonoscopies_per_week_by_2031: 9, year_screening_widens: 2031,
   action_about_extra_colonoscopies_per_year: 40,
 }
@@ -25,7 +25,7 @@ const NAV = idOf('fx-review-followup#navigation')
 
 const good = () => ({
   lines: {
-    problem: '120 people with a positive test never had the follow-up colonoscopy.',
+    problem: '120 people with a positive test have no recorded follow-up colonoscopy.',
     do_this: 'Give the screening nurse a daily list of positive tests without a booked colonoscopy.',
     result: 'About 40 more colonoscopies a year.',
     capacity: 'About 3 more colonoscopies a week now and about 9 more by 2031.',
@@ -40,7 +40,7 @@ test('a good answer passes and renders with renumbered citations', () => {
   const res = renderGrounded(v.answer, pack, found.meta, new Date('2026-11-14T00:00:00Z'))
   assert.equal(res.status, 'grounded')
   assert.equal(res.text, [
-    'Problem: 120 people with a positive test never had the follow-up colonoscopy. [1]',
+    'Problem: 120 people with a positive test have no recorded follow-up colonoscopy. [1]',
     'Do this: Give the screening nurse a daily list of positive tests without a booked colonoscopy. [2][1]',
     'Result: About 40 more colonoscopies a year. [2]',
     'Capacity: About 3 more colonoscopies a week now and about 9 more by 2031.',
@@ -127,10 +127,10 @@ test('Do this must cite an official or intervention source', () => {
 
 test('labels and stray markers are stripped from lines', () => {
   const a = good()
-  a.lines.problem = 'Problem: 120 people with a positive test never had the follow-up colonoscopy [E1].'
+  a.lines.problem = 'Problem: 120 people with a positive test have no recorded follow-up colonoscopy [E1].'
   const v = validateAnswer(a, pack, facts)
   assert.ok(v.ok)
-  assert.equal(v.answer.lines.problem, '120 people with a positive test never had the follow-up colonoscopy.')
+  assert.equal(v.answer.lines.problem, '120 people with a positive test have no recorded follow-up colonoscopy.')
 })
 
 test('prompt injection inside a passage stays inside its passage as data', () => {
@@ -159,4 +159,22 @@ test('schema limits citation ids to the pack', () => {
 test('cutAtWord cuts at a word boundary', () => {
   const t = cutAtWord('alpha beta gamma delta epsilon', 17)
   assert.ok(t.length <= 17 && t.endsWith('…') && !t.includes('gam'), t)
+})
+
+test('rejects overclaims the data cannot support (never had, found earlier, lives saved)', () => {
+  for (const [key, text] of [
+    ['problem', 'In 2024, 120 people with a positive test never had the follow-up colonoscopy.'],
+    ['result', 'This finds cancers earlier.'],
+    ['result', 'About 120 extra follow-up colonoscopies a year, finding about 5 cancers earlier.'],
+    ['result', 'It saves lives.'],
+  ] as const) {
+    const a = good()
+    a.lines[key] = text
+    const r = validateAnswer(a, pack, facts)
+    assert.equal(r.ok, false, text)
+    if (!r.ok) assert.ok(r.errors.includes(`${key}: overclaim`), text)
+  }
+  const ok = good()
+  ok.lines.problem = 'In 2024, 120 people with a positive test have no recorded follow-up colonoscopy.'
+  assert.equal(validateAnswer(ok, pack, facts).ok, true)
 })

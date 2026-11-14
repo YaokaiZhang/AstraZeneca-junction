@@ -47,6 +47,9 @@ function groundedBriefing(body: Partial<BriefingResponse>, facts: Facts): Briefi
   }
 }
 
+/** The county the monitor opens on: a wellbeing services county with a clear follow-up gap and a long wait. */
+const DEFAULT_COUNTY = 'pohjois-savo'
+
 const OPTIONS = SCREENING.map((r) => ({ id: r.id, name: r.name })).sort((a, b) => a.name.localeCompare(b.name, 'fi'))
 
 function Section({ n, a, b, children, id, aside }: { n: string; a: ReactNode; b?: ReactNode; children: ReactNode; id?: string; aside?: ReactNode }) {
@@ -79,7 +82,7 @@ function Block({ a, b, children }: { a: ReactNode; b?: ReactNode; children: Reac
 
 export default function MonitorPage() {
   const [q, setQ] = useSearchParams()
-  const countyId = screeningById(q.get('c') ?? '') ? q.get('c')! : 'helsinki'
+  const countyId = screeningById(q.get('c') ?? '') ? q.get('c')! : DEFAULT_COUNTY
   const r = screeningById(countyId)!
   const [plan, setPlan] = useState<Plan>(EMPTY_PLAN)
   const [sheet, setSheet] = useState(false)

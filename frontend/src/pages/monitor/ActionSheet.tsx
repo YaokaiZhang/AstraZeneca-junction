@@ -88,7 +88,7 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
   const row = (s: Step) => {
     const v = s === 'detection' ? `${n1(r.participationPct)}%` : s === 'referral' ? `${n1(r.colonoscopyOfPositivesPct)}%` : `${n1(r.medianMonths)} mo`
     const fi = s === 'detection' ? `${n1(SCREENING_FI.participationPct)}%` : s === 'referral' ? `${n1(SCREENING_FI.colonoscopyOfPositivesPct)}%` : `${n1(SCREENING_FI.medianMonths)} mo`
-    const lost = s === 'detection' ? `${n0(l.detection.lost)} kits not returned` : s === 'referral' ? `${n0(l.referral.lost)} positives without colonoscopy` : `≈ ${n0(l.capacity.lost)} people waiting`
+    const lost = s === 'detection' ? `${n0(l.detection.lost)} kits not returned` : s === 'referral' ? `${n0(l.referral.lost)} positives with no recorded colonoscopy` : `≈ ${n0(l.capacity.lost)} people waiting`
     return { v, fi, lost }
   }
 
@@ -159,7 +159,7 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
       <section className="mt-4 grid grid-cols-3 gap-3">
         {[
           [signed(res.total.colonoscopies), 'extra colonoscopies a year'],
-          [signed(res.total.cancers, n1), 'cancers found earlier'],
+          [signed(res.total.cancers, n1), 'more cancers detected (estimate)'],
           [signed(res.total.precursors), 'precursors removed'],
         ].map(([v, t]) => (
           <div key={t} className="border border-black/20 rounded p-2">

@@ -1,6 +1,6 @@
 // Shared helpers for the plain-language views: rounding for the main view and the step to act on first.
 import { SCREENING_FI, type ScreeningRow } from './data'
-import { flags, type Step } from './model'
+import { DETECTION_FIXES, EMPTY_PLAN, evaluate, flags, type Step } from './model'
 
 /** Round for the main view: whole numbers below 20, then to 5, then to 10. */
 export const aboutNum = (v: number) => {
@@ -25,4 +25,19 @@ export function weakestStep(r: ScreeningRow): Step {
     ['referral', (fi.colonoscopyOfPositivesPct - r.colonoscopyOfPositivesPct) / fi.colonoscopyOfPositivesPct],
     ['capacity', (r.medianMonths - fi.medianMonths) / fi.medianMonths],
   ] as [Step, number][]).sort((a, b) => b[1] - a[1])[0][0]
+}
+
+/** Short title and result of the start-here action with nothing else planned (for previews). */
+export function startHere(r: ScreeningRow): { step: Step; title: string; result: string } {
+  const w = weakestStep(r)
+  if (w === 'referral') {
+    const a = evaluate(r, { ...EMPTY_PLAN, referral: ['navigation'] }).referral
+    return { step: w, title: 'Follow up every positive test', result: `About ${about(a.colonoscopies)} more colonoscopies a year` }
+  }
+  if (w === 'detection') {
+    const a = evaluate(r, { ...EMPTY_PLAN, detectionPts: DETECTION_FIXES.find((d) => d.id === 'reminder')!.pts(r), detectionFix: 'reminder' }).detection
+    return { step: w, title: 'Remind people who haven’t sent the kit back', result: `About ${about(a.kits)} more kits sent back a year` }
+  }
+  const c = evaluate(r, EMPTY_PLAN).queue.catchUp
+  return { step: w, title: 'Clear the queue for colonoscopy', result: `About ${about(c)} extra colonoscopies in ${EMPTY_PLAN.catchUpWeeks} weeks` }
 }

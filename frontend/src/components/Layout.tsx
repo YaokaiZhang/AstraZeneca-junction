@@ -5,7 +5,7 @@ import { useStore } from '../lib/store'
 const NAV = [
   { to: '/patient', label: 'Patient', sub: 'Notice · track · ask' },
   { to: '/hospital', label: 'Hospital', sub: 'Who is falling behind' },
-  { to: '/county', label: 'County', sub: 'Where people are lost' },
+  { to: '/county', label: 'County', sub: 'What to do next' },
 ]
 
 export default function Layout() {

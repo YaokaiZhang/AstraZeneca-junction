@@ -7,6 +7,9 @@ import { BOWEL_SURV, RADAR_CANCERS, bowelLives, fmt, pct, scaleColor, spreadCont
 import { REGISTRY_FI } from '../../data/registry.generated'
 import { PATHWAY } from '../../data/pathway'
 import { tr } from '../patient/i18n'
+import { SCREENING, SCREENING_FI } from '../monitor/data'
+import { flags, n1 } from '../monitor/model'
+import { startHere } from '../monitor/plain'
 import { Reveal, Tilt, WordsUp, useCount, useInView, useScrollProgress } from './reveal'
 
 /* short plain-language explainer under each headline */
@@ -361,32 +364,50 @@ function HospitalMock() {
 
 function CountyMock() {
   const [ref, on] = useInView<HTMLDivElement>(0.35)
-  const vals = COUNTIES.map((c) => c.cancers.lung.lateShare)
-  const lo = Math.min(...vals), hi = Math.max(...vals)
-  const worst = COUNTIES[vals.indexOf(hi)]
-  const cols = Math.max(...COUNTIES.map((c) => c.col)) + 1
-  const rows = Math.max(...COUNTIES.map((c) => c.row)) + 1
+  const [added, setAdded] = useState(false)
+  useEffect(() => { if (!on) return; const t = setTimeout(() => setAdded(true), 1900); return () => clearTimeout(t) }, [on])
+  // real data: the county that falls behind at the most steps of bowel screening
+  const r = [...SCREENING].sort((x, y) => Object.values(flags(y)).filter(Boolean).length - Object.values(flags(x)).filter(Boolean).length)[0]
+  const f = flags(r)
+  const act = startHere(r)
+  const steps = [
+    { id: 'detection' as const, t: 'Kit sent back', v: `${n1(r.participationPct)}%`, fi: `${n1(SCREENING_FI.participationPct)}%` },
+    { id: 'referral' as const, t: 'Colonoscopy done', v: `${n1(r.colonoscopyOfPositivesPct)}%`, fi: `${n1(SCREENING_FI.colonoscopyOfPositivesPct)}%` },
+    { id: 'capacity' as const, t: 'Wait', v: `${n1(r.medianMonths)} mo`, fi: `${n1(SCREENING_FI.medianMonths)} mo` },
+  ]
   return (
-    <div ref={ref} className="relative">
-      <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${cols}, 64px)`, gridTemplateRows: `repeat(${rows}, 64px)` }}>
-        {COUNTIES.map((c) => {
-          const t = (c.cancers.lung.lateShare - lo) / (hi - lo || 1)
-          const isW = c.id === worst.id
-          return (
-            <div key={c.id} title={c.name}
-              className={cx('rv rv-scale rounded-md relative flex items-end p-1.5', on && 'in', isW && 'ring-2 ring-mustard ring-offset-2 ring-offset-paper')}
-              style={{ gridColumn: c.col + 1, gridRow: c.row + 1, background: `color-mix(in srgb, #C65D3B ${Math.round(15 + t * 85)}%, #F4F1EA)`, transitionDelay: `${c.row * 90 + c.col * 50}ms` }}>
-              <span className={cx('font-type text-[10px] uppercase leading-none', t > 0.55 ? 'text-paper' : 'text-ink/70')}>{c.name.slice(0, 4)}</span>
-              {isW && <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-mustard animate-ping" />}
-            </div>
-          )
-        })}
-      </div>
-      <div className={cx('rv rv-stamp absolute -right-6 lg:-right-16 top-6', on && 'in')} style={{ transitionDelay: '1500ms' }}>
-        <Card tone="mustard" tilt={-6} className="px-4 py-3">
-          <div className="label !opacity-80">Radar · weakest step</div>
-          <div className="font-serif italic text-2xl leading-tight">{worst.name}</div>
-          <div className="font-type text-xs uppercase tracking-widest mt-0.5">found late</div>
+    <div ref={ref} className="relative w-full max-w-[520px] pb-48 sm:pb-40">
+      <Card tone="paper" tilt={2} className="p-6 border border-ink/10 hover:!rotate-0">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="font-serif italic text-3xl leading-none">{r.name}</span>
+          <span className="label">Bowel screening</span>
+        </div>
+        <div className="mt-5 space-y-1.5">
+          {steps.map((s, i) => {
+            const hot = s.id === act.step && f[s.id]
+            return (
+              <div key={s.id} className={cx('rv rv-right flex items-center gap-3 rounded-md px-3 py-2 font-type text-[13px]', on && 'in', hot ? 'bg-terra text-paper' : 'bg-ink/[0.04]')}
+                style={{ transitionDelay: `${200 + i * 140}ms` }}>
+                <span className="w-5 opacity-70">{i + 1}</span>
+                <span className="flex-1 uppercase tracking-wider">{s.t}</span>
+                <span className={cx('font-serif text-lg tabular-nums lining-nums', f[s.id] && !hot && 'text-terra')}>{s.v}</span>
+                <span className="w-[4.5rem] text-right whitespace-nowrap opacity-60">FI {s.fi}</span>
+              </div>
+            )
+          })}
+        </div>
+      </Card>
+      <div className={cx('rv rv-stamp absolute left-6 right-0 lg:-right-10 bottom-0', on && 'in')} style={{ transitionDelay: '900ms' }}>
+        <Card tone={added ? 'ink' : 'mustard'} tilt={-3} className="px-6 py-5 transition-colors duration-500">
+          <div className="label !opacity-80">Do next · start here</div>
+          <div className="mt-1 font-serif text-2xl sm:text-3xl leading-tight">{act.title}</div>
+          <div className={cx('mt-2 font-serif italic text-lg', added ? 'text-mustard' : 'text-ink/80')}>{act.result}</div>
+          <div className="mt-3 flex items-center gap-3">
+            <span className={cx('w-10 h-5 rounded-full relative transition-colors duration-500', added ? 'bg-terra' : 'bg-black/20')}>
+              <span className={cx('absolute top-0.5 w-4 h-4 rounded-full bg-paper shadow transition-all duration-500', added ? 'left-[22px]' : 'left-0.5')} />
+            </span>
+            <span className="font-type text-xs uppercase tracking-widest">{added ? 'In the plan' : 'Add to the plan'}</span>
+          </div>
         </Card>
       </div>
     </div>
@@ -396,7 +417,7 @@ function CountyMock() {
 const VIEWS = [
   { k: '01', who: 'Patient', a: 'Notice it.', b: 'Say it. Chase it.', p: 'Log symptoms, get a clear next step, and chase a late referral.', mock: <PhoneMock />, to: '/patient' },
   { k: '02', who: 'Hospital', a: 'See who is', b: 'falling behind.', p: 'Every overdue patient, most delayed first.', mock: <HospitalMock />, to: '/hospital' },
-  { k: '03', who: 'County', a: 'Find where', b: 'people are lost.', p: 'The step where each county loses the most people.', mock: <CountyMock />, to: '/county' },
+  { k: '03', who: 'County', a: 'Know what', b: 'to do next.', p: 'Where each county loses people, the one action to start with, and what it will take.', mock: <CountyMock />, to: '/county' },
 ]
 
 export function Views() {

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Card, Label, SourceBadge, cx } from '../../components/ui'
 import { STAGE_MODEL_CANCERS, cancerLabel, fmt, pct, stageModel, type StageModelCancer } from '../county/model'
 import { H2, Lede, PAGE } from './Pitch'
-import { Reveal, WordsUp, useInView } from './reveal'
+import { Reveal, WordsUp, useCount, useInView } from './reveal'
 
 /* ───────────── the data gap, modelled ───────────── */
 const W = 560, HGT = 390, PAD = { l: 44, r: 16, t: 34, b: 40 }
@@ -60,11 +60,52 @@ const STAGE_HOW = (k: StageModelCancer) => {
   return `Weighted least squares over the 22 counties: recorded share found after spread (of cases with known stage) = ${fmt(m.a * 100, 1)}% + ${fmt(m.b, 2)} × share with stage missing. Weights: cases with known stage, 2021–25. Explains ${pct(m.r2)} of the weighted variance. Tested by predicting each county from the other 21: average error ${fmt(m.maeModel * 100, 1)} points vs ${fmt(m.maeBase * 100, 1)} for the national average. Red = more than 3 points above the line: found late beyond what missing records explain. A model of county totals, so it cannot say which cases are late; the Registry could run the same idea on individual records.`
 }
 
+/** The headline result: how much less error the model makes than the national average, tested county by county. */
+function Result({ k, on }: { k: StageModelCancer; on: boolean }) {
+  const m = stageModel(k)
+  const top = [...m.points].sort((a, b) => b.resid - a.resid)[0]
+  const cut = 1 - m.maeModel / m.maeBase
+  const n = useCount(cut * 100, on, 1400)
+  const bars = [
+    { who: 'National average', v: m.maeBase, cls: 'bg-paper/30' },
+    { who: 'Our model', v: m.maeModel, cls: 'bg-mustard' },
+  ]
+  return (
+    <Card tone="ink" className="mt-8 lg:mt-[4svh] p-6 lg:p-7">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-type text-xs uppercase tracking-widest text-mustard">Result · each county predicted from the other 21</span>
+        <span className="flex items-center gap-1.5 shrink-0">
+          <SourceBadge id="ourModel" kind="estimate" demo={false} how={STAGE_HOW(k)} className="[&>button]:ring-1 [&>button]:ring-paper/60" />
+          <SourceBadge id="cancerRegistry" kind="direct" demo={false} className="[&>button]:ring-1 [&>button]:ring-paper/60" />
+        </span>
+      </div>
+      <div className="mt-4 flex items-end gap-4">
+        <p className="font-serif text-8xl lg:text-[min(8rem,13svh)] leading-[0.8] tabular-nums lining-nums text-mustard">−{Math.round(n)}<span className="text-[0.5em]">%</span></p>
+        <p className="font-serif italic text-2xl lg:text-3xl leading-tight pb-1">less error than<br />the national average</p>
+      </div>
+      <div className="mt-6 space-y-2.5">
+        {bars.map((b, i) => (
+          <div key={b.who} className="grid grid-cols-[8.5rem_minmax(0,1fr)_3.5rem] items-center gap-3">
+            <span className="font-type text-xs uppercase tracking-widest opacity-70">{b.who}</span>
+            <div className="h-3 rounded-full bg-paper/10 overflow-hidden">
+              <div className={cx('h-full rounded-full origin-left transition-transform duration-[1200ms] ease-out', b.cls)}
+                style={{ width: `${(b.v / m.maeBase) * 100}%`, transform: `scaleX(${on ? 1 : 0})`, transitionDelay: `${300 + i * 250}ms` }} />
+            </div>
+            <span className="font-serif text-xl tabular-nums lining-nums text-right">{fmt(b.v * 100, 1)}<span className="text-sm opacity-60"> pts</span></span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 pt-4 border-t border-paper/15 grid grid-cols-2 gap-4 font-sans text-sm leading-snug">
+        <p><span className="font-serif text-3xl leading-none mr-1.5">{pct(m.r2)}</span><span className="opacity-70">of the county differences track missing records</span></p>
+        <p><span className="font-serif text-3xl leading-none mr-1.5 text-terra">+{fmt(top.resid * 100)}</span><span className="opacity-70">points late beyond the records in <span className="italic">{top.c.name}</span></span></p>
+      </div>
+    </Card>
+  )
+}
+
 export function StageGap() {
   const [ref, on] = useInView<HTMLDivElement>(0.3)
   const [k, setK] = useState<StageModelCancer>('breast')
-  const m = stageModel(k)
-  const top = [...m.points].sort((a, b) => b.resid - a.resid)[0]
   return (
     <section className={PAGE + ' overflow-hidden'} aria-label="Missing data, modelled">
       <div ref={ref} className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-10 lg:gap-16 items-center">
@@ -76,26 +117,7 @@ export function StageGap() {
           <Lede className="mt-6 lg:mt-[3svh]">
             Where stage goes unrecorded, more cancers look late. Our model learns that pattern across all 22 counties, then separates poor records from truly late diagnosis.
           </Lede>
-          <div className="mt-8 lg:mt-[4svh] grid grid-cols-3 gap-4 lg:gap-6 border-t border-ink/15 pt-6">
-            <div>
-              <p className="font-serif text-4xl sm:text-5xl lg:text-[min(3.75rem,7svh)] leading-none tabular-nums lining-nums">{pct(m.r2)}</p>
-              <p className="mt-2 font-sans text-sm leading-snug opacity-75">of the difference between counties tracks missing records</p>
-            </div>
-            <div>
-              <p className="font-serif text-4xl sm:text-5xl lg:text-[min(3.75rem,7svh)] leading-none tabular-nums lining-nums whitespace-nowrap">
-                {fmt(m.maeBase * 100)}<span className="text-ink/40">→</span>{fmt(m.maeModel * 100)}
-              </p>
-              <p className="mt-2 font-sans text-sm leading-snug opacity-75">points of error, each county predicted from the other 21</p>
-            </div>
-            <div>
-              <p className="font-serif text-4xl sm:text-5xl lg:text-[min(3.75rem,7svh)] leading-none tabular-nums lining-nums text-terra">+{fmt(top.resid * 100)}</p>
-              <p className="mt-2 font-sans text-sm leading-snug opacity-75">points late beyond the records in <span className="italic">{top.c.name}</span></p>
-            </div>
-          </div>
-          <p className="mt-6 flex items-center gap-2 font-type text-sm uppercase tracking-wider opacity-70">
-            Tested, not assumed <SourceBadge id="ourModel" kind="estimate" demo={false} how={STAGE_HOW(k)} />
-            <SourceBadge id="cancerRegistry" kind="direct" demo={false} />
-          </p>
+          <Result k={k} on={on} />
         </div>
 
         <Reveal fx="up" delay={200} className="min-w-0">

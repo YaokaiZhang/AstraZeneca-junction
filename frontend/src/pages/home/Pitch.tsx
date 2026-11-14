@@ -874,11 +874,11 @@ export function TryActions() {
   const brief = buildBrief(county, k)
   return (
     <section className={PAGE} aria-label="Try it on a county">
-      <div className="grid lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-12 lg:gap-20 items-center">
+      <div className="grid lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)] gap-12 lg:gap-16 items-center">
         <Reveal fx="up">
-          <Tilt max={4}><Card tone="mustard" tilt={-1} className="relative p-6 pl-10 lg:p-8 lg:pl-12">
+          <Card tone="mustard" tilt={-1} className="relative p-6 pl-10 lg:p-8 lg:pl-12">
             <EdgeText>Try it</EdgeText>
-            <div className="grid grid-cols-[110px_minmax(0,1fr)] sm:grid-cols-[minmax(0,min(210px,26svh))_minmax(0,1fr)] gap-x-5 sm:gap-x-8 items-start">
+            <div className="grid grid-cols-[130px_minmax(0,1fr)] sm:grid-cols-[minmax(0,min(280px,36svh))_minmax(0,1fr)] gap-x-5 sm:gap-x-8 items-start">
               <FinlandMap selected={cid} onSelect={setCid} label="Pick a county"
                 style={(c) => ({ fill: c.id === cid ? '#C65D3B' : 'rgba(31,31,31,.2)' })}
                 tooltip={(c) => stepInfo(buildBrief(c, k).gap.step).label} />
@@ -906,7 +906,7 @@ export function TryActions() {
             <a href={`#/county?c=${cid}&rc=${k}`} className="group mt-5 inline-flex items-center gap-3 font-type uppercase text-xs tracking-widest">
               Full brief, printable <span className="w-9 h-9 rounded-full border border-ink flex items-center justify-center group-hover:bg-ink group-hover:text-mustard transition">→</span>
             </a>
-          </Card></Tilt>
+          </Card>
         </Reveal>
 
         {/* what it takes to start */}

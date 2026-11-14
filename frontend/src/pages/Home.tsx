@@ -8,33 +8,40 @@ import { ChapterRail, Ecg, Impact, Transition } from './home/Story'
 import { Radar } from './home/Radar'
 import FinlandCanvas, { type Hover } from './home/FinlandCanvas'
 import { SHOW_FULL_STORY } from '../config'
-import { ROUNDS, SCREENING_FI, screeningById } from './monitor/data'
-import { GROUP_FACTS, n0, n1 } from './monitor/model'
+import { ROUNDS, screeningById } from './monitor/data'
+import { BREAST, BREAST_FI } from './monitor/breastData'
+import { CERVICAL } from './monitor/cervicalData'
+import { GOAL_ATTENDANCE } from './monitor/programmes'
+import { n0, n1 } from './monitor/model'
 
 /** Short intro shown when the full story is switched off: one line, three facts, a way in. Numbers from the monitor's data. */
 function ShortIntro() {
+  // one fact per programme, each from the same Cancer Registry 2024 data as the monitor
   const c = screeningById('pohjois-savo')!
   const c2023 = ROUNDS.find((x) => x.id === c.id && x.year === 2023)!
+  const b = BREAST.find((x) => x.id === 'helsinki')!
+  const v = CERVICAL.find((x) => x.id === 'varsinais-suomi')!
   const facts = [
-    { big: n0(c.noColonoscopy), unit: 'people', text: <>in {c.name} tested positive in 2024 and have no recorded follow-up colonoscopy. In 2023 it was {n0(c2023.noColonoscopy)}.</> },
-    { big: n1(c.medianMonths), unit: 'months', text: <>is about how long people in {c.name} wait from a positive test to colonoscopy, against {n1(SCREENING_FI.medianMonths)} nationally.</> },
-    { big: `${Math.round(GROUP_FACTS.skipped.pct)}%`, unit: '', text: <>of people who skip one screening round come back the next time.</> },
+    { tag: 'Bowel', big: n0(c.noColonoscopy), unit: 'people', text: <>in {c.name} tested positive and have no recorded follow-up colonoscopy (2024). In 2023 it was {n0(c2023.noColonoscopy)}.</> },
+    { tag: 'Breast', big: `${n1(b.attendedPct)}%`, unit: '', text: <>of invited women in {b.name} came for the mammogram, against {n1(BREAST_FI.attendedPct)}% in Finland and the {GOAL_ATTENDANCE}% goal.</> },
+    { tag: 'Cervical', big: `${v.colposcopyDone} of ${n0(v.referredColposcopy)}`, unit: '', text: <>referred women in {v.name} have a colposcopy on record: most likely a reporting gap, the first thing to fix.</> },
   ]
   return (
     <section id="intro" className="relative px-5 lg:px-12 pt-20 lg:pt-28 pb-16 lg:pb-20 max-w-6xl mx-auto">
-      <Label>Bowel cancer screening · every wellbeing county</Label>
+      <Label>Bowel, breast and cervical cancer screening · every wellbeing county</Label>
       <h2 className={'mt-5 ' + H2}>
         <WordsUp text="A positive test" /><br /><WordsUp text="is not a diagnosis yet." className="italic" delay={150} />
       </h2>
       <div className="mt-12 grid md:grid-cols-3 gap-6">
         {facts.map((f, i) => (
           <Card key={i} tone={i === 0 ? 'terra' : 'paper'} tilt={[-1.5, 1, -0.5][i]} className="p-6 sm:p-7">
+            <p className="font-type text-[12px] uppercase tracking-widest opacity-70 mb-3">{f.tag}</p>
             <p className="font-serif text-6xl leading-none">{f.big}{f.unit && <span className="font-type text-sm opacity-70 ml-2">{f.unit}</span>}</p>
             <p className="mt-4 font-sans text-[16px] leading-snug opacity-90">{f.text}</p>
           </Card>
         ))}
       </div>
-      <p className="mt-4 font-type text-[13px] uppercase tracking-wider opacity-60">Finnish Cancer Registry, bowel cancer screening 2023 and 2024 rounds</p>
+      <p className="mt-4 font-type text-[13px] uppercase tracking-wider opacity-60">Finnish Cancer Registry, bowel, breast and cervical screening statistics, 2023 and 2024 rounds</p>
       <div className="mt-10">
         <Link to="/monitor" className="group inline-flex items-center gap-3 bg-ink text-paper rounded-full pl-6 pr-2 py-2 font-type uppercase text-xs tracking-widest hover:bg-terra transition-colors">
           Open the screening monitor
@@ -100,13 +107,13 @@ export default function Home() {
           <div className="relative z-10 flex flex-col justify-center px-5 lg:pl-16 xl:pl-24 pt-20 lg:pt-24 pb-20 lg:pb-20"
             style={{ transform: `translateY(${scroll * -60}px)`, opacity: 1 - scroll * 1.2 }}>
             <h1 className="font-serif font-light leading-[0.9] text-[min(14vw,11svh)] lg:text-[min(6vw,12svh)] tracking-tight">
-              <span className="block hero-in" style={{ animationDelay: '.1s' }}>{SHOW_FULL_STORY ? 'Every' : 'Every bowel'}</span>
+              <span className="block hero-in" style={{ animationDelay: '.1s' }}>Every</span>
               <span className="block hero-in pl-[0.6em]" style={{ animationDelay: '.2s' }}>cancer,</span>
               <span className="block hero-in" style={{ animationDelay: '.3s' }}>found <RotatingWord /></span>
             </h1>
 
             <p className="mt-8 lg:mt-[5svh] max-w-md font-sans text-lg lg:text-xl leading-snug opacity-75 hero-in" style={{ animationDelay: '.5s' }}>
-              {SHOW_FULL_STORY ? 'Ajoissa shows each county where people are lost, and what to do next.' : 'Ajoissa shows each county where its bowel cancer screening chain leaks, and what to do next.'}
+              {SHOW_FULL_STORY ? 'Ajoissa shows each county where people are lost, and what to do next.' : 'Ajoissa shows each county where its bowel, breast and cervical screening chains leak, and what to do next.'}
             </p>
 
             <div className="mt-8 lg:mt-[4svh] flex flex-wrap gap-3 hero-in" style={{ animationDelay: '.65s' }}>

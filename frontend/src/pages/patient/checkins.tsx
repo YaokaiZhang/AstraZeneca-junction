@@ -167,7 +167,6 @@ export function CheckinCard({ onSimulate }: { onSimulate?: () => void }) {
           <Switch on={!!checkins.notify} onClick={() => { if (checkins.enabled) void toggleNotify() }} label={t('ci.notify')} light />
         </div>
       </div>
-      <p className="font-type text-sm opacity-60 leading-snug mt-4">{t('ci.only')}</p>
       <button onClick={() => { simulateCheckin(); onSimulate?.() }}
         className="mt-4 font-type text-sm uppercase tracking-widest opacity-70 hover:opacity-100 hover:text-mustard underline underline-offset-4 decoration-dashed">{t('ci.simulate')}</button>
     </Card>

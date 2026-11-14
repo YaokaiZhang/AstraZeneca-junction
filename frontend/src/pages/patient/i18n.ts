@@ -236,7 +236,6 @@ const D = {
   'ci.whySymptom': ['More often while something in your diary needs watching.', 'Useammin, kun päiväkirjassasi on seurattavaa.', 'Oftare så länge något i din dagbok behöver följas.'],
   'ci.whyRisk': ['More often because of your screening check.', 'Useammin seulontatarkistuksesi vuoksi.', 'Oftare på grund av din screeningkoll.'],
   'ci.off': ['Switch on and I will ask how you are, now and then.', 'Kytke päälle, niin kysyn välillä vointiasi.', 'Slå på så frågar jag ibland hur du mår.'],
-  'ci.only': ['Uses only what you have told it, never registers.', 'Käyttää vain sitä, mitä olet itse kertonut, ei rekistereitä.', 'Använder bara det du själv berättat, aldrig register.'],
   'ci.now': ['Now', 'Nyt', 'Nu'],
   'ci.notify': ['Browser notification', 'Selainilmoitus', 'Webbläsarnotis'],
   'ci.notifySub': ['While this page is open on this device', 'Kun sivu on auki tällä laitteella', 'När sidan är öppen på den här enheten'],

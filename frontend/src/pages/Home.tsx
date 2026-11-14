@@ -180,7 +180,7 @@ export default function Home() {
       <TryActions />
 
       {/* 04 · the impact */}
-      <Transition chapter="ch-impact" text="What happens if every county catches up with the best?" hot={5} />
+      <Transition chapter="ch-impact" text="With Ajoissa, more cancers are found before they spread." hot={4} />
       <Impact />
 
       {/* 05 · how we know (data quality and transparency) */}

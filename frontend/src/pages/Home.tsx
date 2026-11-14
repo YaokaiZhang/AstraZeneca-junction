@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
+import { Card, EdgeText, Label, TextRing } from '../components/ui'
 import { Actions, CheckIns, Clock, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
 import { Tilt, WordsUp } from './home/reveal'
 import { ChapterRail, Ecg, Impact, Transition } from './home/Story'
 import { Radar } from './home/Radar'
 import FinlandCanvas, { type Hover } from './home/FinlandCanvas'
-import { pct, spreadContrast } from './county/model'
 
-/** Hero stat: breast cancer found after spread, highest vs lowest county (Cancer Registry). */
-const BREAST = spreadContrast('breast')
 
 const CARDS = [
   { to: '/patient', tone: 'mustard' as const, a: 'For the', b: 'patient', k: '01', tilt: -2 },
@@ -17,21 +14,6 @@ const CARDS = [
   { to: '/county', tone: 'stone' as const, a: 'For the', b: 'county', k: '03', tilt: 3 },
 ]
 
-function useCountUp(target: number, ms = 1800, delay = 600) {
-  const [v, setV] = useState(0)
-  useEffect(() => {
-    let raf = 0
-    const t0 = performance.now() + delay
-    const step = (now: number) => {
-      const u = Math.min(1, Math.max(0, (now - t0) / ms))
-      setV(Math.round(target * (1 - Math.pow(1 - u, 3))))
-      if (u < 1) raf = requestAnimationFrame(step)
-    }
-    raf = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(raf)
-  }, [target, ms, delay])
-  return v
-}
 
 const WORDS = ['on time.', 'ajoissa.', 'i tid.']
 
@@ -50,9 +32,6 @@ export default function Home() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [scroll, setScroll] = useState(0)
   const stage = useRef<HTMLDivElement>(null)
-  const { worst, best } = BREAST
-  const hi = useCountUp(Math.round(worst.v * 100))
-  const lo = useCountUp(Math.round(best.v * 100), 1800, 900)
 
   useEffect(() => {
     const on = () => setScroll(Math.min(1, scrollY / innerHeight))
@@ -88,24 +67,9 @@ export default function Home() {
               <span className="block hero-in" style={{ animationDelay: '.3s' }}>found <RotatingWord /></span>
             </h1>
 
-            <div className="mt-8 lg:mt-[5svh] hero-in" style={{ animationDelay: '.5s' }}>
-              <Label>Breast cancers found after spreading</Label>
-              <div className="mt-3 flex items-end gap-5 lg:gap-7">
-                <div>
-                  <div className="font-serif text-5xl lg:text-7xl leading-none lining-nums tabular-nums text-terra">{hi}<span className="text-3xl">%</span></div>
-                  <div className="mt-2 font-serif italic text-lg lg:text-xl">{worst.c.name}</div>
-                </div>
-                <span className="pb-9 lg:pb-10 font-serif italic text-2xl opacity-50">vs</span>
-                <div>
-                  <div className="font-serif text-5xl lg:text-7xl leading-none lining-nums tabular-nums">{lo}<span className="text-3xl">%</span></div>
-                  <div className="mt-2 font-serif italic text-lg lg:text-xl flex items-center gap-2">{best.c.name}
-                    <SourceBadge id="cancerRegistry" kind="direct" demo={false}
-                      how={`Non-localized share of breast cancers with known stage, 2021–25 preliminary statistics. ${worst.c.name} ${pct(worst.v)} (95% range ${pct(worst.lo)}–${pct(worst.hi)}; stage unknown for ${pct(worst.unknown)}, close to half). ${best.c.name} ${pct(best.v)} (${pct(best.lo)}–${pct(best.hi)}; unknown ${pct(best.unknown)}). Finland ${pct(BREAST.nat)}.`} />
-                  </div>
-                </div>
-              </div>
-              <p className="mt-5 max-w-md font-sans text-base lg:text-lg leading-snug opacity-75">Ajoissa shows each county where people are lost, and what to do next.</p>
-            </div>
+            <p className="mt-8 lg:mt-[5svh] max-w-md font-sans text-lg lg:text-xl leading-snug opacity-75 hero-in" style={{ animationDelay: '.5s' }}>
+              Ajoissa shows each county where people are lost, and what to do next.
+            </p>
 
             <div className="mt-8 lg:mt-[4svh] flex flex-wrap gap-3 hero-in" style={{ animationDelay: '.65s' }}>
               <Link to="/patient" className="group inline-flex items-center gap-3 bg-ink text-paper rounded-full pl-6 pr-2 py-2 font-type uppercase text-xs tracking-widest hover:bg-terra transition-colors">

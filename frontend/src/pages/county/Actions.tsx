@@ -20,7 +20,7 @@ export function Actions({ countyId, plan, setPlan }: { countyId: string; plan: P
       <SimpleChain r={r} />
 
       <div className="mt-16 mb-5 flex items-center gap-3"><Label>Do next</Label>
-        {startHere(r).step === 'queue'
+        {startHere(r).step === 'capacity'
           ? <SourceBadge id="ourModel" kind="estimate" demo={false} how={`Queue to clear = colonoscopies a week × (today's wait − national wait), from ${r.name}'s 2024 colonoscopies and wait (Cancer Registry).`} />
           : <SourceBadge id="screeningTrials" kind="estimate" demo={false} how={`Expected result = the effect found in these studies, applied to ${r.name}'s 2024 screening numbers.`} />}</div>
       <Recommend r={r} plan={plan} setPlan={setPlan} res={res} />

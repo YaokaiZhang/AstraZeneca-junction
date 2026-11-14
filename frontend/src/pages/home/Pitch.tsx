@@ -337,7 +337,7 @@ function CountyMock() {
 }
 
 const VIEWS = [
-  { k: '01', who: 'Patient', a: 'Notice it.', b: 'Say it. Chase it.', p: 'Write down symptoms in your own words and find out whether a screening or a doctor visit is worth it: you get a next step, never a score. See how long each step of your care has taken, and if one runs late, Ajoissa drafts a message to the clinic for you. If you want, it checks in on you between visits. In Finnish, Swedish or English.', chips: ['Symptom diary', 'Screening check', 'Pathway clock', 'Check-ins', '3 languages'], mock: <PhoneMock />, to: '/patient' },
+  { k: '01', who: 'Patient', a: 'Notice it.', b: 'Say it. Chase it.', p: 'Write down symptoms in your own words and find out whether a screening or a doctor visit is worth it: you get a clear next step. See how long each step of your care has taken, and if one runs late, Ajoissa drafts a message to the clinic for you. If you want, it checks in on you between visits. In Finnish, Swedish or English.', chips: ['Symptom diary', 'Screening check', 'Pathway clock', 'Check-ins', '3 languages'], mock: <PhoneMock />, to: '/patient' },
   { k: '02', who: 'Hospital', a: 'See who is', b: 'falling behind.', p: 'A live list of patients whose next step is overdue, most delayed first. The worst cases are flagged for escalation, and the bars show which step causes the most delay.', chips: ['Off-track list', 'Auto-escalation', 'Shared records', 'Delay map'], mock: <HospitalMock />, to: '/hospital' },
   { k: '03', who: 'County', a: 'Find where', b: 'people are lost.', p: 'The detection radar follows each county from people at risk, to screening, to stage at diagnosis, to survival, and marks the step where it loses the most people. Darker tiles mean more late diagnoses.', chips: ['Detection radar', 'Who misses screening', 'Overload warning', 'Action brief'], mock: <CountyMock />, to: '/county' },
 ]
@@ -568,7 +568,7 @@ const unk = Object.values(REGISTRY_FI).map((r) => r.unknownStage)
 const OURS = [
   'Survival stand-in: deaths ÷ new cases per county.',
   'People at higher risk: a rough rule of ours, residents × county risk-factor prevalence. Not validated.',
-  'Bowel, breast and cervical check: Registry incidence × published relative risks. Not a clinical score.',
+  'Bowel, breast and cervical check: Registry incidence × published relative risks. Not clinically validated.',
   'Step targets: the 6-week rule, split into steps by us.',
 ]
 /** Stage reporting is itself a finding: how many counties miss it for most bowel cancers. */

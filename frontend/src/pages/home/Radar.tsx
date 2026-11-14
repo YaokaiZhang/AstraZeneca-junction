@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react'
-import { Card, EdgeText, Label, SourceBadge, Stamp, cx } from '../../components/ui'
+import { Card, EdgeText, Label, SourceBadge, cx } from '../../components/ui'
 import { useScrollProgress } from './reveal'
 import { tr } from '../patient/i18n'
 import { FINLAND } from '../../data/counties'
@@ -7,7 +7,7 @@ import { REAL_RANGE, fmt, rangeTowns, topExcess } from '../county/model'
 
 /* ───────────── detection radar (sticky, scroll-driven) ─────────────
    01 a person answers a few questions → 02 the sweep picks out high risk →
-   03 they get a next step, never a score → 04 zoom out to the county funnel →
+   03 they get a clear next step → 04 zoom out to the county funnel →
    05 real 2024 screening turnout spread across towns. */
 
 const PHASES: { a: string; b: string; lede: ReactNode }[] = [
@@ -20,8 +20,8 @@ const PHASES: { a: string; b: string; lede: ReactNode }[] = [
     lede: <>The answers are weighed against published risk data. Lung risk comes from a published lung-risk model <SourceBadge id="plco" kind="estimate" demo={false} how="PLCOm2012 (Tammemägi et al. 2013), applied to the answers the person typed in. Built on US trial data; not validated in Finland." />. Bowel, breast and cervical combine Cancer Registry rates with published risk ratios <SourceBadge id="ourModel" kind="estimate" demo={false} how={tr('en', 'how.estimate')} />.</>,
   },
   {
-    a: 'A next step.', b: 'Never a score.',
-    lede: <>The person only sees what to do next: a screening, or a talk with a doctor. The score reaches a clinician only if the person chooses to share it.</>,
+    a: 'A clear', b: 'next step.',
+    lede: <>The person sees what to do next: a screening, or a talk with a doctor. A clinician sees the details only if the person chooses to share them.</>,
   },
   {
     a: 'Then zoom out', b: 'to the county.',
@@ -204,15 +204,7 @@ export function Radar() {
                 <EdgeText>Next step</EdgeText>
                 <div className="font-type text-xs uppercase tracking-widest opacity-70">What you see</div>
                 <p className="mt-1.5 font-serif text-[22px] lg:text-2xl leading-[1.1]">Lung screening would be worth <span className="italic">discussing with a doctor.</span></p>
-                <div className="mt-3 tear pt-2.5 flex items-center justify-between gap-3">
-                  <span className="font-type text-xs uppercase tracking-widest opacity-70">Risk score</span>
-                  <span className="flex-1 h-3 rounded-sm bg-ink" aria-label="hidden" />
-                  <span className="font-type text-xs uppercase tracking-widest">not shown</span>
-                </div>
               </Card>
-              <div className={cx('absolute -top-16 right-1 lg:-top-4 lg:right-2 rv rv-stamp', zoom && 'in')} style={{ transitionDelay: zoom ? '1000ms' : '0ms' }}>
-                <Stamp tone="terra" rotate={10}>No score</Stamp>
-              </div>
             </div>
           </div>
 

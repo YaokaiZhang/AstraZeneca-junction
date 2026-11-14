@@ -1,163 +1,163 @@
-// Section 3: proven fixes. Each card carries its measured effect, its source and what it would do in this county.
-import type { ReactNode } from 'react'
-import { Card, Label, SourceBadge, Toggle, cx } from '../../components/ui'
+// Evidence: every proven fix, as a plain list grouped by the problem it solves. Each row says what the fix is,
+// what it gets this county and how sure we are; the source and the working sit behind "How we know".
+import { useState, type ReactNode } from 'react'
+import { Toggle, cx } from '../../components/ui'
+import { SOURCES } from '../../data/sources'
 import { Slider } from '../county/bits'
 import { type ScreeningRow } from './data'
 import {
-  DETECTION_FIXES, GOAL_PARTICIPATION, REFERRAL_FIXES, base, evaluate, flags, headroom, n0, n1, signed,
+  DETECTION_FIXES, GOAL_PARTICIPATION, REFERRAL_FIXES, base, evaluate, flags, headroom, n0, n1,
   type Fix, type Plan, type Result, type Step,
-  STEP_META,
 } from './model'
 
-const srcBadge = (f: Fix, how?: ReactNode) => <SourceBadge id={f.source} kind={f.source === 'ours' ? 'estimate' : 'direct'} demo={false} how={how} />
+/** Round for display: whole numbers below 20, then to 5, then to 10. */
+const about = (v: number) => {
+  const a = Math.abs(v)
+  return (a < 20 ? Math.round(a) : a < 100 ? Math.round(a / 5) * 5 : Math.round(a / 10) * 10).toLocaleString('en-GB')
+}
 
-function FixCard({ fix, on, onClick, impact, sub, disabled }: {
-  fix: Fix; on: boolean; onClick: () => void; impact: ReactNode; sub?: ReactNode; disabled?: boolean
+const PLAIN: Record<string, string> = {
+  navigation: 'A named nurse calls everyone with a positive test, books the colonoscopy and explains it. In Finland the screening nurse already does the follow-up; this gives them a daily list of who hasn’t booked.',
+  'patient-reminder': 'A letter, text or call to people with a positive test who haven’t booked yet.',
+  'clinician-reminder': 'The GP gets an alert when a positive test has no colonoscopy booked.',
+  'auto-referral': 'The colonoscopy is booked automatically as soon as the test is positive.',
+  reminder: 'A second letter or text to everyone who hasn’t sent the kit back.',
+  multilingual: 'The reminder in the person’s own language, for people whose mother tongue isn’t Finnish or Swedish.',
+  clinician: 'Doctors and nurses bring up screening whenever the person visits for anything else.',
+}
+
+const GROUPS: Record<Step, string> = {
+  detection: 'If people don’t send the kit back',
+  referral: 'If positive tests aren’t followed up',
+  capacity: 'If the wait is too long',
+}
+
+function Row({ name, what, result, label, on, onChange, disabled, how }: {
+  name: string; what: string; result: ReactNode; label: string; on: boolean; onChange: (v: boolean) => void; disabled?: boolean; how: ReactNode
 }) {
+  const [open, setOpen] = useState(false)
   return (
-    <div role="button" tabIndex={disabled ? -1 : 0} aria-pressed={on} aria-disabled={disabled}
-      onClick={() => !disabled && onClick()}
-      onKeyDown={(e) => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick() } }}
-      className={cx('rounded-lg border p-4 transition-all outline-none text-left',
-        disabled ? 'opacity-45 cursor-not-allowed border-black/10' : 'cursor-pointer',
-        on ? 'bg-ink text-paper border-ink shadow-lg' : !disabled && 'border-black/15 hover:border-ink hover:-translate-y-0.5 bg-paper')}>
-      <div className="flex items-start justify-between gap-3">
-        <p className="font-serif text-xl leading-tight">{fix.name}</p>
-        <span className={cx('w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center', on ? 'border-mustard bg-mustard' : 'border-current opacity-50')}>
-          {on && <span className="w-2 h-2 rounded-full bg-ink" />}
-        </span>
+    <li className={cx('py-4 border-t border-black/10 first:border-t-0', disabled && 'opacity-50')}>
+      <div className="grid sm:grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-2 items-start">
+        <div className="min-w-0">
+          <p className="font-serif text-xl leading-tight">{name}</p>
+          <p className="font-sans text-[15px] leading-snug opacity-80 mt-1 max-w-2xl">{what}</p>
+          <p className={cx('font-serif text-lg mt-2', on ? 'text-terra' : '')}>{result}</p>
+          <p className="font-sans text-[13px] opacity-60 mt-1">
+            {label} · <button onClick={() => setOpen(!open)} aria-expanded={open} className="underline underline-offset-2 hover:text-terra">{open ? 'Hide' : 'How we know'}</button>
+          </p>
+          {open && <div className="rise mt-2 font-sans text-[13px] leading-relaxed opacity-80 bg-black/[.04] rounded p-3 max-w-2xl">{how}</div>}
+        </div>
+        <div className="sm:pt-1"><Toggle on={on} onChange={(v) => !disabled && onChange(v)} label={on ? 'Applied' : 'Apply'} /></div>
       </div>
-      <p className="font-sans text-[14px] leading-snug opacity-80 mt-1">{fix.what}</p>
-      {fix.local && <p className={cx('font-sans text-[14px] leading-snug mt-2 pl-3 border-l-2', on ? 'border-mustard' : 'border-terra/60')}>{fix.local}</p>}
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className={cx('font-type text-[13px] uppercase tracking-wider px-2 py-0.5 rounded-full', on ? 'bg-mustard text-ink' : 'bg-black/[.07]')}>{fix.effect}</span>
-        <span onClick={(e) => e.stopPropagation()}>{srcBadge(fix)}</span>
-      </div>
-      <p className={cx('mt-3 font-serif text-2xl leading-none', on ? 'text-mustard' : '')}>{impact}</p>
-      {sub && <p className="font-type text-[13px] uppercase tracking-wider opacity-70 mt-1">{sub}</p>}
-      {fix.caveat && <p className="font-sans text-[13px] italic opacity-60 mt-2">{fix.caveat}</p>}
-    </div>
+    </li>
   )
 }
 
-function Column({ step, weak, children, note }: { step: Step; weak: boolean; children: ReactNode; note?: ReactNode }) {
-  const m = STEP_META[step]
-  return (
-    <div className="min-w-0">
-      <div className="flex items-center gap-2 mb-3">
-        <span className={cx('w-2.5 h-2.5 rounded-full', weak ? 'bg-terra' : 'bg-stone')} />
-        <Label>{m.n} · {m.short}{weak ? ' · leaks' : ''}</Label>
-      </div>
-      <div className="space-y-3">{children}</div>
-      {note && <p className="font-sans text-[13px] leading-snug opacity-65 mt-3">{note}</p>}
-    </div>
-  )
+const src = (f: Fix) => {
+  const s = SOURCES[f.source]
+  return <>Source: {s?.url ? <a className="underline" href={s.url} target="_blank" rel="noreferrer">{s.name}</a> : s?.name}.</>
 }
 
 export function Fixes({ r, plan, setPlan, res }: { r: ScreeningRow; plan: Plan; setPlan: (p: Plan) => void; res: Result }) {
   const f = flags(r)
   const b = base(r)
   const room = headroom(r)
-  // what one referral fix would add alone, for its card
+  const [adjust, setAdjust] = useState(false)
   const alone = (id: string) => evaluate(r, { ...plan, referral: [id], detectionPts: 0 }).referral.colonoscopies
-  const toggleRef = (id: string) => setPlan({ ...plan, referral: plan.referral.includes(id) ? plan.referral.filter((x) => x !== id) : [...plan.referral, id] })
-  const strongest = res.referral.fix
+  const toggleRef = (id: string, v: boolean) => setPlan({ ...plan, referral: v ? [...plan.referral.filter((x) => x !== id), id] : plan.referral.filter((x) => x !== id) })
 
-  return (
-    <div>
-      <div className="grid lg:grid-cols-3 gap-6 lg:gap-6">
-        <Column step="referral" weak={f.referral}
-          note={plan.referral.length > 1 ? <>Several picked: only the strongest, <b>{strongest?.name}</b>, counts. Effects are not multiplied together.</> : <>Pick several and only the strongest counts. Follow-through is capped at 95%.</>}>
-          {REFERRAL_FIXES.map((fx) => {
-            const add = alone(fx.id)
-            return (
-              <FixCard key={fx.id} fix={fx} on={plan.referral.includes(fx.id)} onClick={() => toggleRef(fx.id)}
-                impact={<>{signed(add)} <span className="font-type text-sm opacity-70">colonoscopies / yr</span></>}
-                sub={`≈ ${n1(add * b.yieldCancer)} cancers · ${n0(add * b.yieldPrecursor)} precursors`} />
-            )
-          })}
-        </Column>
-
-        <Column step="detection" weak={f.detection}
-          note={<>Patient navigation for screening (RR 2.01) comes from low US baselines and is not applied here. The goal is {GOAL_PARTICIPATION}% (National Cancer Strategy, Goal 2).</>}>
-          {DETECTION_FIXES.map((fx) => {
-            const pts = fx.pts(r)
-            const on = plan.detectionFix === fx.id
-            return (
-              <FixCard key={fx.id} fix={fx} on={on} disabled={room <= 0}
-                onClick={() => setPlan(on ? { ...plan, detectionFix: null, detectionPts: 0 } : { ...plan, detectionFix: fx.id, detectionPts: pts })}
-                impact={<>{signed(pts, n1)} <span className="font-type text-sm opacity-70">pts kit return</span></>}
-                sub={<>{fx.how(r)} · ≈ {n0(r.invited * pts / 100)} more kits
-                  {fx.id === 'multilingual' && <span className="ml-1.5 normal-case" onClick={(e) => e.stopPropagation()}><SourceBadge id="statfinLang" kind="direct" demo={false} /></span>}</>} />
-            )
-          })}
-          <Card className="p-4">
-            <Slider label="Kit return gain" value={plan.detectionPts} min={0} max={Math.max(0.1, Math.round(room * 10) / 10)} step={0.1}
+  const groups: Record<Step, ReactNode> = {
+    referral: (
+      <>
+        {REFERRAL_FIXES.map((fx) => {
+          const add = alone(fx.id)
+          return (
+            <Row key={fx.id} name={fx.name} what={PLAIN[fx.id]} on={plan.referral.includes(fx.id)} onChange={(v) => toggleRef(fx.id, v)}
+              result={<>About {about(add)} more colonoscopies a year, about {about(add * b.yieldCancer)} cancers found earlier</>}
+              label="Proven in other programmes"
+              how={<>In studies, {Math.round((fx.rr! - 1) * 100)}% more people with a positive test went on to have the colonoscopy (risk ratio {fx.rr}). {fx.caveat}.
+                <br />For {r.name}: {n0(r.testPositive)} positive tests × ({n1(Math.min(b.c * fx.rr!, Math.max(b.c, 0.95)) * 100)}% − {n1(b.c * 100)}% followed up) = {n0(add)} colonoscopies a year; cancers at {r.name}&apos;s 2024 rate of {r.cancers} per {n0(r.colonoscopyDone)} colonoscopies.<br />{src(fx)}</>} />
+          )
+        })}
+        <li className="pt-2 font-sans text-[13px] opacity-60 list-none">If you apply more than one, only the strongest is counted, and follow-up is capped at 95%.</li>
+      </>
+    ),
+    detection: (
+      <>
+        {DETECTION_FIXES.map((fx) => {
+          const pts = fx.pts(r)
+          const on = plan.detectionFix === fx.id
+          const kits = (r.invited * pts) / 100
+          return (
+            <Row key={fx.id} name={fx.name} what={PLAIN[fx.id]} on={on} disabled={room <= 0}
+              onChange={(v) => setPlan(v ? { ...plan, detectionFix: fx.id, detectionPts: pts } : { ...plan, detectionFix: null, detectionPts: 0 })}
+              result={<>About {about(kits)} more kits sent back a year</>}
+              label={fx.id === 'multilingual' ? 'Proven in other programmes; group size is our estimate' : 'Proven in other programmes'}
+              how={<>{fx.id === 'reminder' && <>In studies, reminders raised the number of kits sent back (risk ratio 1.20). We use a cautious 3 percentage points.</>}
+                {fx.id === 'multilingual' && <>Reminders raise kit return by a fifth (risk ratio 1.20). Applied to people with another mother tongue: {fx.how(r)}. Language share from Statistics Finland 2025.</>}
+                {fx.id === 'clinician' && <>US studies found about 13 percentage points more; capped so {r.name} doesn&apos;t pass the {GOAL_PARTICIPATION}% national goal.</>}
+                <br />For {r.name}: {n0(r.invited)} invited × {n1(pts)} points = about {n0(kits)} more kits. {fx.caveat}.<br />{src(fx)}</>} />
+          )
+        })}
+        <li className="pt-2 list-none">
+          <button onClick={() => setAdjust(!adjust)} className="font-sans text-[13px] underline underline-offset-2 opacity-70 hover:text-terra">{adjust ? 'Hide' : 'Adjust'} the kit return target</button>
+          {adjust && <div className="mt-3 max-w-md">
+            <Slider label="Extra kit return" value={plan.detectionPts} min={0} max={Math.max(0.1, Math.round(room * 10) / 10)} step={0.1}
               onChange={(v) => setPlan({ ...plan, detectionPts: v, detectionFix: null })}
-              display={<>{signed(plan.detectionPts, n1)}<span className="font-type text-sm opacity-60">pts</span></>} />
-            <div className="flex justify-between items-center mt-2 font-type text-[13px] uppercase tracking-wider">
-              <span className="opacity-70">{n1(r.participationPct)}% → {n1(r.participationPct + plan.detectionPts)}%</span>
-              <button disabled={room <= 0} onClick={() => setPlan({ ...plan, detectionPts: Math.round(room * 10) / 10, detectionFix: null })}
-                className="underline underline-offset-2 hover:text-terra disabled:opacity-40">Reach {GOAL_PARTICIPATION}%</button>
-            </div>
-          </Card>
-        </Column>
-
-        <Column step="capacity" weak={f.capacity}
-          note={<>Catch-up is a one-off to clear today&apos;s excess queue. The weekly capacity the fixes need is in the bottleneck panel below.</>}>
-          <Card className={cx('p-4', plan.catchUp && '!bg-ink !text-paper')}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-serif text-xl leading-tight">Catch-up colonoscopy sessions</p>
-                <p className="font-sans text-[14px] leading-snug opacity-80 mt-1">Extra evening or weekend lists until the wait is back to target.</p>
-              </div>
-              <Toggle on={plan.catchUp} onChange={(v) => setPlan({ ...plan, catchUp: v })} />
-            </div>
-            <div className="mt-3 flex items-center gap-2">
-              <span className={cx('font-type text-[13px] uppercase tracking-wider px-2 py-0.5 rounded-full', plan.catchUp ? 'bg-mustard text-ink' : 'bg-black/[.07]')}>Sized by queue model</span>
-              <SourceBadge id="ourModel" kind="estimate" demo={false}
-                how={<>catch-up = arrivals/wk × (wait − target)<br />= {n1(res.queue.arrivalsWeek)} × ({n1(res.queue.waitWeeks)} − {n1(res.queue.targetWeeks)}) weeks<br />= {n0(res.queue.catchUp)}</>} />
-            </div>
-            <p className={cx('mt-3 font-serif text-2xl leading-none', plan.catchUp && 'text-mustard')}>
-              {res.queue.catchUp < 0.5 ? 'Not needed' : <>{n0(res.queue.catchUp)} <span className="font-type text-sm opacity-70">one-off colonoscopies</span></>}
-            </p>
-            {res.queue.catchUp >= 0.5 && <p className="font-type text-[13px] uppercase tracking-wider opacity-70 mt-1">≈ {n1(res.queue.catchUp / plan.catchUpWeeks)} a week for {plan.catchUpWeeks} weeks</p>}
-            <p className="font-sans text-[13px] italic opacity-60 mt-2">Our calculation, not a trial result</p>
-          </Card>
-          <Card className="p-4 space-y-5">
+              display={<>+{n1(plan.detectionPts)}<span className="font-sans text-sm opacity-60"> points</span></>} />
+            <p className="font-sans text-[13px] opacity-60 mt-1">{n1(r.participationPct)}% → {n1(r.participationPct + plan.detectionPts)}% (national goal {GOAL_PARTICIPATION}%)</p>
+          </div>}
+        </li>
+      </>
+    ),
+    capacity: (
+      <>
+        <Row name="Catch-up colonoscopy lists" what={`Extra evening or weekend lists until the wait is back to about ${n1(plan.targetMonths)} months.`}
+          on={plan.catchUp} onChange={(v) => setPlan({ ...plan, catchUp: v })}
+          result={res.queue.catchUp < 0.5 ? <>Not needed: the wait is already at the target</> : <>About {about(res.queue.catchUp)} extra colonoscopies over {plan.catchUpWeeks} weeks, about {about(res.queue.catchUp / plan.catchUpWeeks)} a week</>}
+          label="Our estimate"
+          how={<>The people waiting beyond a {n1(plan.targetMonths)}-month wait: {n1(res.queue.arrivalsWeek)} colonoscopies a week × ({n1(res.queue.waitWeeks)} − {n1(res.queue.targetWeeks)}) weeks of extra wait = {n0(res.queue.catchUp)}. This is our calculation from the Cancer Registry figures, not a trial result.</>} />
+        <li className="pt-2 list-none">
+          <button onClick={() => setAdjust(!adjust)} className="font-sans text-[13px] underline underline-offset-2 opacity-70 hover:text-terra">{adjust ? 'Hide' : 'Adjust'} the target wait</button>
+          {adjust && <div className="mt-3 max-w-md space-y-5">
             <Slider label="Target wait" value={plan.targetMonths} min={0.8} max={Math.max(3, Math.ceil(r.medianMonths * 2) / 2)} step={0.1}
               onChange={(v) => setPlan({ ...plan, targetMonths: v })}
-              display={<>{n1(plan.targetMonths)}<span className="font-type text-sm opacity-60">mo</span></>} />
-            <Slider label="Catch-up spread over" value={plan.catchUpWeeks} min={4} max={26} step={1}
+              display={<>{n1(plan.targetMonths)}<span className="font-sans text-sm opacity-60"> months</span></>} />
+            <Slider label="Spread over" value={plan.catchUpWeeks} min={4} max={26} step={1}
               onChange={(v) => setPlan({ ...plan, catchUpWeeks: v })}
-              display={<>{plan.catchUpWeeks}<span className="font-type text-sm opacity-60">weeks</span></>} />
-          </Card>
-        </Column>
-      </div>
+              display={<>{plan.catchUpWeeks}<span className="font-sans text-sm opacity-60"> weeks</span></>} />
+          </div>}
+        </li>
+      </>
+    ),
+  }
 
-      {/* the gain, all fixes together */}
-      <Card tone="ink" className="mt-8 p-5 sm:p-7">
-        <div className="grid sm:grid-cols-3 gap-6">
-          {[
-            [res.total.colonoscopies, 'extra colonoscopies a year', n0],
-            [res.total.cancers, 'cancers found earlier', n1],
-            [res.total.precursors, 'precursors removed', n0],
-          ].map(([v, t, fmt]) => (
-            <div key={t as string}>
-              <p className="font-serif text-6xl leading-none text-mustard">{signed(v as number, fmt as (x: number) => string)}</p>
-              <p className="font-type text-sm uppercase tracking-widest opacity-80 mt-2">{t as string}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-5 pt-4 border-t border-paper/20 flex flex-wrap gap-x-6 gap-y-2 font-type text-sm uppercase tracking-wider opacity-80 items-center">
-          <span>Kit return {n1(r.participationPct)}% → {n1(r.participationPct + res.detection.pts)}%</span>
-          <span>Colonoscopy after positive {n1(b.c * 100)}% → {n1(res.referral.cNew * 100)}%</span>
-          <SourceBadge id="ourModel" kind="estimate" demo={false}
-            how={<>referral: positives × (c_new − c) = {n0(r.testPositive)} × ({n1(res.referral.cNew * 100)}% − {n1(b.c * 100)}%) = {n0(res.referral.colonoscopies)}<br />
-              detection: invited × Δp × positive rate × c_new = {n0(r.invited)} × {n1(res.detection.pts)}% × {n1(b.pos * 100)}% × {n1(res.referral.cNew * 100)}% = {n0(res.detection.colonoscopies)}<br />
-              cancers = colonoscopies × {r.cancers}/{r.colonoscopyDone}; precursors × {r.precursors}/{r.colonoscopyDone} (this county&apos;s 2024 yield)</>} />
-        </div>
-      </Card>
+  const order: Step[] = ['referral', 'detection', 'capacity']
+  const first = order.filter((s) => f[s])
+  const rest = order.filter((s) => !f[s])
+  const Group = ({ s }: { s: Step }) => (
+    <div className="mt-8 first:mt-0">
+      <p className="font-serif text-2xl sm:text-3xl italic">{GROUPS[s]}</p>
+      <ul className="mt-2">{groups[s]}</ul>
+    </div>
+  )
+  const total = res.total.colonoscopies
+  return (
+    <div className="max-w-4xl">
+      {first.map((s) => <Group key={s} s={s} />)}
+      {!first.length && <p className="font-sans text-[16px] opacity-75">No step is falling behind in {r.name}. All options are below.</p>}
+      {rest.length > 0 && (
+        <details className="mt-8" open={!first.length}>
+          <summary className="cursor-pointer font-sans text-[15px] underline underline-offset-4 opacity-75 hover:opacity-100 w-fit">More options, for steps that are on track</summary>
+          {rest.map((s) => <Group key={s} s={s} />)}
+        </details>
+      )}
+      {total > 0.5 && (
+        <p className="mt-8 p-5 rounded-lg bg-ink text-paper font-serif text-2xl leading-snug">
+          With what you&apos;ve applied: about <span className="text-mustard">{about(total)} more colonoscopies a year</span> and about <span className="text-mustard">{about(res.total.cancers)} cancers found earlier</span>.
+        </p>
+      )}
     </div>
   )
 }

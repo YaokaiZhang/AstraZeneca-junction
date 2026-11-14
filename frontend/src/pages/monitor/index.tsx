@@ -138,10 +138,10 @@ export default function MonitorPage() {
             <div key={countyId} className="rise"><MixGap r={r} /></div>
           </Section>
           <Section n="C" a="All proven fixes," b={`in ${r.name}`} id="evidence-fixes"
-            aside={<p className="font-sans text-[15px] opacity-70 max-w-sm">Each card shows the measured effect and its source. Tap to apply; the numbers are for {r.name}&apos;s 2024 volumes.</p>}>
+            aside={<p className="font-sans text-[15px] opacity-70 max-w-sm">What each fix would do with {r.name}&apos;s 2024 numbers. Apply one to see it in the plan.</p>}>
             <Fixes r={r} plan={plan} setPlan={setPlan} res={res} />
           </Section>
-          <Section n="D" a="Colonoscopy" b="capacity" id="bottleneck">
+          <Section n="D" a="Can the hospital" b="keep up?" id="bottleneck">
             <Bottleneck r={r} plan={plan} setPlan={setPlan} res={res} />
           </Section>
           {SHOW_FULL_STORY && <Section n="E" a="Every county," b="same tool">

@@ -82,3 +82,21 @@ export function useCount(target: number, on: boolean, ms = 1600) {
   }, [on, target, ms])
   return v
 }
+
+/** Leans toward the pointer in 3D, like the hero map. */
+export function Tilt({ children, className, max = 8 }: { children: ReactNode; className?: string; max?: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [t, setT] = useState({ x: 0, y: 0 })
+  return (
+    <div ref={ref} className={cx('[perspective:1000px]', className)}
+      onPointerMove={(e) => {
+        if (e.pointerType !== 'mouse') return
+        const r = ref.current!.getBoundingClientRect()
+        setT({ x: ((e.clientY - r.top) / r.height - 0.5) * -max, y: ((e.clientX - r.left) / r.width - 0.5) * max * 1.2 })
+      }}
+      onPointerLeave={() => setT({ x: 0, y: 0 })}>
+      <div className="h-full transition-transform duration-300 ease-out will-change-transform"
+        style={{ transform: `rotateX(${t.x}deg) rotateY(${t.y}deg)`, transformStyle: 'preserve-3d' }}>{children}</div>
+    </div>
+  )
+}

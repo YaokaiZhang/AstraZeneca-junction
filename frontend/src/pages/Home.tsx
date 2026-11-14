@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
 import { Actions, CheckIns, Clock, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
-import { WordsUp } from './home/reveal'
-import { ChapterRail, Impact, Transition } from './home/Story'
+import { Tilt, WordsUp } from './home/reveal'
+import { ChapterRail, Ecg, Impact, Transition } from './home/Story'
 import { Radar } from './home/Radar'
 import FinlandCanvas, { type Hover } from './home/FinlandCanvas'
 import { pct, spreadContrast } from './county/model'
@@ -42,20 +42,6 @@ function RotatingWord() {
     <span className="relative inline-block align-top py-[0.18em] -my-[0.18em] overflow-hidden whitespace-nowrap">
       <span key={i} className="block italic text-terra hero-word">{WORDS[i]}</span>
     </span>
-  )
-}
-
-function Ecg() {
-  // one heartbeat, repeated; the path scrolls left forever
-  const beat = 'l40 0 l6 -6 l6 6 l10 0 l5 8 l7 -46 l7 58 l6 -20 l14 0 l10 -9 l12 9 l77 0'
-  const d = 'M0 40 ' + Array.from({ length: 12 }, () => beat).join(' ')
-  return (
-    <div className="absolute inset-x-0 bottom-0 h-16 overflow-hidden pointer-events-none opacity-70" aria-hidden>
-      <svg className="ecg-scroll h-full" viewBox="0 0 4800 60" preserveAspectRatio="none" style={{ width: '200%' }}>
-        <path d={d} fill="none" stroke="#C65D3B" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
-      </svg>
-      <div className="absolute inset-0 bg-gradient-to-r from-paper via-transparent to-paper" />
-    </div>
   )
 }
 
@@ -206,7 +192,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 w-full max-w-5xl">
           {CARDS.map((c) => (
             <Link key={c.to} to={c.to} className="block">
-              <Card tone={c.tone} tilt={c.tilt} className="h-[360px] lg:h-[460px] p-8 pl-12 flex flex-col hover:!rotate-0 hover:-translate-y-2">
+              <Tilt max={10}><Card tone={c.tone} tilt={c.tilt} className="h-[360px] lg:h-[460px] p-8 pl-12 flex flex-col hover:!rotate-0 hover:-translate-y-2">
                 <EdgeText>Ajoissa · {c.k}</EdgeText>
                 <Label>{c.k}</Label>
                 <div className="mt-auto">
@@ -217,7 +203,7 @@ export default function Home() {
                   <span className="font-type text-xs uppercase tracking-widest">Open</span>
                   <span>→</span>
                 </div>
-              </Card>
+              </Card></Tilt>
             </Link>
           ))}
         </div>

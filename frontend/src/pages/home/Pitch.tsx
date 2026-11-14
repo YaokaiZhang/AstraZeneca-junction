@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Card, EdgeText, KindLegend, KindDot, Label, Picker, SourceBadge, Stamp, cx } from '../../components/ui'
+import { Card, EdgeText, KindLegend, KindDot, Label, Picker, SourceBadge, Stamp, TextRing, cx } from '../../components/ui'
 import { CANCERS, COUNTIES, type RadarCancerId } from '../../data/counties'
 import { buildBrief } from '../county/Brief'
 import { RADAR_CANCERS, pct, spreadContrast, stepInfo, unknownMajority } from '../county/model'
 import { REGISTRY_FI } from '../../data/registry.generated'
-import { SOURCES } from '../../data/sources'
 import { PATHWAY } from '../../data/pathway'
 import { tr } from '../patient/i18n'
-import { Reveal, WordsUp, useCount, useInView, useScrollProgress } from './reveal'
+import { Reveal, Tilt, WordsUp, useCount, useInView, useScrollProgress } from './reveal'
 
 /* short plain-language explainer under each headline */
 function Lede({ children, className, delay = 250 }: { children: React.ReactNode; className?: string; delay?: number }) {
@@ -176,8 +175,9 @@ export function TooLate() {
   const [ref, on] = useInView<HTMLDivElement>(0.35)
   const { worst, best, nat, counted } = BREAST
   return (
-    <section className="relative px-5 lg:px-24 py-28 lg:py-40">
-      <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
+    <section className="relative px-5 lg:px-24 py-28 lg:py-40 overflow-hidden">
+      <div className="absolute -right-48 -top-24 opacity-[0.07] pointer-events-none hidden lg:block text-terra" aria-hidden><TextRing size={640} text="found too late • stage at diagnosis • " /></div>
+      <h2 className="relative font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
         <WordsUp text="Found" /><br /><WordsUp text="too late." className="italic text-terra" delay={140} />
       </h2>
 
@@ -374,7 +374,7 @@ export function Views() {
             </Reveal>
           </div>
           <Reveal fx={i % 2 ? 'left' : 'right'} className="flex justify-center overflow-visible">
-            <div className="max-w-full overflow-x-auto lg:overflow-visible py-6 px-2">{v.mock}</div>
+            <Tilt max={10} className="max-w-full overflow-x-auto lg:overflow-visible py-6 px-2"><div className="float-y">{v.mock}</div></Tilt>
           </Reveal>
         </div>
       ))}
@@ -452,11 +452,11 @@ export function ThreeDates() {
         </svg>
         {dates.map(([a, b], i) => (
           <div key={a} className={cx('relative rv rv-stamp', on && 'in')} style={{ transitionDelay: `${i * 350}ms` }}>
-            <Card tone={i === 1 ? 'mustard' : 'paper'} tilt={[-4, 3, -2][i]} className="p-6 pl-10 border border-ink/10">
+            <Tilt max={14}><Card tone={i === 1 ? 'mustard' : 'paper'} tilt={[-4, 3, -2][i]} className="p-6 pl-10 border border-ink/10">
               <EdgeText>{String(i + 1).padStart(2, '0')}</EdgeText>
               <div className="label">{a}</div>
               <div className="mt-2 font-type text-4xl lg:text-5xl tracking-tight">{b}</div>
-            </Card>
+            </Card></Tilt>
           </div>
         ))}
         <div className={cx('rv rv-scale text-center sm:text-left', on && 'in')} style={{ transitionDelay: '1200ms' }}>
@@ -593,7 +593,7 @@ export function Transparency() {
       <Lede className="mt-8">Every number has a badge. Hover it for the source.</Lede>
       <div className="mt-16 lg:mt-24 grid md:grid-cols-3 gap-8 lg:gap-10 items-start">
         <Reveal delay={0}>
-          <Card tone="paper" tilt={-1.5} className="relative p-6 pl-10 border border-ink/10">
+          <Tilt><Card tone="paper" tilt={-1.5} className="relative p-6 pl-10 border border-ink/10">
             <EdgeText>Published</EdgeText>
             <div className="flex items-center gap-2"><KindDot kind="direct" /><Label>Official data</Label></div>
             <ul className="mt-4 space-y-2.5">
@@ -601,25 +601,24 @@ export function Transparency() {
                 <li key={id} className="flex items-baseline justify-between gap-3 border-b border-dashed border-ink/15 pb-2">
                   <span className="font-serif text-lg leading-tight">{what}</span>
                   <span className="flex items-center gap-2 shrink-0">
-                    {SOURCES[id].years && <span className="font-type text-xs tabular-nums opacity-60">{SOURCES[id].years!.replace(/^cases and deaths /, '').replace(' · stage ', ' / ').replace(' and ', ', ')}</span>}
                     <SourceBadge id={id} kind="direct" demo={false} />
                   </span>
                 </li>
               ))}
             </ul>
-          </Card>
+          </Card></Tilt>
         </Reveal>
         <Reveal delay={150}>
-          <Card tone="mustard" tilt={1} className="relative p-6 pl-10">
+          <Tilt><Card tone="mustard" tilt={1} className="relative p-6 pl-10">
             <EdgeText>Worked out</EdgeText>
             <div className="flex items-center gap-2"><KindDot kind="estimate" /><Label className="!opacity-80">Our calculations</Label></div>
             <ul className="mt-4 space-y-3 font-sans text-[15px] leading-snug">
               {OURS.map((t) => <li key={t} className="border-b border-dashed border-ink/20 pb-3">{t}</li>)}
             </ul>
-          </Card>
+          </Card></Tilt>
         </Reveal>
         <Reveal delay={300}>
-          <Card tone="ink" tilt={-1} className="relative p-6 pl-10">
+          <Tilt><Card tone="ink" tilt={-1} className="relative p-6 pl-10">
             <EdgeText>Limits</EdgeText>
             <div className="flex items-center gap-2"><KindDot kind="gap" /><Label className="!opacity-70">What we cannot say</Label></div>
             <p className="mt-4 pb-3 border-b border-dashed border-paper/20 font-serif text-2xl leading-tight">
@@ -629,7 +628,7 @@ export function Transparency() {
             <ul className="mt-3 space-y-3 font-sans text-[15px] leading-snug">
               {LIMITS.map((t) => <li key={t} className="border-b border-dashed border-paper/20 pb-3">{t}</li>)}
             </ul>
-          </Card>
+          </Card></Tilt>
         </Reveal>
       </div>
     </section>
@@ -690,7 +689,8 @@ export function Actions() {
   const county = COUNTIES.find((c) => c.id === cid)!
   const brief = buildBrief(county, k)
   return (
-    <section id="act" className="relative px-5 lg:px-24 py-28 lg:py-40" aria-label="Actions">
+    <section id="act" className="relative px-5 lg:px-24 py-28 lg:py-40 overflow-hidden" aria-label="Actions">
+      <div className="absolute -right-48 -top-24 opacity-[0.07] pointer-events-none hidden lg:block" aria-hidden><TextRing size={640} text="finding • action • who • target • " /></div>
       <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
         <WordsUp text="A gap found." /><br /><WordsUp text="A step to take." className="italic text-terra" delay={180} />
       </h2>
@@ -719,7 +719,7 @@ export function Actions() {
       <div className="mt-20 lg:mt-24 grid lg:grid-cols-[1.3fr_1fr] gap-12 lg:gap-20 items-start">
         {/* real-data hook: any county → its weakest step → its three actions (same engine as the county brief) */}
         <Reveal fx="up">
-          <Card tone="mustard" tilt={-1} className="relative p-6 pl-10 lg:p-8 lg:pl-12">
+          <Tilt max={4}><Card tone="mustard" tilt={-1} className="relative p-6 pl-10 lg:p-8 lg:pl-12">
             <EdgeText>Try it</EdgeText>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
               <Label className="!opacity-80">Pick a county</Label>
@@ -749,7 +749,7 @@ export function Actions() {
             <a href={`#/county?c=${cid}&rc=${k}`} className="group mt-6 inline-flex items-center gap-3 font-type uppercase text-xs tracking-widest">
               Full brief, printable <span className="w-9 h-9 rounded-full border border-ink flex items-center justify-center group-hover:bg-ink group-hover:text-mustard transition">→</span>
             </a>
-          </Card>
+          </Card></Tilt>
         </Reveal>
 
         {/* what it takes to start */}

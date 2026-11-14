@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Label, SourceBadge, cx } from '../../components/ui'
+import { Label, SourceBadge, TextRing, cx } from '../../components/ui'
 import { COUNTIES } from '../../data/counties'
 import { earlierFinds, fmt, pct, projection, screeningGain } from '../county/model'
 import { useCount, useInView, useScrollProgress } from './reveal'
@@ -27,19 +27,26 @@ export function Transition({ text, hot = 3, chapter }: { text: string; hot?: num
   return (
     <section ref={ref} id={chapter} data-chapter={chapter} className="relative h-[140svh] scroll-mt-0">
       <div className="sticky top-0 h-[100svh] flex flex-col items-center justify-center px-5 overflow-hidden">
+        <div className="absolute left-1/2 top-1/2 pointer-events-none text-terra" aria-hidden
+          style={{ opacity: 0.05 * line, transform: `translate(-50%, -50%) scale(${0.8 + 0.3 * p}) rotate(${p * 90}deg)` }}>
+          <TextRing size={760} text={ch ? `chapter ${ch.n} • ${ch.title} • ajoissa • ` : 'ajoissa • on time • i tid • '} />
+        </div>
         {ch && (
           <div className="mb-6 flex items-center gap-3 font-type text-xs uppercase tracking-[0.3em] transition-opacity duration-500" style={{ opacity: 0.35 + 0.65 * line }}>
             <span className="text-terra">Chapter {ch.n}</span><span className="w-6 h-px bg-ink/40" /><span>{ch.title}</span>
           </div>
         )}
         <div className="w-px h-[16svh] bg-terra origin-top" style={{ transform: `scaleY(${line})` }} />
-        <div className="mt-3 w-2 h-2 rounded-full bg-terra transition-opacity duration-300" style={{ opacity: line >= 1 ? 1 : 0 }} />
-        <p className="mt-10 max-w-5xl text-center font-serif font-light text-[10vw] sm:text-6xl lg:text-7xl xl:text-8xl leading-[1.04] tracking-tight">
+        <div className="relative mt-3 w-2 h-2 transition-opacity duration-300" style={{ opacity: line >= 1 ? 1 : 0 }}>
+          <span className="absolute inset-0 rounded-full bg-terra" />
+          <span className="absolute inset-0 rounded-full bg-terra ping-soft" />
+        </div>
+        <p className="relative mt-10 max-w-5xl text-center font-serif font-light text-[10vw] sm:text-6xl lg:text-7xl xl:text-8xl leading-[1.04] tracking-tight">
           {words.map((w, i) => {
             const t = Math.min(1, Math.max(0, shown - i))
             return (
               <span key={i} className={i >= words.length - hot ? 'italic text-terra' : undefined}
-                style={{ opacity: 0.1 + 0.9 * t, display: 'inline-block', transform: `translateY(${(1 - t) * 0.25}em)` }}>
+                style={{ opacity: 0.1 + 0.9 * t, display: 'inline-block', transform: `translateY(${(1 - t) * 0.25}em)`, filter: `blur(${(1 - t) * 4}px)` }}>
                 {w}&nbsp;
               </span>
             )
@@ -47,6 +54,20 @@ export function Transition({ text, hot = 3, chapter }: { text: string; hot?: num
         </p>
       </div>
     </section>
+  )
+}
+
+export function Ecg({ className }: { className?: string }) {
+  // one heartbeat, repeated; the path scrolls left forever
+  const beat = 'l40 0 l6 -6 l6 6 l10 0 l5 8 l7 -46 l7 58 l6 -20 l14 0 l10 -9 l12 9 l77 0'
+  const d = 'M0 40 ' + Array.from({ length: 12 }, () => beat).join(' ')
+  return (
+    <div className={cx('absolute inset-x-0 bottom-0 h-16 overflow-hidden pointer-events-none opacity-70', className)} aria-hidden>
+      <svg className="ecg-scroll h-full" viewBox="0 0 4800 60" preserveAspectRatio="none" style={{ width: '200%' }}>
+        <path d={d} fill="none" stroke="#C65D3B" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <div className="absolute inset-0 bg-gradient-to-r from-paper via-transparent to-paper" />
+    </div>
   )
 }
 
@@ -103,24 +124,30 @@ const FINDS_HOW = `For breast, bowel and lung: each county's share of cancers fo
 const SCREEN_HOW = `Each county below the strategy target of 80% turnout is brought up to 80% (THL Sotkanet 2024 turnout: bowel 6103, cervical 3620, breast 3621). People invited ≈ residents in the programme's age band (Statistics Finland 2025: bowel 56–74, breast women 50–69, cervical women 30–65). Counties already above 80% are left as they are. Per screening round: bowel and breast every 2 years, cervical every 5.`
 const PROJ_HOW = `Lung, bowel, pancreas and liver. Cases today = Cancer Registry mean 2020–24, ${fmt(Math.round(PROJ.now))} a year. 2035 = the same age-specific rates applied to Statistics Finland's 2035 population projection (table 14wx): ${fmt(Math.round(PROJ.then))} a year.`
 
+const DOTS = FINDS.rows.reduce((t, r) => t + Math.round(r.perYear), 0)
+
 /** One dot per cancer found earlier, grouped by type; fills itself in once on screen. */
 function Waffle({ on }: { on: boolean }) {
+  const [wave, setWave] = useState(false)
+  useEffect(() => { if (!on) return; const id = setTimeout(() => setWave(true), 400 + DOTS * 4 + 600); return () => clearTimeout(id) }, [on])
   const dots = useMemo(() => FINDS.rows.flatMap((r) => Array.from({ length: Math.round(r.perYear) }, () => r.k)), [])
   return (
     <div className="grid gap-[3px] sm:gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(8px, 1fr))' }} aria-hidden>
       {dots.map((c, i) => (
-        <span key={i} className="aspect-square rounded-full transition-[background-color,transform] duration-300"
-          style={{
-            background: on ? COLORS[c] : 'rgba(31,31,31,.08)',
-            transform: on ? 'scale(1)' : 'scale(.6)',
-            transitionDelay: `${400 + i * 4}ms`,
-          }} />
+        <span key={i} className="aspect-square">
+          <span className={cx('block w-full h-full rounded-full transition-[background-color,transform] duration-300', wave && 'dot-wave')}
+            style={{
+              background: on ? COLORS[c] : 'rgba(31,31,31,.08)',
+              transform: on ? undefined : 'scale(.6)',
+              transitionDelay: `${400 + i * 4}ms`,
+              animationDelay: `${(i % 48) * 45}ms`,
+            }} />
+        </span>
       ))}
     </div>
   )
 }
 
-const DOTS = FINDS.rows.reduce((t, r) => t + Math.round(r.perYear), 0)
 
 function Stat({ on, delay, value, unit, line, badge, hot }: { on: boolean; delay: number; value: React.ReactNode; unit?: string; line: string; badge: React.ReactNode; hot?: boolean }) {
   return (
@@ -136,10 +163,10 @@ export function Impact() {
   const t = useCount(1, on, 2000)
   const t2 = useCount(1, on, 2400)
   return (
-    <section className="relative min-h-[100svh] flex flex-col justify-center px-5 lg:px-24 py-16" aria-label="Estimated impact">
+    <section className="relative min-h-[100svh] flex flex-col justify-center px-5 lg:px-24 py-16 overflow-hidden" aria-label="Estimated impact">
       <div ref={ref} className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-12 lg:gap-20 items-center">
         <div>
-          <Label>If every county matched the best quarter</Label>
+          <Label>If every county found cancer as early as Finland's best</Label>
           <div className="mt-4 flex items-end gap-4 flex-wrap">
             <span className="font-serif text-8xl lg:text-[9rem] leading-[0.8] tabular-nums lining-nums text-terra">{fmt(Math.round(DOTS * t))}</span>
             <span className="pb-1 font-serif text-2xl lg:text-3xl leading-tight">more cancers a year<br /><span className="italic">found before they spread</span>
@@ -159,17 +186,18 @@ export function Impact() {
         </div>
 
         <div className="space-y-8">
-          <Stat on={on} delay={600} value={`+${fmt(round1000(SCREEN.total * t2))}`} line="screened each round, at 80% turnout"
+          <Stat on={on} delay={600} value={`+${fmt(round1000(SCREEN.total * t2))}`} line="more people screened, at 80% turnout"
             badge={<SourceBadge id="ourModel" kind="estimate" demo={false} how={SCREEN_HOW} />} />
-          <Stat on={on} delay={900} hot value={<>0 <span className="opacity-40 text-4xl">→</span> {Math.round(COUNTIES.length * t2)}</>} line="counties that can see cancer waiting times"
+          <Stat on={on} delay={900} hot value={<>0 <span className="opacity-40 text-4xl">→</span> {Math.round(COUNTIES.length * t2)}</>} line="counties that can see their cancer waits"
             badge={<SourceBadge id="waitGap" kind="gap" demo={false} />} />
-          <Stat on={on} delay={1200} value={`+${Math.round(PROJ.rise * 100 * t2)}`} unit="%" line="cases by 2035, planned ahead"
+          <Stat on={on} delay={1200} value={`+${Math.round(PROJ.rise * 100 * t2)}`} unit="%" line="more cases by 2035: planned ahead"
             badge={<SourceBadge id="statfinProjection" kind="estimate" demo={false} how={PROJ_HOW} />} />
         </div>
       </div>
       <p className={cx('rv rv-up mt-12 font-type text-xs uppercase tracking-widest opacity-60', on && 'in')} style={{ transitionDelay: '1600ms' }}>
         Estimates from open data · counts only cases with a known stage · hover a badge for the method
       </p>
+      <Ecg className="opacity-40" />
     </section>
   )
 }

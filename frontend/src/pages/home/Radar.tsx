@@ -5,7 +5,7 @@ import { tr } from '../patient/i18n'
 
 /* ───────────── detection radar (sticky, scroll-driven) ─────────────
    01 a person answers a few questions → 02 the sweep picks out high risk →
-   03 they get a clear next step → 04 zoom out to the county funnel. */
+   03 they get a clear next step. */
 
 const PHASES: { a: string; b: string; lede: ReactNode }[] = [
   {
@@ -19,10 +19,6 @@ const PHASES: { a: string; b: string; lede: ReactNode }[] = [
   {
     a: 'A clear', b: 'next step.',
     lede: <>The person sees what to do next: a screening, or a talk with a doctor. A clinician sees the details only if the person chooses to share them.</>,
-  },
-  {
-    a: 'Then zoom out', b: 'to the county.',
-    lede: <>The same engine follows each county from people at risk, to screening, to stage at diagnosis, to survival, and marks the step where it loses the most people.</>,
   },
 ]
 
@@ -57,37 +53,27 @@ const QUESTIONS: [string, string][] = [
   ['Age', '63'], ['Smoked', '30 years'], ['A day', '20 cigarettes'], ['Family history', 'no'], ['Diary', 'cough, 3 weeks'],
 ]
 
-/* illustrative shape only; the county tab computes each step from Sotkanet, Statistics Finland and Cancer Registry data */
-const FUNNEL = [
-  { k: 'At risk', v: 100, drop: '' },
-  { k: 'Screened', v: 71, drop: '−29 not screened' },
-  { k: 'Found late', v: 38, drop: '−33 found too late', leak: true },
-  { k: 'Survival', v: 31, drop: '−7 deaths' },
-]
-
-
 export function Radar() {
   const [ref, p] = useScrollProgress<HTMLElement>()
   const { dots, you } = useMemo(buildDots, [])
-  const seg = Math.min(3.999, p * 4)
+  const seg = Math.min(2.999, p * 3)
   const phase = Math.floor(seg)
   const t = seg - phase
   const sweep = phase < 1 ? 0 : phase === 1 ? Math.min(360, t * 1.15 * 360) : 360
   const asked = phase === 0 ? Math.min(QUESTIONS.length, Math.floor(t * 1.4 * (QUESTIONS.length + 1))) : QUESTIONS.length
   const zoom = phase === 2
-  const radarOn = phase <= 2
   const Y = dots[you]
   const lit = dots.filter((d) => d.hi && d.a <= sweep).length
 
   return (
-    <section ref={ref} className="relative h-[370vh]" aria-label="Detection radar">
+    <section ref={ref} className="relative h-[290vh]" aria-label="Detection radar">
       <div className="sticky top-0 h-[100svh] overflow-hidden px-5 lg:px-24 flex flex-col justify-center gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-16 pt-6 pb-14 lg:py-0">
         {/* copy */}
         <div className="relative min-w-0">
           <div className="flex items-center gap-4">
             <Label>The detection radar</Label>
             <span className="h-px w-10 bg-ink/40" />
-            <span className="font-type text-[13px] tracking-widest tabular-nums">{String(phase + 1).padStart(2, '0')} / 04</span>
+            <span className="font-type text-[13px] tracking-widest tabular-nums">{String(phase + 1).padStart(2, '0')} / 03</span>
           </div>
           <div className="mt-4 grid text-[10.5vw] sm:text-6xl xl:text-7xl font-serif font-light leading-[0.95]">
             {PHASES.map((ph, i) => (
@@ -115,7 +101,7 @@ export function Radar() {
         {/* stage */}
         <div className="relative mx-auto shrink-0 aspect-square w-[min(88vw,46svh)] lg:w-[min(40vw,74svh)]">
           {/* radar */}
-          <div className={cx('absolute inset-0 transition-all duration-700', radarOn ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.35] pointer-events-none')}>
+          <div className={cx('absolute inset-0 transition-all duration-700', 'opacity-100 scale-100')}>
             <div className="absolute inset-0 rounded-full overflow-hidden">
             <svg viewBox="0 0 200 200" className="w-full h-full" aria-hidden>
               <g style={{ transform: zoom ? `translate(100px,100px) scale(2.2) translate(${-Y.x}px,${-Y.y}px)` : 'none', transformOrigin: '0 0', transition: 'transform 1.1s cubic-bezier(.6,0,.2,1)' }}>
@@ -183,42 +169,6 @@ export function Radar() {
                 <p className="mt-1.5 font-serif text-[22px] lg:text-2xl leading-[1.1]">Lung screening would be worth <span className="italic">discussing with a doctor.</span></p>
               </Card>
             </div>
-          </div>
-
-          {/* county funnel */}
-          <div className={cx('absolute inset-0 flex items-center transition-all duration-700', phase === 3 ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.6] pointer-events-none')}>
-            <Card tone="paper" tilt={1.5} className="w-full p-5 pl-10 lg:p-7 lg:pl-12 border border-ink/10">
-              <EdgeText>County</EdgeText>
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-type text-xs uppercase tracking-widest opacity-70">Out of 100 at risk · example county</span>
-                <SourceBadge id="illustration" kind="example" how="Made-up numbers that show the shape of the funnel. The county tab computes each step from real data." />
-              </div>
-              <div className="mt-4 space-y-3 lg:space-y-4">
-                {FUNNEL.map((f, i) => (
-                  <div key={f.k}>
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className={cx('font-serif text-xl lg:text-2xl leading-none', f.leak && 'italic text-terra')}>{f.k}</span>
-                      <span className="flex items-center gap-2">
-                        {f.drop && <span className={cx('font-type text-xs uppercase tracking-wider', f.leak ? 'text-terra' : 'opacity-60')}>{f.drop}</span>}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 h-5 lg:h-6 rounded-sm bg-ink/[0.06] overflow-hidden flex">
-                      <div className={cx('h-full origin-left transition-transform duration-1000 ease-out', f.leak ? 'bg-terra' : 'bg-ink/85')}
-                        style={{ width: `${f.v}%`, transform: `scaleX(${phase >= 3 ? 1 : 0})`, transitionDelay: `${300 + i * 180}ms` }} />
-                      {i > 0 && (
-                        <div className={'h-full transition-opacity duration-700'}
-                          style={{ width: `${FUNNEL[i - 1].v - f.v}%`, opacity: phase >= 3 ? 1 : 0, transitionDelay: `${700 + i * 180}ms`,
-                            background: f.leak ? 'repeating-linear-gradient(135deg, rgba(198,93,59,.35) 0 4px, transparent 4px 8px)' : 'repeating-linear-gradient(135deg, rgba(31,31,31,.12) 0 4px, transparent 4px 8px)' }} />
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className={cx('mt-4 flex items-center gap-2 rv rv-up', phase === 3 && 'in')} style={{ transitionDelay: '1300ms' }}>
-                <span className="w-2 h-2 rounded-full bg-terra motion-safe:animate-ping" />
-                <span className="font-type text-xs uppercase tracking-widest">Most people lost here → action brief</span>
-              </div>
-            </Card>
           </div>
 
         </div>

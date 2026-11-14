@@ -1,9 +1,10 @@
 // Actions tab: the county's concrete next steps for bowel cancer screening.
 // Where the chain leaks, the one action to start with, and what it takes. The header's Print button prints the one-page plan.
 import { useMemo } from 'react'
-import { Label } from '../../components/ui'
+import { Label, SourceBadge } from '../../components/ui'
 import { screeningById } from '../monitor/data'
 import { evaluate, type Plan } from '../monitor/model'
+import { startHere } from '../monitor/plain'
 import { Recommend, SimpleChain, Verdict, WhatItTakes } from '../monitor/Simple'
 
 export function Actions({ countyId, plan, setPlan }: { countyId: string; plan: Plan; setPlan: (p: Plan) => void }) {
@@ -14,25 +15,22 @@ export function Actions({ countyId, plan, setPlan }: { countyId: string; plan: P
       <Label className="mb-4">Bowel cancer screening · 2024 round</Label>
       <p className="font-serif text-3xl sm:text-[2.6rem] leading-[1.15] max-w-4xl"><Verdict r={r} /></p>
 
-      <Label className="mt-14 mb-5">Where people are lost</Label>
+      <div className="mt-14 mb-5 flex items-center gap-3"><Label>Where people are lost</Label>
+        <SourceBadge id="bowelScreening" kind="direct" demo={false} how={`${r.name}, 2024 round. Finland = whole-country figure.`} /></div>
       <SimpleChain r={r} />
 
-      <Label className="mt-16 mb-5">Do next</Label>
+      <div className="mt-16 mb-5 flex items-center gap-3"><Label>Do next</Label>
+        {startHere(r).step === 'queue'
+          ? <SourceBadge id="ourModel" kind="estimate" demo={false} how={`Queue to clear = colonoscopies a week × (today's wait − national wait), from ${r.name}'s 2024 colonoscopies and wait (Cancer Registry).`} />
+          : <SourceBadge id="screeningTrials" kind="estimate" demo={false} how={`Expected result = the effect found in these studies, applied to ${r.name}'s 2024 screening numbers.`} />}</div>
       <Recommend r={r} plan={plan} setPlan={setPlan} res={res} />
 
       <div className="mt-16 tear pt-8">
-        <Label className="mb-6">What it will take</Label>
+        <div className="mb-6 flex items-center gap-3"><Label>What it will take</Label>
+          <SourceBadge id="ourModel" kind="estimate" demo={false} how="Colonoscopies in 2031 = today's colonoscopies (Cancer Registry, 2024 round) × people aged 56–74 invited in 2031 (Statistics Finland population 2025) ÷ people invited in 2024, at today's rates. Shown as extra on top of what the county does today." /></div>
         <WhatItTakes r={r} plan={plan} setPlan={setPlan} res={res} />
       </div>
 
-      <div className="mt-16 tear pt-6 max-w-3xl font-type text-[13px] leading-relaxed opacity-70">
-        <p className="uppercase tracking-widest mb-2">Sources</p>
-        <ul className="space-y-1">
-          <li>Screening figures: Finnish Cancer Registry, bowel cancer screening statistics, 2024 round.</li>
-          <li>Effect of the action: studies of real screening programmes (JAMA Internal Medicine 2026 and 2018), applied to {r.name}&apos;s numbers.</li>
-          <li>Colonoscopies needed: our estimate from the registry figures and Statistics Finland population 2025, at today&apos;s rates.</li>
-        </ul>
-      </div>
     </div>
   )
 }

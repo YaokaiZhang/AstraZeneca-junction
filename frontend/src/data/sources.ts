@@ -111,6 +111,17 @@ export const SOURCES: Record<string, Source> = {
     years: 'diagnosed 2006–2015', retrieved: PULLED,
     links: [{ label: 'Article (PMC)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8976396/' }],
   },
+  bowelScreening: {
+    id: 'bowelScreening', name: 'Finnish Cancer Registry – bowel cancer screening statistics', url: 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html',
+    note: 'Bowel screening by wellbeing services county: kits sent back, positive tests, colonoscopies done, time from positive test to colonoscopy. Published 20 May 2026.',
+    years: '2024 round', retrieved: PULLED,
+  },
+  screeningTrials: {
+    id: 'screeningTrials', name: 'Studies of real screening programmes (JAMA Internal Medicine)', url: 'https://pubmed.ncbi.nlm.nih.gov/42832233/',
+    note: 'Meta-analysis of ways to raise colonoscopy after a positive test (JAMA Intern Med 2026), and of ways to raise kit return, e.g. reminders (Dougherty et al., JAMA Intern Med 2018). Their pooled effects are applied to the county\u2019s own numbers.',
+    years: 'published 2018 and 2026', retrieved: PULLED,
+    links: [{ label: 'JAMA Intern Med 2026 · PMID 42832233', url: 'https://pubmed.ncbi.nlm.nih.gov/42832233/' }, { label: 'JAMA Intern Med 2018 · PMID 30326005', url: 'https://pubmed.ncbi.nlm.nih.gov/30326005/' }],
+  },
   ourModel: { id: 'ourModel', name: 'Our calculation', note: 'Method shown below. Inputs are the published sources named in it.' },
   waitGap: { id: 'waitGap', name: 'No public source', note: 'Finland publishes no referral-to-treatment waiting times for cancer.' },
   mentor: { id: 'mentor', name: 'AstraZeneca mentor interview' },

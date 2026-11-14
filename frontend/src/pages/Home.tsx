@@ -1,4 +1,3 @@
-import { RiskInPractice } from './home/Practical'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, TextRing } from '../components/ui'
@@ -131,7 +130,6 @@ export default function Home() {
       <Radar />
       <Views />
       <CheckIns />
-      <RiskInPractice />
 
       {/* 03 · what to do (actionability) */}
       <Transition chapter="ch-do" text="Every gap it finds comes with a step to take on Monday." hot={4} />

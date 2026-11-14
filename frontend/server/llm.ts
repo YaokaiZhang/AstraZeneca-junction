@@ -217,7 +217,8 @@ export async function briefing(facts: Record<string, number | string>): Promise<
   } catch (e) {
     if (e instanceof Anthropic.APIError) {
       console.warn(`[llm] briefing: Claude API error ${e.status ?? ''}: ${e.name}`)
-      return { ok: false, status: 502, error: 'api_error' }
+      // status code and error type only (never the key or the request): enough to tell a bad key from a bad request
+      return { ok: false, status: 502, error: `api_error ${e.status ?? ''} ${e.name}`.trim() }
     }
     console.warn('[llm] briefing failed:', e instanceof Error ? e.name : 'unknown')
     return { ok: false, status: 502, error: 'failed' }

@@ -70,8 +70,8 @@ export function Screening({ countyId, select }: TabProps) {
       <div className="mt-5 grid lg:grid-cols-[minmax(0,1fr)_280px] gap-6 items-start">
         <Card tilt={-0.6} className="p-3 sm:p-5 min-w-0">
           <div className="flex flex-wrap justify-between items-center gap-2 mb-2 px-1">
-            <span className="flex items-center gap-1.5 font-type text-xs uppercase tracking-wider opacity-70">Turnout % {fitBadge}</span>
-            <div className="flex flex-wrap gap-3 font-type text-xs uppercase tracking-wider">
+            <span className="flex items-center gap-1.5 font-type text-sm uppercase tracking-wider opacity-70">Turnout % {fitBadge}</span>
+            <div className="flex flex-wrap gap-3 font-type text-sm uppercase tracking-wider">
               {(['help', 'copy'] as Verdict[]).map((v) => (
                 <span key={v} className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: VC[v] }} />{VL[v]}</span>
               ))}
@@ -83,17 +83,17 @@ export function Screening({ countyId, select }: TabProps) {
               <g key={v}>
                 <line x1={sx(v)} x2={sx(v)} y1={M.t} y2={H - M.b} stroke="#1F1F1F" strokeOpacity=".07" />
                 <line x1={M.l} x2={W - M.r} y1={sy(v)} y2={sy(v)} stroke="#1F1F1F" strokeOpacity=".07" />
-                <text x={sx(v)} y={H - M.b + 14} textAnchor="middle" className="font-type" style={{ fontSize: 10 }} fill="#1F1F1F" opacity=".6">{v}</text>
-                <text x={M.l - 6} y={sy(v) + 3} textAnchor="end" className="font-type" style={{ fontSize: 10 }} fill="#1F1F1F" opacity=".6">{v}</text>
+                <text x={sx(v)} y={H - M.b + 14} textAnchor="middle" className="font-type" style={{ fontSize: 12 }} fill="#1F1F1F" opacity=".6">{v}</text>
+                <text x={M.l - 6} y={sy(v) + 3} textAnchor="end" className="font-type" style={{ fontSize: 12 }} fill="#1F1F1F" opacity=".6">{v}</text>
               </g>
             ))}
             <polygon fill="#FFC233" fillOpacity=".14"
               points={`${sx(lo)},${sy(lo + band)} ${sx(hi - band)},${sy(hi)} ${sx(hi)},${sy(hi)} ${sx(hi)},${sy(hi - band)} ${sx(lo + band)},${sy(lo)} ${sx(lo)},${sy(lo)}`} />
             <line x1={sx(lo)} y1={sy(lo)} x2={sx(hi)} y2={sy(hi)} stroke="#1F1F1F" strokeDasharray="4 4" strokeOpacity=".5" />
-            <text x={W - M.r - 4} y={M.t + 12} textAnchor="end" className="font-type uppercase" style={{ fontSize: 9, letterSpacing: '.1em' }} fill="#5E6B4E">↖ better than predicted</text>
-            <text x={W - M.r - 4} y={H - M.b - 8} textAnchor="end" className="font-type uppercase" style={{ fontSize: 9, letterSpacing: '.1em' }} fill="#C65D3B">↘ worse than predicted</text>
-            <text x={(W + M.l) / 2} y={H - 4} textAnchor="middle" className="font-type uppercase" style={{ fontSize: 9, letterSpacing: '.15em' }} fill="#1F1F1F" opacity=".55">predicted</text>
-            <text transform={`translate(10 ${(H - M.b) / 2}) rotate(-90)`} textAnchor="middle" className="font-type uppercase" style={{ fontSize: 9, letterSpacing: '.15em' }} fill="#1F1F1F" opacity=".55">actual</text>
+            <text x={W - M.r - 4} y={M.t + 12} textAnchor="end" className="font-type uppercase" style={{ fontSize: 11, letterSpacing: '.1em' }} fill="#5E6B4E">↖ better than predicted</text>
+            <text x={W - M.r - 4} y={H - M.b - 8} textAnchor="end" className="font-type uppercase" style={{ fontSize: 11, letterSpacing: '.1em' }} fill="#C65D3B">↘ worse than predicted</text>
+            <text x={(W + M.l) / 2} y={H - 4} textAnchor="middle" className="font-type uppercase" style={{ fontSize: 11, letterSpacing: '.15em' }} fill="#1F1F1F" opacity=".55">predicted</text>
+            <text transform={`translate(10 ${(H - M.b) / 2}) rotate(-90)`} textAnchor="middle" className="font-type uppercase" style={{ fontSize: 11, letterSpacing: '.15em' }} fill="#1F1F1F" opacity=".55">actual</text>
             {[...pts].sort((a, b) => Number(inCounty(a)) - Number(inCounty(b))).map((d) => {
               const mine = inCounty(d)
               const r = 3 + Math.sqrt(d.t.population / 4000)
@@ -106,7 +106,7 @@ export function Screening({ countyId, select }: TabProps) {
                     fillOpacity={mine ? 0.95 : d.v === 'ok' ? 0.35 : 0.5}
                     stroke="#1F1F1F" strokeOpacity={mine ? 1 : 0.2} strokeWidth={isSel ? 3 : mine ? 1.6 : 0.6} />
                   {(mine && d.v !== 'ok') || isSel ? (
-                    <text x={sx(d.p) + Math.min(r, 14) + 3} y={sy(d.a) + 3} className="font-type" style={{ fontSize: 10 }} fill="#1F1F1F">{d.t.name}</text>
+                    <text x={sx(d.p) + Math.min(r, 14) + 3} y={sy(d.a) + 3} className="font-type" style={{ fontSize: 12 }} fill="#1F1F1F">{d.t.name}</text>
                   ) : null}
                 </g>
               )
@@ -120,9 +120,9 @@ export function Screening({ countyId, select }: TabProps) {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-serif text-3xl leading-none">{sel.t.name}</p>
-                  {sel.t.county !== countyId && <p className="font-type text-xs uppercase tracking-wider opacity-60 mt-1">{countyById(sel.t.county)!.name}</p>}
+                  {sel.t.county !== countyId && <p className="font-type text-sm uppercase tracking-wider opacity-60 mt-1">{countyById(sel.t.county)!.name}</p>}
                 </div>
-                <button onClick={() => setTownId(null)} aria-label="Close town" className="font-type text-xs w-7 h-7 rounded-full border border-current hover:bg-ink hover:text-mustard">✕</button>
+                <button onClick={() => setTownId(null)} aria-label="Close town" className="font-type text-sm w-7 h-7 rounded-full border border-current hover:bg-ink hover:text-mustard">✕</button>
               </div>
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <div>
@@ -134,11 +134,11 @@ export function Screening({ countyId, select }: TabProps) {
                   <p className="font-serif text-4xl leading-none flex items-baseline gap-1">{fmt(sel.p, 1)}<span className="text-lg">%</span> {fitBadge}</p>
                 </div>
               </div>
-              <p className={cx('inline-block mt-3 font-type text-[13px] uppercase tracking-wider px-2 py-1 rounded-full',
+              <p className={cx('inline-block mt-3 font-type text-[15px] uppercase tracking-wider px-2 py-1 rounded-full',
                 sel.v === 'help' ? 'bg-terra text-paper' : sel.v === 'copy' ? 'bg-moss text-paper' : 'bg-ink/10')}>
                 {sel.res >= 0 ? '+' : '−'}{fmt(Math.abs(sel.res), 1)} pts · {VL[sel.v]}
               </p>
-              <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 font-type text-[13px]">
+              <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 font-type text-[15px]">
                 <dt className="opacity-60 uppercase">Residents</dt><dd className="text-right">{fmt(sel.t.population)} <SourceBadge id="statfinPop" kind="direct" /></dd>
                 {FEATURES.map((f) => (
                   <FeatureRow key={f.key} label={f.label} value={sel.t[f.key]} />
@@ -177,7 +177,7 @@ function TownList({ title, tone, items, onPick, activeId }: {
             <button onClick={() => onPick(d.t)}
               className={cx('w-full flex justify-between items-baseline gap-2 py-1 border-b border-black/15 text-left hover:opacity-70', activeId === d.t.id && 'font-bold')}>
               <span className="font-serif text-lg leading-tight truncate">{d.t.name}</span>
-              <span className="font-type text-xs tabular-nums shrink-0">{d.res >= 0 ? '+' : '−'}{fmt(Math.abs(d.res), 1)} pts</span>
+              <span className="font-type text-sm tabular-nums shrink-0">{d.res >= 0 ? '+' : '−'}{fmt(Math.abs(d.res), 1)} pts</span>
             </button>
           </li>
         ))}

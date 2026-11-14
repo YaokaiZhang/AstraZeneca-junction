@@ -54,9 +54,9 @@ export default function Pathway() {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-6 lg:gap-0 items-start">
         <Card tone={overdue ? 'terra' : finished ? 'ink' : 'mustard'} tilt={-1.5} className="p-6 sm:p-8 relative z-10 lg:mr-[-28px] lg:mt-6">
           <Clock dates={dates} size={260} dark={overdue || finished}>
-            <span className="font-type text-xs uppercase tracking-widest opacity-70">{t('p.day')}</span>
+            <span className="font-type text-sm uppercase tracking-widest opacity-70">{t('p.day')}</span>
             <span className="font-serif text-7xl leading-none">{dayN}</span>
-            <span className="font-type text-xs uppercase tracking-widest opacity-70 flex items-center gap-1">{t('p.of', { n: totalTarget })} <SourceBadge id="thlTargets" kind="estimate" how={TARGET_HOW} /></span>
+            <span className="font-type text-sm uppercase tracking-widest opacity-70 flex items-center gap-1">{t('p.of', { n: totalTarget })} <SourceBadge id="thlTargets" kind="estimate" how={TARGET_HOW} /></span>
           </Clock>
         </Card>
 
@@ -78,7 +78,7 @@ export default function Pathway() {
                       style={{ width: `${Math.min(100, (st.waited / Math.max(st.waited, st.next.targetDays ?? 1, 1)) * 100)}%` }} />
                     {overdue && <div className="absolute inset-y-0 w-0.5 bg-ink" style={{ left: `${((st.next.targetDays ?? 0) / st.waited) * 100}%` }} />}
                   </div>
-                  <p className={cx('font-type text-xs uppercase tracking-widest mt-2', overdue ? 'text-terra' : 'opacity-60')}>
+                  <p className={cx('font-type text-sm uppercase tracking-widest mt-2', overdue ? 'text-terra' : 'opacity-60')}>
                     {overdue ? t('p.overdue', { n: st.overdueBy }) : st.overdueBy === 0 ? t('ago.today') : t('p.dueIn', { n: -st.overdueBy })}
                   </p>
                 </div>
@@ -132,12 +132,12 @@ export default function Pathway() {
             const isNext = st.next?.id === s.id && started
             return (
               <li key={s.id} className={cx('py-3 px-2 sm:px-3 grid grid-cols-[28px_minmax(0,1fr)] sm:grid-cols-[28px_minmax(0,1fr)_auto] gap-x-3 gap-y-2 items-center rounded', isNext && (overdue ? 'bg-terra/10' : 'bg-mustard/25'))}>
-                <span className={cx('w-6 h-6 rounded-full flex items-center justify-center font-type text-xs border',
+                <span className={cx('w-6 h-6 rounded-full flex items-center justify-center font-type text-sm border',
                   v ? 'bg-ink text-paper border-ink' : isNext ? (overdue ? 'border-terra text-terra border-2' : 'border-ink border-2') : 'border-black/20 opacity-60')}>{v ? '✓' : i + 1}</span>
                 <div className="min-w-0">
                   <label htmlFor={`d-${s.id}`} className="font-serif text-xl leading-tight block">{t(`step.${s.id}`)}</label>
                   {s.targetDays !== null && (
-                    <span className={cx('font-type text-xs uppercase tracking-widest', late ? 'text-terra font-bold' : 'opacity-60')}>
+                    <span className={cx('font-type text-sm uppercase tracking-widest', late ? 'text-terra font-bold' : 'opacity-60')}>
                       {gap !== null ? t('p.took', { n: gap, target: s.targetDays }) : t('p.target', { n: s.targetDays })}
                     </span>
                   )}
@@ -145,8 +145,8 @@ export default function Pathway() {
                 <div className="col-start-2 sm:col-start-3 flex items-center gap-2">
                   <input id={`d-${s.id}`} type="date" value={v ?? ''} max={now} onChange={(e) => setDate(s.id, e.target.value || undefined)}
                     className="font-type text-sm border-b border-black/20 py-1 outline-none focus:border-terra min-w-0" />
-                  <button onClick={() => setDate(s.id, now)} className="font-type text-xs uppercase tracking-widest border border-black/20 rounded-full px-2.5 py-1 hover:bg-ink hover:text-paper">{t('c.today')}</button>
-                  {v && <button onClick={() => setDate(s.id, undefined)} aria-label={t('p.clear')} title={t('p.clear')} className="font-type text-xs opacity-40 hover:opacity-100 hover:text-terra px-1">✕</button>}
+                  <button onClick={() => setDate(s.id, now)} className="font-type text-sm uppercase tracking-widest border border-black/20 rounded-full px-2.5 py-1 hover:bg-ink hover:text-paper">{t('c.today')}</button>
+                  {v && <button onClick={() => setDate(s.id, undefined)} aria-label={t('p.clear')} title={t('p.clear')} className="font-type text-sm opacity-60 hover:opacity-100 hover:text-terra px-1">✕</button>}
                 </div>
               </li>
             )
@@ -176,7 +176,7 @@ function Support({ barrier, side, owner }: { barrier: BarrierId; side: 'system' 
         {items.map((it) => {
           const inner = <>
             <span className="font-serif text-lg leading-tight block">{it.title}</span>
-            <span className="font-type text-xs uppercase tracking-widest opacity-70">{it.sub}{it.href && ' ↗'}</span>
+            <span className="font-type text-sm uppercase tracking-widest opacity-70">{it.sub}{it.href && ' ↗'}</span>
           </>
           return it.href
             ? <a key={it.title} href={it.href} target="_blank" rel="noreferrer" className="block bg-paper rounded-lg p-3 border border-black/10 hover:border-ink">{inner}</a>

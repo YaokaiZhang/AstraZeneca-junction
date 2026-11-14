@@ -154,7 +154,7 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
 
       <div className={cx('mt-8 rounded-lg p-5 bg-terra text-paper', !print && 'shadow-xl -rotate-1')}>
         <p className="font-serif text-3xl leading-tight">{brief.gap.text}</p>
-        <p className="font-type text-[13px] uppercase tracking-wider mt-2 flex flex-wrap items-center gap-2 opacity-90">{brief.gap.why.replace(/^[^:]+:\s*/, '')} {brief.gap.badge}</p>
+        <p className="font-type text-[15px] uppercase tracking-wider mt-2 flex flex-wrap items-center gap-2 opacity-90">{brief.gap.why.replace(/^[^:]+:\s*/, '')} {brief.gap.badge}</p>
       </div>
 
       <div className="mt-6">
@@ -162,7 +162,7 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
           {STRIP.map((s) => (
             <div key={s} className="min-w-0">
               <div className={cx('h-2 rounded-full', hot.has(s) ? 'bg-terra' : 'bg-black/10')} />
-              <p className={cx('font-type text-[10px] sm:text-[11px] uppercase tracking-wide mt-1 truncate', hot.has(s) ? '' : 'opacity-50')}>{s}</p>
+              <p className={cx('font-type text-[13px] sm:text-[13px] uppercase tracking-wide mt-1 truncate', hot.has(s) ? '' : 'opacity-70')}>{s}</p>
             </div>
           ))}
         </div>
@@ -176,7 +176,7 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
               <span className={cx('w-9 h-9 rounded-full flex items-center justify-center font-serif text-lg shrink-0', i === 0 ? 'bg-ink text-mustard' : 'border border-ink')}>{i + 1}</span>
               <div className="min-w-0">
                 <p className="font-serif text-2xl leading-tight flex items-center gap-2">{a.title} {a.badge}</p>
-                <p className="font-type text-xs mt-1 opacity-80">{a.detail}</p>
+                <p className="font-type text-sm mt-1 opacity-80">{a.detail}</p>
               </div>
             </li>
           ))}

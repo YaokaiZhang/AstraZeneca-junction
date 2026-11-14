@@ -31,7 +31,7 @@ export default function Privacy({ onErased, onSimulate }: { onErased: () => void
               <Btn variant="terra" onClick={() => { erasePatient(); setAsk(false); toast(t('pr.erased')); onErased() }}>{t('pr.erase')}</Btn>
             </div>
           )}
-          <span className="font-type text-xs uppercase tracking-widest opacity-50">{t('pr.gdpr')}</span>
+          <span className="font-type text-sm uppercase tracking-widest opacity-70">{t('pr.gdpr')}</span>
         </div>
       </div>
       <CheckinCard onSimulate={onSimulate} />

@@ -74,8 +74,8 @@ function ChatView() {
             {last.datePicker && (
               <span className="inline-flex items-center gap-1 border border-black/20 rounded-full pl-3 pr-1 py-0.5">
                 <label className="sr-only" htmlFor="chat-date">{t('d.pickDate')}</label>
-                <input id="chat-date" type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)} className="font-type text-xs outline-none" />
-                <button onClick={() => date && send(date, date)} className="font-type text-xs bg-ink text-paper rounded-full px-2.5 py-1">OK</button>
+                <input id="chat-date" type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)} className="font-type text-sm outline-none" />
+                <button onClick={() => date && send(date, date)} className="font-type text-sm bg-ink text-paper rounded-full px-2.5 py-1">OK</button>
               </span>
             )}
           </div>
@@ -104,7 +104,7 @@ function FlagCard() {
       {reasons.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-4">
           {reasons.map((r) => (
-            <span key={r.tag} className={cx('font-type text-xs uppercase tracking-wider px-2 py-0.5 rounded-full', r.red ? 'bg-paper text-terra' : 'border border-paper/50')}>
+            <span key={r.tag} className={cx('font-type text-sm uppercase tracking-wider px-2 py-0.5 rounded-full', r.red ? 'bg-paper text-terra' : 'border border-paper/50')}>
               {t(`sym.${r.tag}`)}{!r.red && ` · ${r.days} d`}
             </span>
           ))}
@@ -143,13 +143,13 @@ export function CheckinCard({ onSimulate }: { onSimulate?: () => void }) {
       <div className={cx('transition-opacity', !checkins.enabled && 'opacity-35')}>
         <div className="mt-4">
           <p className="font-serif text-4xl leading-none">{checkins.enabled ? d(nextIso, { weekday: 'short', day: 'numeric', month: 'short' }) : '—'}</p>
-          {checkins.enabled && <p className="font-type text-xs uppercase tracking-widest text-mustard mt-1">{nextIn <= 0 ? t('ago.today') : `+${nextIn} d`}</p>}
+          {checkins.enabled && <p className="font-type text-sm uppercase tracking-widest text-mustard mt-1">{nextIn <= 0 ? t('ago.today') : `+${nextIn} d`}</p>}
         </div>
         <div className="mt-4 flex items-center gap-2 flex-wrap" role="radiogroup" aria-label={t('ci.every')}>
-          <span className="font-type text-xs uppercase tracking-widest opacity-60 mr-1">{t('ci.every')}</span>
+          <span className="font-type text-sm uppercase tracking-widest opacity-60 mr-1">{t('ci.every')}</span>
           {[3, 7, 14].map((n) => (
             <button key={n} role="radio" aria-checked={checkins.everyDays === n} disabled={!checkins.enabled} onClick={() => upd({ everyDays: n })}
-              className={cx('relative font-type text-xs px-3 py-1.5 rounded-full border transition-colors',
+              className={cx('relative font-type text-sm px-3 py-1.5 rounded-full border transition-colors',
                 checkins.everyDays === n ? 'bg-mustard text-ink border-mustard' : 'border-paper/30 hover:border-paper')}>
               {t('ci.days', { n })}
               {n === rec && <span title={t('ci.rec')} className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-terra border border-ink" />}
@@ -158,7 +158,7 @@ export function CheckinCard({ onSimulate }: { onSimulate?: () => void }) {
         </div>
       </div>
       <button onClick={() => { simulateCheckin(); onSimulate?.() }}
-        className="mt-5 font-type text-xs uppercase tracking-widest opacity-50 hover:opacity-100 hover:text-mustard underline underline-offset-4 decoration-dashed">{t('ci.simulate')}</button>
+        className="mt-5 font-type text-sm uppercase tracking-widest opacity-70 hover:opacity-100 hover:text-mustard underline underline-offset-4 decoration-dashed">{t('ci.simulate')}</button>
     </Card>
   )
 }
@@ -187,7 +187,7 @@ function Timeline() {
             const red = ['blood-cough', 'blood-stool', 'blood', 'jaundice', 'weight-loss'].includes(tag)
             return (
               <div key={tag} className="grid grid-cols-[96px_minmax(0,1fr)] sm:grid-cols-[150px_minmax(0,1fr)] items-center gap-3">
-                <span className="font-type text-xs sm:text-[13px] uppercase tracking-wider truncate" title={t(`sym.${tag}`)}>{t(`sym.${tag}`)}</span>
+                <span className="font-type text-sm sm:text-[15px] uppercase tracking-wider truncate" title={t(`sym.${tag}`)}>{t(`sym.${tag}`)}</span>
                 <div className="relative h-5">
                   <div className="absolute inset-y-[9px] left-0 right-0 bg-black/5 rounded" />
                   <div className={cx('absolute inset-y-[7px] rounded', red ? 'bg-terra/40' : 'bg-mustard/70')} style={{ left: x(dates[0]), right: 0 }} />
@@ -203,7 +203,7 @@ function Timeline() {
           <span />
           <div className="relative h-4 border-t border-black/15">
             {ticks.map((tk, i) => (
-              <span key={i} className={cx('absolute top-1 font-type text-[11px] opacity-60 whitespace-nowrap', i === 0 ? '' : i === 4 ? '-translate-x-full' : '-translate-x-1/2')} style={{ left: `${i * 25}%` }}>{d(tk)}</span>
+              <span key={i} className={cx('absolute top-1 font-type text-[13px] opacity-60 whitespace-nowrap', i === 0 ? '' : i === 4 ? '-translate-x-full' : '-translate-x-1/2')} style={{ left: `${i * 25}%` }}>{d(tk)}</span>
             ))}
           </div>
         </div>
@@ -214,13 +214,13 @@ function Timeline() {
           <li key={e.id} className="pl-5 relative group">
             <span className={cx('absolute -left-[7px] top-2 w-3 h-3 rounded-full', e.source === 'checkin' ? 'bg-mustard border border-ink' : 'bg-ink')} />
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="font-type text-xs uppercase tracking-widest">{d(e.date, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-              <span className="font-type text-xs opacity-50">{daysBetween(e.date, now)} d</span>
+              <span className="font-type text-sm uppercase tracking-widest">{d(e.date, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              <span className="font-type text-sm opacity-70">{daysBetween(e.date, now)} d</span>
               {e.source === 'checkin' && <Tag tone="mustard">{t('d.checkin')}</Tag>}
               {e.tags.map((g) => <Tag key={g}>{t(`sym.${g}`)}</Tag>)}
               <button onClick={() => set((s) => ({ diary: s.diary.filter((x) => x.id !== e.id) }))}
                 aria-label={t('d.delete')} title={t('d.delete')}
-                className="ml-auto font-type text-xs opacity-30 hover:opacity-100 hover:text-terra px-2">✕</button>
+                className="ml-auto font-type text-sm opacity-30 hover:opacity-100 hover:text-terra px-2">✕</button>
             </div>
             <p className="font-serif text-lg leading-snug mt-1">{e.text}</p>
           </li>
@@ -288,8 +288,8 @@ function Summary() {
                           {reasons.some((r) => r.tag === s) && <span className="inline-block w-2 h-2 rounded-full bg-terra mr-2 align-middle" />}
                           {t(`sym.${s}`)}{s === 'weight-loss' && kg ? ` · −${kg} kg` : ''}
                         </td>
-                        <td className="py-1.5 font-type text-xs whitespace-nowrap">{t('d.since')} {d(first[s])}</td>
-                        <td className="py-1.5 font-type text-xs text-right whitespace-nowrap">{daysBetween(first[s], now)} d</td>
+                        <td className="py-1.5 font-type text-sm whitespace-nowrap">{t('d.since')} {d(first[s])}</td>
+                        <td className="py-1.5 font-type text-sm text-right whitespace-nowrap">{daysBetween(first[s], now)} d</td>
                       </tr>
                     ))}
                   </tbody>
@@ -305,18 +305,18 @@ function Summary() {
                 <Label>{t('tab.check')}</Label>
                 <ul className="mt-1 space-y-0.5">
                   {steps.map((st) => (
-                    <li key={st.id} className={cx('font-type text-xs flex justify-between gap-2', st.level === 'doctor' && 'text-terra')}><span>{t(`prog.${st.id}`)}</span><span className="text-right">{t(st.short)}</span></li>
+                    <li key={st.id} className={cx('font-type text-sm flex justify-between gap-2', st.level === 'doctor' && 'text-terra')}><span>{t(`prog.${st.id}`)}</span><span className="text-right">{t(st.short)}</span></li>
                   ))}
-                  {!steps.length && <li className="font-type text-xs opacity-50">—</li>}
+                  {!steps.length && <li className="font-type text-sm opacity-70">—</li>}
                 </ul>
               </div>
               <div>
                 <Label>{t('tab.pathway')}</Label>
                 <ul className="mt-1 space-y-0.5">
                   {PATHWAY.filter((s) => pathway.dates[s.id]).map((s) => (
-                    <li key={s.id} className="font-type text-xs flex justify-between gap-2"><span>{t(`step.${s.id}`)}</span><span>{d(pathway.dates[s.id])}</span></li>
+                    <li key={s.id} className="font-type text-sm flex justify-between gap-2"><span>{t(`step.${s.id}`)}</span><span>{d(pathway.dates[s.id])}</span></li>
                   ))}
-                  {!Object.values(pathway.dates).some(Boolean) && <li className="font-type text-xs opacity-50">—</li>}
+                  {!Object.values(pathway.dates).some(Boolean) && <li className="font-type text-sm opacity-70">—</li>}
                 </ul>
               </div>
             </div>
@@ -327,12 +327,12 @@ function Summary() {
               <Label className="mb-2">{t('d.notes')}</Label>
               <ul className="space-y-1 columns-1 sm:columns-2 gap-8">
                 {[...diary].sort((a, b) => a.date.localeCompare(b.date)).map((e) => (
-                  <li key={e.id} className="break-inside-avoid font-serif text-[15px] leading-snug"><span className="font-type text-xs opacity-60 mr-2">{d(e.date)}</span>{e.text}</li>
+                  <li key={e.id} className="break-inside-avoid font-serif text-[15px] leading-snug"><span className="font-type text-sm opacity-60 mr-2">{d(e.date)}</span>{e.text}</li>
                 ))}
               </ul>
             </div>
           )}
-          <p className="mt-6 font-type text-[11px] uppercase tracking-widest opacity-50">{t('d.notDiagnosis')}</p>
+          <p className="mt-6 font-type text-[13px] uppercase tracking-widest opacity-70">{t('d.notDiagnosis')}</p>
         </div>
       </Card>
       <div className="no-print grid grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)] gap-4 sm:gap-6 items-center">

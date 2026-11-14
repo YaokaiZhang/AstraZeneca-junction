@@ -30,17 +30,17 @@ export default function Layout() {
           {NAV.map((n) => {
             const active = pathname.startsWith(n.to)
             return (
-              <NavLink key={n.to} to={n.to} className={cx('group font-type uppercase text-[13px] sm:text-xs lg:text-sm tracking-wider sm:tracking-widest hover:text-terra transition-colors', !active && 'opacity-50')}>
+              <NavLink key={n.to} to={n.to} className={cx('group font-type uppercase text-[13px] sm:text-sm lg:text-sm tracking-wider sm:tracking-widest hover:text-terra transition-colors', !active && 'opacity-50')}>
                 <span className="flex items-center gap-2">
                   {active && <span className="w-1.5 h-1.5 bg-terra rounded-full" />}
                   {n.label}
                 </span>
-                <span className="hidden lg:block normal-case tracking-normal text-xs opacity-70 mt-1 pl-3.5">{n.sub}</span>
+                <span className="hidden lg:block normal-case tracking-normal text-sm opacity-75 mt-1 pl-3.5">{n.sub}</span>
               </NavLink>
             )
           })}
           <button onClick={() => { if (confirm('Clear all demo data?')) { reset(); location.reload() } }}
-            className="hidden lg:block font-type uppercase text-xs tracking-widest opacity-40 hover:opacity-100 hover:text-terra mt-6">Reset demo</button>
+            className="hidden lg:block font-type uppercase text-sm tracking-widest opacity-60 hover:opacity-100 hover:text-terra mt-6">Reset demo</button>
         </nav>
       </aside>
 

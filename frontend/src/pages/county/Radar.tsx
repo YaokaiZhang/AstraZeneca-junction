@@ -55,7 +55,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
 
       <div className="mt-6 flex flex-wrap gap-3 items-center">
         <Seg items={RADAR_CANCERS} value={k} onChange={setRadarCancer} />
-        {pooled && <span className="font-type text-xs uppercase tracking-wider px-2 py-1 rounded-full bg-ink text-paper">{periodLabel(k)}</span>}
+        {pooled && <span className="font-type text-sm uppercase tracking-wider px-2 py-1 rounded-full bg-ink text-paper">{periodLabel(k)}</span>}
       </div>
 
       <Funnel row={me} k={k} />
@@ -91,7 +91,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
           />
           <div className="mt-4 space-y-3">
             {by === 'weakest' && (
-              <div className="flex flex-wrap gap-x-3 gap-y-1 font-type text-xs uppercase tracking-wider">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 font-type text-sm uppercase tracking-wider">
                 {STEPS.filter((s) => hasProg || s.id !== 'screen').map((s) => (
                   <span key={s.id} className="flex items-baseline gap-1"><span className="font-serif text-base leading-none">{s.n}</span>{s.short}</span>
                 ))}
@@ -102,7 +102,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
         </Card>
 
         <Card tone="stone" tilt={0.6} className="p-4 sm:p-6 min-w-0">
-          <div className="grid grid-cols-[1.4rem_minmax(0,1fr)_6rem_3rem] gap-2 px-2 pb-2 border-b border-black/10 font-type text-[11px] uppercase tracking-wider opacity-70">
+          <div className="grid grid-cols-[1.4rem_minmax(0,1fr)_6rem_3rem] gap-2 px-2 pb-2 border-b border-black/10 font-type text-[13px] uppercase tracking-wider opacity-70">
             <span />
             <span>County</span>
             <span className="flex items-center gap-1">Weakest {weakBadge}</span>
@@ -116,13 +116,13 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
                   <button onClick={() => select(r.c.id)} onDoubleClick={() => openBrief(r.c.id)}
                     className={cx('w-full grid grid-cols-[1.4rem_minmax(0,1fr)_6rem_3rem] items-center gap-2 py-1.5 px-2 rounded-md text-left transition-colors',
                       sel ? 'bg-mustard shadow' : 'hover:bg-black/5')}>
-                    <span className="font-type text-xs opacity-50">{i + 1}</span>
+                    <span className="font-type text-sm opacity-70">{i + 1}</span>
                     <span className="font-serif text-base leading-tight truncate">{r.c.name}</span>
-                    <span className={cx('flex items-center gap-1.5 font-type text-xs uppercase tracking-wide whitespace-nowrap', !sel && r.weakest === me.weakest && 'text-terra')}>
+                    <span className={cx('flex items-center gap-1.5 font-type text-sm uppercase tracking-wide whitespace-nowrap', !sel && r.weakest === me.weakest && 'text-terra')}>
                       <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: scaleColor(zt(r.weakZ)) }} />
                       {stepInfo(r.weakest).short}
                     </span>
-                    <span className="font-type text-xs text-right tabular-nums opacity-70">{fmtK(r.highRisk)}</span>
+                    <span className="font-type text-sm text-right tabular-nums opacity-70">{fmtK(r.highRisk)}</span>
                   </button>
                 </li>
               )
@@ -181,11 +181,11 @@ function Funnel({ row, k }: { row: RadarRow; k: RadarCancerId }) {
             <li key={s.id}
               className={cx('relative rounded-lg p-3 sm:p-4 min-w-0 flex flex-col',
                 isWeak ? 'col-span-6 order-first lg:order-none lg:col-span-1 bg-terra text-paper shadow-lg -rotate-1' : 'col-span-2 lg:col-span-1 bg-black/[.04]', none && 'hatch-soft')}>
-              <span className="font-type text-xs uppercase tracking-wider flex items-center gap-1.5 min-w-0">
+              <span className="font-type text-sm uppercase tracking-wider flex items-center gap-1.5 min-w-0">
                 <span className={cx('w-5 h-5 rounded-full flex items-center justify-center font-serif text-sm shrink-0', isWeak ? 'bg-paper text-terra' : 'border border-current opacity-60')}>{s.n}</span>
                 <span className={cx('truncate', !isWeak && 'opacity-60')}><span className="sm:hidden">{isWeak ? s.label : s.short}</span><span className="hidden sm:inline">{s.label}</span></span>
               </span>
-              {i < STEPS.length - 1 && <span aria-hidden className="hidden lg:block absolute -right-[11px] top-4 z-10 font-type text-sm opacity-40">→</span>}
+              {i < STEPS.length - 1 && <span aria-hidden className="hidden lg:block absolute -right-[11px] top-4 z-10 font-type text-sm opacity-60">→</span>}
               <p className={cx('font-serif leading-none mt-3 flex items-baseline gap-1.5 flex-wrap', isWeak ? 'text-5xl sm:text-6xl' : 'text-2xl sm:text-4xl', !isWeak && !none && 'opacity-80')}>
                 {main} {stepBadge(s.id, k, row)}
               </p>
@@ -197,7 +197,7 @@ function Funnel({ row, k }: { row: RadarRow; k: RadarCancerId }) {
                     {st.nat != null && (
                       <div className="absolute -top-1.5 -bottom-1.5" style={{ left: `${(st.nat / top) * 100}%` }}>
                         <div className={cx('h-full border-l-2', isWeak ? 'border-ink' : 'border-terra')} />
-                        <span className={cx('absolute top-full mt-0.5 -translate-x-1/2 font-type text-[10px] tracking-wider', isWeak ? 'text-ink' : 'text-terra')}>FI</span>
+                        <span className={cx('absolute top-full mt-0.5 -translate-x-1/2 font-type text-[13px] tracking-wider', isWeak ? 'text-ink' : 'text-terra')}>FI</span>
                       </div>
                     )}
                   </div>
@@ -243,7 +243,7 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
     <Card tone="paper" tilt={0.3} className="mt-10 p-4 sm:p-6">
       <p className="font-serif text-2xl leading-tight">Towns in {county.name}</p>
 
-      <div className={cx('mt-3 grid gap-2 sm:gap-3 px-1 pb-2 border-b border-black/10 font-type text-[11px] uppercase tracking-wider opacity-70 items-center', cols)}>
+      <div className={cx('mt-3 grid gap-2 sm:gap-3 px-1 pb-2 border-b border-black/10 font-type text-[13px] uppercase tracking-wider opacity-70 items-center', cols)}>
         <span />
         <span className="flex items-center gap-1 whitespace-nowrap">High risk {stepBadge('risk', k)}</span>
         {prog && (
@@ -261,7 +261,7 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
               <span className={cx('font-serif text-base leading-tight truncate', worst && 'text-terra')}>{d.t.name}</span>
               <span className="flex items-center gap-1.5 min-w-0">
                 <span className="h-1.5 rounded-full bg-mustard shrink-0" style={{ width: prog ? `${Math.max(3, (d.high / maxHigh) * 26)}px` : `${Math.max(1, (d.high / maxHigh) * 70)}%` }} aria-hidden />
-                <span className="font-type text-xs tabular-nums">{fmtK(d.high)}</span>
+                <span className="font-type text-sm tabular-nums">{fmtK(d.high)}</span>
               </span>
               {prog && (
                 <>
@@ -272,7 +272,7 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
                     <span className={cx('absolute top-1/2 w-3 h-3 -mt-1.5 -ml-1.5 rounded-full border border-ink', worst ? 'bg-terra' : d.turnout! < (countyT ?? 0) ? 'bg-mustard' : 'bg-paper')}
                       style={{ left: `${x(d.turnout!)}%` }} />
                   </span>
-                  <span className="font-type text-xs text-right tabular-nums">{fmt(d.turnout!, 1)}</span>
+                  <span className="font-type text-sm text-right tabular-nums">{fmt(d.turnout!, 1)}</span>
                 </>
               )}
             </li>
@@ -280,7 +280,7 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
         })}
       </ul>
       {prog && (
-        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-type text-xs uppercase tracking-wider opacity-70">
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-type text-sm uppercase tracking-wider opacity-70">
           <span className="flex items-center gap-1.5"><span className="h-3 border-l border-ink/60" />{county.name} {countyT != null ? fmt(countyT, 1) : ''}%</span>
           <span className="flex items-center gap-1.5 text-terra"><span className="h-3 border-l-2 border-terra" />FI {natT != null ? fmt(natT, 1) : ''}%</span>
         </div>

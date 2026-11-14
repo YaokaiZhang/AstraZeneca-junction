@@ -117,7 +117,7 @@ export default function HospitalPage() {
           <Picker label="County" align="right" value={countyId} options={COUNTIES}
             onChange={(v) => { setParams((p) => { p.set('county', v); return p }, { replace: true }); setOpenId(null) }}
             className="font-serif text-2xl italic py-0.5" />
-          <span className="flex items-center gap-2 font-type text-xs opacity-70">
+          <span className="flex items-center gap-2 font-type text-sm opacity-70">
             {open.length} synthetic patients
             <SourceBadge id="demoPatients" kind="estimate" demo={false}
               how={`${patients.length - (you ? 1 : 0)} made-up patients, volume scaled from ${county.name}'s yearly lung, bowel, pancreas and liver cases. ${open.length} open pathways.`} />
@@ -159,7 +159,7 @@ export default function HospitalPage() {
             </div>
           </div>
           {filtersOn && (
-            <div className="flex items-center justify-between font-type text-xs uppercase tracking-widest mb-2">
+            <div className="flex items-center justify-between font-type text-sm uppercase tracking-widest mb-2">
               <span data-testid="count">{list.length} shown</span>
               <button onClick={clear} className="underline underline-offset-2 hover:text-terra">Clear ✕</button>
             </div>
@@ -187,7 +187,7 @@ export default function HospitalPage() {
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label}
-      className={cx('w-full min-w-0 bg-transparent border-b py-1.5 font-type text-xs outline-none focus:border-terra cursor-pointer truncate',
+      className={cx('w-full min-w-0 bg-transparent border-b py-1.5 font-type text-sm outline-none focus:border-terra cursor-pointer truncate',
         value !== 'all' ? 'border-ink text-ink' : 'border-black/20 text-ink/60')}>
       {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
     </select>

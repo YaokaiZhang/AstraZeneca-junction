@@ -45,7 +45,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
 
   const head = (k: SortKey, label: string, cls?: string) => (
     <button onClick={() => setSort((s) => ({ k, desc: s.k === k ? !s.desc : k !== 'name' && k !== 'year' }))}
-      className={cx('font-type text-xs uppercase tracking-wider flex items-center gap-1 hover:text-terra', sort.k === k ? '' : 'opacity-60', cls)}>
+      className={cx('font-type text-sm uppercase tracking-wider flex items-center gap-1 hover:text-terra', sort.k === k ? '' : 'opacity-60', cls)}>
       {label}{sort.k === k && <span>{sort.desc ? '↓' : '↑'}</span>}
     </button>
   )
@@ -64,7 +64,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
           <p className="font-serif text-4xl sm:text-5xl leading-none">
             {me.year ? <>Full by <span className="italic">{me.year}</span></> : <>Fits through <span className="italic">2035</span></>}
           </p>
-          <p className="font-type text-[13px] uppercase tracking-wider mt-3 flex flex-wrap items-baseline gap-x-2">
+          <p className="font-type text-[15px] uppercase tracking-wider mt-3 flex flex-wrap items-baseline gap-x-2">
             <span className="font-serif text-2xl normal-case tracking-normal">{fmt(me.s[0])} → {fmt(me.s[10])}</span>
             <span className="opacity-80">cases / yr</span>
             <SourceBadge id="ourModel" kind="estimate" how={HOW(headroom)} />
@@ -72,17 +72,17 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
           <div ref={chartRef} className="mt-3">
           <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block max-w-full" role="img" aria-label="Projected cases 2025 to 2035">
             {[0, 2, 4, 6, 8, 10].map((i) => (
-              <text key={i} x={sx(i)} y={H - 8} textAnchor="middle" className="font-type" style={{ fontSize: 10 }} fill="currentColor" opacity=".7">{YEARS[i]}</text>
+              <text key={i} x={sx(i)} y={H - 8} textAnchor="middle" className="font-type" style={{ fontSize: 12 }} fill="currentColor" opacity=".7">{YEARS[i]}</text>
             ))}
             {[ymin, (ymin + ymax) / 2, ymax].map((v) => (
               <g key={v}>
                 <line x1={M.l} x2={W - M.r} y1={sy(v)} y2={sy(v)} stroke="currentColor" strokeOpacity=".12" />
-                <text x={M.l - 6} y={sy(v) + 3} textAnchor="end" className="font-type" style={{ fontSize: 10 }} fill="currentColor" opacity=".7">{fmt(v)}</text>
+                <text x={M.l - 6} y={sy(v) + 3} textAnchor="end" className="font-type" style={{ fontSize: 12 }} fill="currentColor" opacity=".7">{fmt(v)}</text>
               </g>
             ))}
             <path d={`${line}L${sx(10)},${H - M.b}L${sx(0)},${H - M.b}Z`} fill="currentColor" fillOpacity=".12" />
             <line x1={M.l} x2={W - M.r} y1={sy(cap)} y2={sy(cap)} stroke="currentColor" strokeDasharray="5 4" strokeWidth={1.2} />
-            <text x={W - M.r} y={sy(cap) - 5} textAnchor="end" className="font-type uppercase" style={{ fontSize: 9, letterSpacing: '.1em' }} fill="currentColor">capacity +{Math.round(headroom * 100)}%</text>
+            <text x={W - M.r} y={sy(cap) - 5} textAnchor="end" className="font-type uppercase" style={{ fontSize: 11, letterSpacing: '.1em' }} fill="currentColor">capacity +{Math.round(headroom * 100)}%</text>
             <path d={line} fill="none" stroke="currentColor" strokeWidth={2.2} />
             {yi >= 0 && (
               <g>
@@ -96,7 +96,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
             <Slider label="Spare capacity" value={headroom} min={0.05} max={0.4} step={0.05} onChange={setHeadroom}
               display={`+${Math.round(headroom * 100)}%`} />
           </div>
-          <div className="mt-4 flex items-center gap-3 font-type text-[13px] uppercase tracking-wider">
+          <div className="mt-4 flex items-center gap-3 font-type text-[15px] uppercase tracking-wider">
             <span>Queue &gt;90 d</span>
             <Spark values={county.queueTrend} w={70} h={22} mark={3} stroke="currentColor" fill="rgba(0,0,0,.08)" />
             <span>{county.queueTrend[0]} → {county.queueTrend[3]} /10k</span>
@@ -119,11 +119,11 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
                   className={cx('w-full grid grid-cols-[minmax(0,1fr)_3.2rem_3.2rem_4.5rem] gap-2 items-center py-1.5 px-1.5 rounded text-left',
                     r.c.id === countyId ? 'bg-mustard' : 'hover:bg-black/5')}>
                   <span className="font-serif text-base leading-tight truncate">{r.c.name}</span>
-                  <span className="font-type text-xs text-right tabular-nums">+{Math.round(r.growth * 100)}%</span>
-                  <span className={cx('font-type text-xs text-right tabular-nums', r.year != null && 'text-terra font-bold')}>{r.year ?? '—'}</span>
+                  <span className="font-type text-sm text-right tabular-nums">+{Math.round(r.growth * 100)}%</span>
+                  <span className={cx('font-type text-sm text-right tabular-nums', r.year != null && 'text-terra font-bold')}>{r.year ?? '—'}</span>
                   <span className="flex items-center justify-end gap-1">
                     <Spark values={r.c.queueTrend} w={34} h={14} stroke={r.rising ? '#C65D3B' : '#1F1F1F'} fill="transparent" />
-                    <span className={cx('font-type text-xs w-3', r.rising ? 'text-terra' : 'opacity-30')}>{r.rising ? '▲' : '·'}</span>
+                    <span className={cx('font-type text-sm w-3', r.rising ? 'text-terra' : 'opacity-30')}>{r.rising ? '▲' : '·'}</span>
                   </span>
                 </button>
               </li>

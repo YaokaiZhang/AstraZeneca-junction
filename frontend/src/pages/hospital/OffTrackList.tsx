@@ -7,23 +7,23 @@ const stepShort = (id: string | null) => (id ? PATHWAY.find((s) => s.id === id)?
 
 export function StatusPill({ row, className }: { row: Row; className?: string }) {
   const m = STATUS_META[row.status]
-  return <span className={cx('inline-block font-type uppercase tracking-widest text-[11px] px-2 py-1 rounded-full whitespace-nowrap', m.cls, className)}>{m.label}</span>
+  return <span className={cx('inline-block font-type uppercase tracking-widest text-[13px] px-2 py-1 rounded-full whitespace-nowrap', m.cls, className)}>{m.label}</span>
 }
 
 /** Quiet status for table rows: only what differs from "overdue" gets ink. */
 function RowStatus({ row }: { row: Row }) {
   if (row.status === 'overdue') return null
   if (row.status === 'escalated') {
-    return <span className="font-type text-xs text-terra truncate block">→ {row.coordinator?.name.split(' ')[0] ?? 'Escalated'}</span>
+    return <span className="font-type text-sm text-terra truncate block">→ {row.coordinator?.name.split(' ')[0] ?? 'Escalated'}</span>
   }
   return <StatusPill row={row} />
 }
 
 export function ReasonChip({ row, quiet }: { row: Row; quiet?: boolean }) {
   const b = row.p.barrier && row.p.barrier.step === row.step ? barrierMeta(row.p.barrier.barrier) : undefined
-  if (!b) return quiet ? null : <span className="font-type text-xs opacity-30">—</span>
+  if (!b) return quiet ? null : <span className="font-type text-sm opacity-30">—</span>
   return (
-    <span className={cx('inline-flex items-center gap-1.5 font-type text-[13px] leading-tight',
+    <span className={cx('inline-flex items-center gap-1.5 font-type text-[15px] leading-tight',
       !quiet && 'px-2 py-1 rounded-md', !quiet && (b.side === 'system' ? 'bg-terra/10' : 'bg-mustard/30'),
       b.side === 'system' ? 'text-terra' : 'text-ink')}>
       <span className={cx('w-1.5 h-1.5 rounded-full shrink-0', b.side === 'system' ? 'bg-terra' : 'bg-mustard')} />
@@ -36,9 +36,9 @@ function Days({ row, threshold }: { row: Row; threshold: number }) {
   const d = row.overdue
   if (d > 0) {
     const hot = d >= threshold
-    return <span className={cx('font-serif lining-nums tabular-nums leading-none', hot ? 'text-terra text-3xl' : 'text-2xl')}>{d}<span className="font-type text-xs ml-0.5 opacity-60">d</span></span>
+    return <span className={cx('font-serif lining-nums tabular-nums leading-none', hot ? 'text-terra text-3xl' : 'text-2xl')}>{d}<span className="font-type text-sm ml-0.5 opacity-60">d</span></span>
   }
-  return <span className="font-type text-xs opacity-40 whitespace-nowrap">{!row.step ? '·' : d === 0 ? 'due today' : `${-d} d left`}</span>
+  return <span className="font-type text-sm opacity-60 whitespace-nowrap">{!row.step ? '·' : d === 0 ? 'due today' : `${-d} d left`}</span>
 }
 
 function Bar({ row, max, threshold }: { row: Row; max: number; threshold: number }) {
@@ -84,7 +84,7 @@ export function OffTrackList({ rows, threshold, onOpen }: { rows: Row[]; thresho
                     <span className="font-serif text-lg leading-none whitespace-nowrap">{r.p.isYou ? 'You' : r.p.label}</span>
                     {r.p.shared && !r.p.isYou && <span title="Diary shared" className="w-1.5 h-1.5 rounded-full bg-ink/60 shrink-0" />}
                   </span>
-                  <span className="block font-type text-xs opacity-55 mt-1 truncate">{stepShort(r.step)} · {CANCER_LABEL[r.p.cancer]}</span>
+                  <span className="block font-type text-sm opacity-55 mt-1 truncate">{stepShort(r.step)} · {CANCER_LABEL[r.p.cancer]}</span>
                 </span>
                 <span><Days row={r} threshold={threshold} /></span>
                 <Bar row={r} max={max} threshold={threshold} />
@@ -99,7 +99,7 @@ export function OffTrackList({ rows, threshold, onOpen }: { rows: Row[]; thresho
                     <span className="font-serif text-xl leading-none whitespace-nowrap">{r.p.isYou ? 'You' : r.p.label}</span>
                     <RowStatus row={r} />
                   </span>
-                  <span className="block font-type text-xs opacity-55 truncate">{stepShort(r.step)} · {CANCER_LABEL[r.p.cancer]}</span>
+                  <span className="block font-type text-sm opacity-55 truncate">{stepShort(r.step)} · {CANCER_LABEL[r.p.cancer]}</span>
                   {r.side && <span className="block"><ReasonChip row={r} quiet /></span>}
                 </span>
               </div>

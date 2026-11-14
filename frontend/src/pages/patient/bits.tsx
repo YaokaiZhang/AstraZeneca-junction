@@ -70,7 +70,7 @@ export function ShareSwitch({ which, label, children }: { which: 'hospital' | 's
         <div className="min-w-0">
           <p className="font-serif text-xl leading-tight">{label}</p>
           {on && sharing.at && (
-            <p className="font-type text-xs uppercase tracking-widest opacity-60 mt-1">
+            <p className="font-type text-sm uppercase tracking-widest opacity-60 mt-1">
               {t('pr.since', { t: d(sharing.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) })}
             </p>
           )}
@@ -101,7 +101,7 @@ export async function copyText(s: string) {
 }
 
 export const Tag = ({ children, tone = 'line' }: { children: ReactNode; tone?: 'line' | 'terra' | 'ink' | 'mustard' }) => (
-  <span className={cx('inline-flex items-center font-type text-xs uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap',
+  <span className={cx('inline-flex items-center font-type text-sm uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap',
     { line: 'border border-current/30 border-black/20', terra: 'bg-terra text-paper', ink: 'bg-ink text-paper', mustard: 'bg-mustard text-ink' }[tone])}>{children}</span>
 )
 

@@ -59,7 +59,7 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
           {reasons.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-auto pt-6">
               {reasons.slice(0, 4).map((r) => (
-                <span key={r.tag} className={cx('font-type text-xs uppercase tracking-wider px-2 py-0.5 rounded-full', r.red ? 'bg-paper text-terra' : 'border border-paper/50')}>
+                <span key={r.tag} className={cx('font-type text-sm uppercase tracking-wider px-2 py-0.5 rounded-full', r.red ? 'bg-paper text-terra' : 'border border-paper/50')}>
                   {t(`sym.${r.tag}`)}
                 </span>
               ))}
@@ -79,7 +79,7 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
               )}
             </div>
             {started && <Clock dates={s.pathway.dates} size={96} dark={overdue}>
-              {st.next && <span className="font-serif text-3xl leading-none">{st.waited}<span className="font-type text-[11px] ml-0.5">d</span></span>}
+              {st.next && <span className="font-serif text-3xl leading-none">{st.waited}<span className="font-type text-[13px] ml-0.5">d</span></span>}
             </Clock>}
           </div>
         </Tile>
@@ -100,7 +100,7 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
 
         <Tile tone="ink" tilt={1.2} label={t('ci.title')} onOpen={() => go('diary')} className="lg:col-span-2">
           <p className="font-serif text-4xl leading-none">{nextCheck ? d(nextCheck, { weekday: 'short', day: 'numeric', month: 'short' }) : t('pr.off')}</p>
-          {nextCheck && <p className="font-type text-xs uppercase tracking-widest text-mustard mt-3">{t('ci.every')} {t('ci.days', { n: s.checkins.everyDays })}</p>}
+          {nextCheck && <p className="font-type text-sm uppercase tracking-widest text-mustard mt-3">{t('ci.every')} {t('ci.days', { n: s.checkins.everyDays })}</p>}
         </Tile>
 
         <Tile tone="paper" tilt={0.6} label={t('tab.settings')} onOpen={() => go('settings')} className="lg:col-span-2">

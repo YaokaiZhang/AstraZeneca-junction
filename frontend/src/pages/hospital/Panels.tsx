@@ -19,7 +19,7 @@ export function ThresholdCard({ value, onChange }: { value: number; onChange: (n
         <button aria-label="Fewer days" onClick={() => set(value - 1)} className="w-10 h-10 rounded-full border border-ink/40 font-type text-lg hover:bg-ink hover:text-mustard transition-colors">−</button>
         <p className="font-serif leading-none flex items-baseline gap-2">
           <span className="text-6xl lining-nums tabular-nums" data-testid="threshold">{value}</span>
-          <span className="font-type text-xs uppercase tracking-widest">days</span>
+          <span className="font-type text-sm uppercase tracking-widest">days</span>
         </p>
         <button aria-label="More days" onClick={() => set(value + 1)} className="w-10 h-10 rounded-full border border-ink/40 font-type text-lg hover:bg-ink hover:text-mustard transition-colors">+</button>
       </div>
@@ -45,13 +45,13 @@ export function EscalationQueue({ rows, coords, onOpen, onAct }: {
         {groups.map(({ c, items }) => (
           <section key={c.id} className="border-t border-paper/25 pt-3 first:border-0 first:pt-1">
             <p className="font-serif text-xl leading-none">{c.name}</p>
-            <p className="font-type text-[11px] opacity-60 mt-1 mb-1">{c.role}</p>
+            <p className="font-type text-sm opacity-80 mt-1 mb-1">{c.role}</p>
             <ul className="space-y-1">
               {items.map((r) => (
                 <li key={r.p.id} className={cx('flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-paper/10', r.p.isYou && 'bg-mustard/25')}>
                   <button onClick={() => onOpen(r.p.id)} className="flex-1 min-w-0 text-left flex items-baseline gap-2">
-                    <span className="font-serif text-2xl leading-none lining-nums tabular-nums w-10">{r.overdue}<span className="font-type text-[11px] opacity-70">d</span></span>
-                    <span className="font-type text-xs whitespace-nowrap truncate">{r.p.isYou ? 'You' : r.p.label}</span>
+                    <span className="font-serif text-2xl leading-none lining-nums tabular-nums w-11 shrink-0">{r.overdue}<span className="font-type text-sm opacity-80">d</span></span>
+                    <span className="font-type text-sm whitespace-nowrap truncate">{r.p.isYou ? 'You' : r.p.label}</span>
                   </button>
                   <QuickBtn title="Contacted" active={r.status === 'contacted'} onClick={() => onAct(r, 'contacted')}><IconPhone className="w-3.5 h-3.5" /></QuickBtn>
                   <QuickBtn title="Booked" active={r.status === 'booked'} onClick={() => onAct(r, 'booked')}><IconCal className="w-3.5 h-3.5" /></QuickBtn>
@@ -107,7 +107,7 @@ export function DelayChart({ rows, step, reason, onStep, onReason }: {
             <button key={d.s.id} role="listitem" onClick={() => onStep(active ? 'all' : d.s.id)} data-step={d.s.id}
               className={cx('group w-full grid grid-cols-[72px_1fr_24px] items-center gap-2 text-left rounded-md px-1 py-1 transition-colors',
                 active ? 'bg-ink/10' : 'hover:bg-ink/5', step !== 'all' && !active && 'opacity-50')}>
-              <span className="font-type text-xs uppercase tracking-wider truncate">{d.s.short}</span>
+              <span className="font-type text-sm uppercase tracking-wider truncate">{d.s.short}</span>
               <span className="relative h-5 rounded-sm bg-black/[0.06] overflow-hidden">
                 <span className="absolute inset-y-0 left-0 flex" style={{ width: `${(d.total / max) * 100}%` }}>
                   <span className="bg-terra h-full" style={{ flexGrow: d.system }} />
@@ -123,7 +123,7 @@ export function DelayChart({ rows, step, reason, onStep, onReason }: {
       </div>
 
       <div className="tear mt-4 pt-3">
-        <div className="flex flex-wrap gap-x-3 gap-y-1 font-type text-xs uppercase tracking-wider">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 font-type text-sm uppercase tracking-wider">
           <Legend dot="bg-terra" label="System" n={sys} active={reason === 'system'} onClick={() => onReason(reason === 'system' ? 'all' : 'system')} />
           <Legend dot="bg-mustard" label="Personal" n={per} active={reason === 'personal'} onClick={() => onReason(reason === 'personal' ? 'all' : 'personal')} />
           <Legend dot="bg-ink/40" label="No reason" n={none} active={reason === 'none'} onClick={() => onReason(reason === 'none' ? 'all' : 'none')} />
@@ -134,8 +134,8 @@ export function DelayChart({ rows, step, reason, onStep, onReason }: {
               <button onClick={() => onReason(reason === b.id ? 'all' : (b.id as BarrierId))}
                 className={cx('w-full flex items-center gap-2 text-left rounded px-1 py-0.5 hover:bg-ink/5', reason === b.id && 'bg-ink/10')}>
                 <span className={cx('w-1.5 h-1.5 rounded-full', b.side === 'system' ? 'bg-terra' : 'bg-mustard')} />
-                <span className="font-type text-[13px] flex-1">{b.label}</span>
-                <span className="font-type text-[13px] tabular-nums">{n}</span>
+                <span className="font-type text-[15px] flex-1">{b.label}</span>
+                <span className="font-type text-[15px] tabular-nums">{n}</span>
               </button>
             </li>
           ))}

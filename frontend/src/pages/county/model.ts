@@ -316,10 +316,10 @@ export function excessText(s: StepId, x: number | null) {
 export function weakestSentence(r: RadarRow, k: RadarCancerId) {
   const s = r.steps[r.weakest]
   const lbl = cancerLabel(k)
-  if (r.weakest === 'risk') return `${lbl}: ${pct(s.v!)} of ${RISK[k].who} at higher risk vs FI ${pct(s.nat!)}`
-  if (r.weakest === 'screen') return `${lbl} screening turnout ${pct(s.v!, 1)} vs FI ${pct(s.nat!, 1)}`
-  if (r.weakest === 'late') return `${lbl} found late: ${pct(s.v!)} had spread (of known stage) vs FI ${pct(s.nat!)}`
-  return `${lbl}: ${fmt(s.v!, 2)} deaths per new case vs FI ${fmt(s.nat!, 2)}`
+  if (r.weakest === 'risk') return `${lbl}: ${pct(s.v!)} of ${RISK[k].who} at higher risk, against ${pct(s.nat!)} in Finland`
+  if (r.weakest === 'screen') return `${lbl} screening: ${pct(s.v!, 1)} take part, against ${pct(s.nat!, 1)} in Finland`
+  if (r.weakest === 'late') return `${lbl}: ${pct(s.v!)} found after it had spread (cases with a known stage), against ${pct(s.nat!)} in Finland`
+  return `${lbl}: ${fmt(s.v! * 100, 0)} deaths for every 100 new cases, against ${fmt(s.nat! * 100, 0)} in Finland`
 }
 
 // ---------- estimated impact (home page): what changes if counties catch up ----------

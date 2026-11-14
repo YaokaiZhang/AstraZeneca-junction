@@ -474,45 +474,6 @@ export function Views() {
 }
 
 /* ───────────── 4 · privacy ───────────── */
-/* ───────────── 5 · three dates ───────────── */
-export function ThreeDates() {
-  const [ref, on] = useInView<HTMLDivElement>(0.35)
-  const dates = [['Referral', '03.11.'], ['Diagnosis', '17.11.'], ['Treatment', '01.12.']]
-  const n = useCount(28, on, 1400)
-  return (
-    <section className={PAGE}>
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <h2 className={H2}>
-          <WordsUp text="Three dates." /><br /><WordsUp text="Enough to count." className="italic text-terra" delay={180} />
-        </h2>
-        <Reveal fx="blur" delay={300} className="flex items-center gap-2"><Label>Starter dataset</Label><SourceBadge id="illustration" kind="example" how="Example dates for one patient: 3 Nov → 1 Dec = 28 days." /></Reveal>
-      </div>
-      <Lede className="mt-6 lg:mt-[3svh]">
-        No new IT system is needed to start. Three dates per patient — referral, diagnosis and start of treatment — already show where time is lost.
-      </Lede>
-      <div ref={ref} className="relative mt-20 grid sm:grid-cols-[1fr_1fr_1fr_auto] gap-10 items-center">
-        <svg className="absolute left-0 right-24 top-1/2 h-4 -translate-y-1/2 hidden sm:block w-full" preserveAspectRatio="none" viewBox="0 0 100 4" aria-hidden>
-          <path d="M2 2 H98" stroke="#1F1F1F" strokeOpacity=".35" strokeWidth=".4" strokeDasharray="1.5 1.5" fill="none"
-            pathLength={100} style={{ strokeDashoffset: on ? 0 : 100, transition: 'stroke-dashoffset 1.6s ease-out' }} />
-        </svg>
-        {dates.map(([a, b], i) => (
-          <div key={a} className={cx('relative rv rv-stamp', on && 'in')} style={{ transitionDelay: `${i * 350}ms` }}>
-            <Tilt max={14}><Card tone={i === 1 ? 'mustard' : 'paper'} tilt={[-4, 3, -2][i]} className="p-6 pl-10 border border-ink/10">
-              <EdgeText>{String(i + 1).padStart(2, '0')}</EdgeText>
-              <div className="label">{a}</div>
-              <div className="mt-2 font-type text-4xl lg:text-5xl tracking-tight">{b}</div>
-            </Card></Tilt>
-          </div>
-        ))}
-        <div className={cx('rv rv-scale text-center sm:text-left', on && 'in')} style={{ transitionDelay: '1200ms' }}>
-          <div className="font-serif text-8xl lg:text-9xl leading-none tabular-nums lining-nums">{Math.round(n)}</div>
-          <div className="label mt-1">days to treatment</div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 /* ───────────── 3b · caring check-ins (spec 1.6) ───────────── */
 const CI_DAYS = 21
 const CI_ROWS = [
@@ -699,141 +660,6 @@ export function Transparency() {
   )
 }
 
-/* ───────────── 7 · from finding to action ───────────── */
-type Effort = 1 | 2 | 3
-type Icon = 'risk' | 'mail' | 'scan' | 'clock' | 'calendar'
-/** Ordered along the care pathway, left to right. `goal`: a share the target ring fills to, or a glyph. */
-const PLAYBOOK: { step: string; icon: Icon; finding: string; action: string; who: string; effort: Effort; goal: number | string; target: string; badge: React.ReactNode }[] = [
-  {
-    step: 'Risk', icon: 'risk', finding: 'Many at higher risk', action: 'Self-check in the app, then a doctor',
-    who: 'Health centre nurse', effort: 2, goal: '↑', target: 'More people at risk reached',
-    badge: <SourceBadge id="plco" kind="estimate" demo={false} how="Lung: PLCOm2012 six-year risk ≥ 1.51% (Tammemägi et al. 2014). Built on US data; not validated in Finland. Lung CT screening is only piloted in Finland. Other cancers: our rough county heuristic. Uses a published lung-risk cut-off." />,
-  },
-  {
-    step: 'Screening', icon: 'mail', finding: 'Few get screened', action: 'Reminder and a second kit, lowest towns first',
-    who: 'Screening unit', effort: 1, goal: 0.8, target: 'Turnout in every county',
-    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 80% screening turnout in every county. Builds on the existing screening invitations. Tracked with THL Sotkanet 6103 / 3621 / 3620, already on the radar." />,
-  },
-  {
-    step: 'Doctor visit', icon: 'scan', finding: 'Found after spread', action: 'Scan straight away for warning signs',
-    who: 'Health centre doctor', effort: 2, goal: 0.7, target: 'Found early',
-    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 70% of cancers found at stage I–II. Uses the urgent referral in the regional care pathway. Warning signs, for example: weight loss with new diabetes, or jaundice (pancreas and liver). Tracked on the radar as the Registry's spread share (Found late)." />,
-  },
-  {
-    step: 'Treatment', icon: 'clock', finding: 'Waiting time unknown', action: 'Record three dates; call anyone running late',
-    who: 'Nurse coordinator', effort: 1, goal: '6 wk', target: 'Referral to treatment',
-    badge: <SourceBadge id="thlTargets" kind="direct" demo={false} how="Referral arriving → first treatment within 6 weeks, tests included (STM report 2010:6). Tracked by the hospital off-track list." />,
-  },
-  {
-    step: 'Capacity', icon: 'calendar', finding: 'More cases by 2035', action: 'Book scan and specialist time early',
-    who: 'County', effort: 3, goal: '↓', target: 'Fewer waiting over 6 months',
-    badge: <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how="THL Sotkanet 3336: waited over 6 months for specialist care, per 10 000 residents. Planned in the yearly budget and service plan." />,
-  },
-]
-const EFFORT = ['', 'Low effort', 'Medium effort', 'High effort']
-
-function EffortBars({ n }: { n: Effort }) {
-  return (
-    <span className="inline-flex items-end gap-1" aria-label={EFFORT[n]} title={EFFORT[n]}>
-      {[1, 2, 3].map((i) => <i key={i} className={cx('w-2 rounded-sm', i <= n ? 'bg-ink' : 'bg-ink/15')} style={{ height: 6 + i * 5 }} />)}
-    </span>
-  )
-}
-
-const ICON_PATHS: Record<Icon, React.ReactNode> = {
-  risk: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5" /><path d="M18.5 4.5v4M16.5 6.5h4" /></>,
-  mail: <><rect x="3.5" y="6" width="17" height="12" rx="1.5" /><path d="m4 7 8 6 8-6" /></>,
-  scan: <><circle cx="10.5" cy="10.5" r="6" /><path d="m15 15 5 5" /><path d="M8 10.5h5M10.5 8v5" /></>,
-  clock: <><circle cx="12" cy="12" r="8" /><path d="M12 7.5V12l3 2" /></>,
-  calendar: <><rect x="3.5" y="5.5" width="17" height="15" rx="1.5" /><path d="M3.5 10h17M8 3.5v4M16 3.5v4" /><path d="m9.5 15 2 2 3.5-4" /></>,
-}
-function PlayIcon({ k }: { k: Icon }) {
-  return <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{ICON_PATHS[k]}</svg>
-}
-
-/** Target as a ring: fills to the share for percentage targets, otherwise shows the glyph. */
-function GoalRing({ goal, on, delay }: { goal: number | string; on: boolean; delay: number }) {
-  const r = 26, c = 2 * Math.PI * r
-  const share = typeof goal === 'number' ? goal : 1
-  return (
-    <div className="relative w-16 h-16 shrink-0">
-      <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90" aria-hidden>
-        <circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeOpacity=".12" strokeWidth="5" />
-        <circle cx="32" cy="32" r={r} fill="none" stroke="#C65D3B" strokeWidth="5" strokeLinecap="round"
-          strokeDasharray={c} strokeDashoffset={on ? c * (1 - share) : c}
-          style={{ transition: `stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1) ${delay}ms`, strokeOpacity: typeof goal === 'number' ? 1 : 0.35 }} />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center font-serif text-xl tabular-nums">
-        {typeof goal === 'number' ? `${Math.round(goal * 100)}%` : goal}
-      </span>
-    </div>
-  )
-}
-
-function Playbook() {
-  const [ref, on] = useInView<HTMLDivElement>(0.25)
-  return (
-    <div ref={ref} className="relative mt-10 lg:mt-[5svh]">
-      {/* the care pathway the actions sit on */}
-      <div className="relative hidden lg:grid grid-cols-5 gap-6 mb-6">
-        <div className="absolute left-[10%] right-[10%] top-[7px] h-px bg-ink origin-left transition-transform duration-[1400ms] ease-out" style={{ transform: `scaleX(${on ? 1 : 0})` }} />
-        {PLAYBOOK.map((r, i) => (
-          <div key={r.step} className="relative flex flex-col items-center gap-3">
-            <span className={cx('w-[15px] h-[15px] rounded-full border-2 border-ink bg-paper transition-colors duration-300', on && 'bg-terra border-terra')} style={{ transitionDelay: `${300 + i * 250}ms` }} />
-            <span className="font-type text-xs uppercase tracking-widest">{r.step}</span>
-          </div>
-        ))}
-      </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 lg:gap-6">
-        {PLAYBOOK.map((r, i) => (
-          <div key={r.step} className={cx('rv rv-up', on && 'in')} style={{ transitionDelay: `${300 + i * 250}ms` }}>
-            <Tilt max={8} className="h-full">
-              <div className="h-full rounded-xl border border-ink/12 bg-paper shadow-[0_10px_30px_-18px_rgba(0,0,0,.35)] p-5 flex flex-col">
-                <div className="flex items-center justify-between">
-                  <span className="w-10 h-10 rounded-full bg-terra/10 text-terra flex items-center justify-center"><PlayIcon k={r.icon} /></span>
-                  <span className="lg:hidden font-type text-xs uppercase tracking-widest opacity-60">{r.step}</span>
-                </div>
-                <div className="mt-3 font-serif italic text-xl leading-tight text-terra">{r.finding}</div>
-                <div className="my-1.5 text-xl leading-none opacity-30" aria-hidden>↓</div>
-                <div className="font-serif text-2xl leading-tight lg:min-h-[3.75em]">{r.action}</div>
-                <div className="mt-3 flex items-center justify-between gap-3 border-t border-dashed border-ink/20 pt-3">
-                  <span className="flex items-center gap-2 font-sans text-sm leading-tight min-w-0">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5" /></svg>
-                    {r.who}
-                  </span>
-                  <EffortBars n={r.effort} />
-                </div>
-                <div className="mt-auto pt-3 flex items-center gap-3">
-                  <GoalRing goal={r.goal} on={on} delay={600 + i * 250} />
-                  <span className="font-sans text-sm leading-snug flex flex-wrap items-center gap-1.5">{r.target} {r.badge}</span>
-                </div>
-              </div>
-            </Tilt>
-          </div>
-        ))}
-      </div>
-      <div className="mt-5 lg:mt-0 lg:absolute lg:right-0 lg:bottom-full lg:mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 font-type text-xs uppercase tracking-widest opacity-60">
-        <span className="flex items-center gap-2"><EffortBars n={1} /> Effort</span>
-        <span className="flex items-center gap-2"><span className="w-3 h-3 rounded-full border-2 border-terra" /> Target</span>
-      </div>
-    </div>
-  )
-}
-
-
-export function Actions() {
-  return (
-    <section id="act" className={PAGE + ' overflow-hidden'} aria-label="Actions">
-      <div className="absolute -right-48 -top-24 opacity-[0.07] pointer-events-none hidden lg:block" aria-hidden><TextRing size={640} text="finding • action • who • target • " /></div>
-      <h2 className={H2}>
-        <WordsUp text="A gap found." /><br /><WordsUp text="A step to take." className="italic text-terra" delay={180} />
-      </h2>
-      <Lede className="mt-6">One action for each step of the pathway: what to do, who does it, and the target it moves.</Lede>
-      <Playbook />
-    </section>
-  )
-}
-
 /** Real-data hook: any county → its weakest step → its three actions (same engine as the county brief). */
 export function TryActions() {
   const [cid, setCid] = useState('pohjois-karjala')
@@ -841,11 +667,16 @@ export function TryActions() {
   const county = COUNTIES.find((c) => c.id === cid)!
   const brief = buildBrief(county, k)
   return (
-    <section className={PAGE} aria-label="Try it on a county">
+    <section id="act" className={PAGE} aria-label="Try it on a county">
+      <div className="mb-10 lg:mb-[4svh] flex flex-wrap items-end justify-between gap-x-12 gap-y-6">
+        <h2 className="font-serif font-light text-5xl lg:text-[min(4.5rem,7.5svh)] leading-[0.95]">
+          <WordsUp text="Pick a county." /><br /><WordsUp text="See what to do first." className="italic text-terra" delay={180} />
+        </h2>
+        <Lede className="max-w-md">Ajoissa finds the step where the county loses the most people and ranks three actions. The first comes with a plan for its first month.</Lede>
+      </div>
       <div className="grid lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)] gap-12 lg:gap-16 items-center">
         <Reveal fx="up">
           <Card tone="mustard" tilt={-1} className="relative p-6 pl-10 lg:p-8 lg:pl-12">
-            <EdgeText>Try it</EdgeText>
             <div className="grid grid-cols-[130px_minmax(0,1fr)] sm:grid-cols-[minmax(0,min(280px,36svh))_minmax(0,1fr)] gap-x-5 sm:gap-x-8 items-start">
               <FinlandMap selected={cid} onSelect={setCid} label="Pick a county"
                 style={(c) => ({ fill: c.id === cid ? '#C65D3B' : 'rgba(31,31,31,.2)' })}
@@ -860,7 +691,7 @@ export function TryActions() {
                   ))}
                 </div>
                 <div className="mt-4 tear pt-3">
-                  <Label className="!opacity-80">Weakest step · {stepInfo(brief.gap.step).label}</Label>
+                  <Label className="!opacity-80">Biggest gap · {stepInfo(brief.gap.step).label}</Label>
                   <p className="mt-1 font-serif text-xl lg:text-2xl leading-tight flex flex-wrap items-center gap-2">{brief.gap.why} {brief.gap.badge}</p>
                 </div>
                 <ol className="mt-4 space-y-3 hidden sm:block">
@@ -872,7 +703,7 @@ export function TryActions() {
               {brief.actions.map((a, i) => <ActionItem key={a.id} a={a} i={i} />)}
             </ol>
             <a href={`#/county?c=${cid}&rc=${k}`} className="group mt-5 inline-flex items-center gap-3 font-type uppercase text-xs tracking-widest">
-              Full brief, printable <span className="w-9 h-9 rounded-full border border-ink flex items-center justify-center group-hover:bg-ink group-hover:text-mustard transition">→</span>
+              Open the full brief <span className="w-9 h-9 rounded-full border border-ink flex items-center justify-center group-hover:bg-ink group-hover:text-mustard transition">→</span>
             </a>
           </Card>
         </Reveal>
@@ -887,7 +718,7 @@ export function TryActions() {
 /** Who does what in the first month, for the county's top action. Plain steps; no new numbers. */
 const START: Record<string, { who: string; week: string; month: string; measure: string }> = {
   lung: { who: 'Lung clinic lead, with two pilot health centres', week: 'Name a pilot lead and pick two health centres with many smokers.', month: 'Offer the lung self-check to smokers aged 50–74 at any visit; send the high-risk ones for a low-dose CT.', measure: 'CT scans done, and the share of lung cancers found at stage I–II.' },
-  remind: { who: 'Screening coordinator', week: 'Pull the list of people who have not sent the kit back, starting in the towns named on the left.', month: 'Send a second letter or text message with a new kit about six weeks after the invitation.', measure: 'Kit return each round, against the 80% national goal.' },
+  remind: { who: 'Screening coordinator', week: 'Pull the list of people who have not taken part, starting in the towns named in action 1.', month: 'Send a second letter or text message, with a new kit or a new appointment.', measure: 'Turnout each round, against the 80% national goal.' },
   risk: { who: 'Health centre nurses', week: 'Add the self-check link to screening invitations and health checks.', month: 'Book a doctor visit for everyone the self-check flags as higher risk.', measure: 'Visits booked, and cancers found at an early stage.' },
   diag: { who: 'Head of the hospital diagnostic unit', week: 'Count scan and specialist slots: how many are asked for and how many are done each week.', month: 'Add evening or weekend lists, or buy slots from a private provider, until the queue stops growing.', measure: 'Share of patients waiting longer than the target time.' },
   fast: { who: 'Chief physician of primary care, with radiology', week: 'Agree the triggers with radiology: weight loss with new diabetes, or jaundice.', month: 'Let health centre doctors order a CT scan directly for those triggers.', measure: 'Days from first visit to CT scan.' },
@@ -900,8 +731,8 @@ function FirstMonth({ county, top }: { county: string; top: ReturnType<typeof bu
   const rows: [string, string][] = [['Who', s.who], ['This week', s.week], ['This month', s.month], ['How you know it works', s.measure]]
   return (
     <div key={county + top.id} className="rise">
-      <Label>Start on Monday · {county}</Label>
-      <p className="mt-3 font-serif text-3xl leading-tight">{top.title}</p>
+      <Label>Action 1 · the first month</Label>
+      <p className="mt-3 font-serif text-3xl leading-tight">{top.title}, {county}</p>
       <div className="mt-5 space-y-4">
         {rows.map(([k, v]) => (
           <div key={k} className="border-t border-ink/20 pt-3">

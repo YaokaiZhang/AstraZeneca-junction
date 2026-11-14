@@ -74,14 +74,14 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
     {
       id: 'lung', score: ((lungLate - natLate) / 0.03) * lungLateW + (c.smoking - NAT.smoking) / 1.5,
       title: 'Lung CT screening pilot',
-      detail: `${fmt(lungRad.highRisk)} people ${RISK.lung.ages} at higher risk (rough) · self-check first, then CT`,
+      detail: `${fmt(lungRad.highRisk)} people ${RISK.lung.ages} at higher risk (estimate) · self-check first, then CT`,
       why: `Spread at diagnosis ${pct(lungLate)} vs FI ${pct(natLate)} · smoking ${c.smoking}% vs ${fmt(NAT.smoking, 1)}%`,
       gap: `Lung cancer found late: ${pct(lungLate)}`, stamp: 'Late lung', stages: ['Screening', 'Visit'],
       badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how={`Rule: spread at diagnosis (non-localized share of cases with known stage) above national + smoking above national. Counts half when stage is unknown for most cases (here ${pct(c.cancers.lung.unknownStage)}) or the range is wide. People at higher risk: our rough heuristic from the detection radar (population 50–74 × smoking prevalence).`} />,
     },
     {
       id: 'remind', score: (natTurnout - turnout) / 2 + helpTowns.length * 0.8,
-      title: 'Reminder + second kit',
+      title: prog === 'bowel' ? 'Reminder + second kit' : 'Reminder + new appointment',
       detail: helpTowns.length ? `Start in ${helpTowns.map((t) => t.name).join(', ')}` : `Start in ${lowTowns.slice(0, 2).map((t) => t.name).join(', ')}`,
       why: `${progLabel} turnout ${turnout}% vs FI ${fmt(natTurnout, 1)}%${helpTowns.length ? ` · ${helpTowns.length} town${helpTowns.length > 1 ? 's' : ''} below prediction` : ''}`,
       gap: `${progLabel} screening turnout: ${turnout}%`, stamp: 'Low turnout', stages: ['Screening'],
@@ -90,7 +90,7 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
     {
       id: 'risk', score: rad.steps.risk.z! * 1.2,
       title: 'Reach people at higher risk',
-      detail: `${fmt(rad.highRisk)} ${RISK[k].who} at higher risk of ${cancerLabel(k).toLowerCase()} cancer (rough) · self-check in the app, then a doctor visit`,
+      detail: `${fmt(rad.highRisk)} ${RISK[k].who} at higher risk of ${cancerLabel(k).toLowerCase()} cancer (estimate) · self-check in the app, then a doctor visit`,
       why: `${pct(rad.steps.risk.v!)} of ${RISK[k].who} at higher risk vs FI ${pct(rad.steps.risk.nat!)}`,
       gap: `Many at higher risk: ${fmt(rad.highRisk)}`, stamp: 'Many at risk', stages: ['Screening', 'Visit'],
       badge: stepBadge('risk', k, rad),
@@ -98,7 +98,7 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
     {
       id: 'diag', score: (slope ?? 0) / 5 + (growth - natGrowth) / 0.04 + (oy ? (2036 - oy) / 4 : 0),
       title: 'Add diagnostic capacity',
-      detail: `Scan + specialist slots for ${growth >= 0 ? '+' : '−'}${pct(Math.abs(growth))} cases by 2035${oy ? ` · overload ${oy}` : ''}`,
+      detail: `Scan and specialist time for ${pct(Math.abs(growth))} ${growth >= 0 ? 'more' : 'fewer'} cases by 2035${oy ? ` · short of slots by ${oy}` : ''}`,
       why: c.queueTrend ? `Waited > 6 months ${fmt(c.queueTrend[0], 1)} → ${fmt(c.queueTrend[3], 1)} per 10k, 2022–25` : 'Waiting-list trend not published for this county',
       gap: `Queue ${slope == null ? 'unknown' : queueRising(c) ? 'rising' : 'not rising'}, cases ${growth >= 0 ? '+' : '−'}${pct(Math.abs(growth))} by 2035`, stamp: oy ? `Overload ${oy}` : queueRising(c) ? 'Queue rising' : 'Capacity',
       stages: ['Referral', 'Scan', 'Diagnosis'],

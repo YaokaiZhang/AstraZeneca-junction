@@ -17,7 +17,7 @@
 
 @layer components {
   /* small uppercase typewriter label, as in the reference design */
-  .label { @apply font-type uppercase tracking-widest text-[10px] opacity-60; }
+  .label { @apply font-type uppercase tracking-widest text-xs opacity-70; }
   .paper-texture { position: relative; overflow: hidden; }
   .paper-texture::before {
     content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; opacity: .4;

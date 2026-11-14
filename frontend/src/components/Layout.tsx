@@ -21,9 +21,8 @@ export default function Layout() {
             </div>
             <span className="lg:hidden font-serif text-2xl italic">Ajoissa</span>
           </NavLink>
-          <div className="hidden lg:block space-y-4">
+          <div className="hidden lg:block">
             <h1 className="text-6xl font-light leading-[0.9]">Ajo<br /><span className="ml-8 italic">issa</span></h1>
-            <p className="font-type text-sm leading-relaxed opacity-80">Cancer, on time<br />Finland<br />2026–2035</p>
           </div>
         </div>
 
@@ -31,17 +30,17 @@ export default function Layout() {
           {NAV.map((n) => {
             const active = pathname.startsWith(n.to)
             return (
-              <NavLink key={n.to} to={n.to} className={cx('group font-type uppercase text-xs tracking-widest hover:text-terra transition-colors', !active && 'opacity-50')}>
+              <NavLink key={n.to} to={n.to} className={cx('group font-type uppercase text-sm tracking-widest hover:text-terra transition-colors', !active && 'opacity-50')}>
                 <span className="flex items-center gap-2">
                   {active && <span className="w-1.5 h-1.5 bg-terra rounded-full" />}
                   {n.label}
                 </span>
-                <span className="hidden lg:block normal-case tracking-normal text-[10px] opacity-60 mt-1 pl-3.5">{n.sub}</span>
+                <span className="hidden lg:block normal-case tracking-normal text-xs opacity-70 mt-1 pl-3.5">{n.sub}</span>
               </NavLink>
             )
           })}
           <button onClick={() => { if (confirm('Clear all demo data?')) { reset(); location.reload() } }}
-            className="hidden lg:block font-type uppercase text-[10px] tracking-widest opacity-30 hover:opacity-100 hover:text-terra mt-6">Reset demo</button>
+            className="hidden lg:block font-type uppercase text-xs tracking-widest opacity-40 hover:opacity-100 hover:text-terra mt-6">Reset demo</button>
         </nav>
       </aside>
 

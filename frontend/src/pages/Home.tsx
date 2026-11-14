@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
-import { Clock, Marquee, Privacy, ThreeDates, TooLate, Views } from './home/Pitch'
+import { CheckIns, Clock, Marquee, Privacy, ThreeDates, TooLate, Views } from './home/Pitch'
 import { WordsUp, useScrollProgress } from './home/reveal'
 import { Radar } from './home/Radar'
 import FinlandCanvas, { HOSPITALS, type Hover, type Tally } from './home/FinlandCanvas'
@@ -206,6 +206,7 @@ export default function Home() {
       <Radar />
       <Marquee words={['notice', 'track', 'ask', 'escalate', 'find']} reverse />
       <Views />
+      <CheckIns />
       <Privacy />
       <ThreeDates />
 

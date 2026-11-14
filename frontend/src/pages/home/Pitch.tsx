@@ -289,7 +289,7 @@ function CountyMock() {
 }
 
 const VIEWS = [
-  { k: '01', who: 'Patient', a: 'Notice it.', b: 'Say it. Chase it.', p: 'Write down symptoms in your own words and find out whether a screening or a doctor visit is worth it: you get a next step, never a score. See how long each step of your care has taken, and if one runs late, Ajoissa drafts a message to the clinic for you. In Finnish, Swedish or English.', chips: ['Symptom diary', 'Screening check', 'Pathway clock', '3 languages'], mock: <PhoneMock />, to: '/patient' },
+  { k: '01', who: 'Patient', a: 'Notice it.', b: 'Say it. Chase it.', p: 'Write down symptoms in your own words and find out whether a screening or a doctor visit is worth it: you get a next step, never a score. See how long each step of your care has taken, and if one runs late, Ajoissa drafts a message to the clinic for you. If you want, it checks in on you between visits. In Finnish, Swedish or English.', chips: ['Symptom diary', 'Screening check', 'Pathway clock', 'Check-ins', '3 languages'], mock: <PhoneMock />, to: '/patient' },
   { k: '02', who: 'Hospital', a: 'See who is', b: 'falling behind.', p: 'A live list of patients whose next step is overdue, most delayed first. The worst cases are flagged for escalation, and the bars show which step causes the most delay.', chips: ['Off-track list', 'Auto-escalation', 'Shared records', 'Delay map'], mock: <HospitalMock />, to: '/hospital' },
   { k: '03', who: 'County', a: 'Find where', b: 'people are lost.', p: 'The detection radar follows each county from people at risk, to screening, to stage at diagnosis, to survival, and marks the step where it loses the most people. Darker tiles mean more late diagnoses.', chips: ['Detection radar', 'Who misses screening', 'Overload warning', 'Action brief'], mock: <CountyMock />, to: '/county' },
 ]
@@ -414,6 +414,86 @@ export function ThreeDates() {
         <div className={cx('rv rv-scale text-center sm:text-left', on && 'in')} style={{ transitionDelay: '1200ms' }}>
           <div className="font-serif text-8xl lg:text-9xl leading-none tabular-nums lining-nums">{Math.round(n)}</div>
           <div className="label mt-1">days to treatment</div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────── 3b · caring check-ins (spec 1.6) ───────────── */
+const CI_DAYS = 21
+const CI_ROWS = [
+  { who: 'Worrying symptom', every: 7, hot: true },
+  { who: 'Everyone else', every: 14, hot: false },
+]
+
+/** Scroll-scrubbed: the days tick by after a cough is logged; the app reaches out on schedule, the reply lands in the diary. */
+export function CheckIns() {
+  const [ref, p] = useScrollProgress<HTMLElement>()
+  const day = Math.min(CI_DAYS, Math.max(0, ((p - 0.12) / 0.7) * CI_DAYS))
+  const ping = day >= 7, two = day >= 14, reply = day >= 16, saved = day >= 18
+  return (
+    <section ref={ref} className="relative lg:h-[260svh]">
+      <div className="lg:sticky top-0 min-h-[100svh] px-5 lg:px-24 py-16 flex flex-col justify-center overflow-hidden">
+        <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
+          <WordsUp text="We don't wait." /><br /><WordsUp text="We ask." className="italic text-terra" delay={180} />
+        </h2>
+        <div className="mt-12 lg:mt-16 grid lg:grid-cols-[1.4fr_1fr] gap-12 lg:gap-20 items-center">
+          <div>
+            <div className="flex items-baseline gap-4">
+              <span className="font-serif text-7xl lg:text-8xl leading-none tabular-nums lining-nums w-[2.2ch]">{Math.floor(day)}</span>
+              <span className="label">days since<br />“cough”</span>
+            </div>
+            <div className="mt-10 space-y-8">
+              {CI_ROWS.map((r) => (
+                <div key={r.who}>
+                  <div className={cx('font-type text-sm uppercase tracking-widest mb-3', r.hot && 'text-terra')}>{r.who}</div>
+                  <div className="relative flex justify-between items-center">
+                    <div className="absolute inset-x-0 top-1/2 h-px bg-ink/15" />
+                    <div className="absolute left-0 top-1/2 h-px bg-ink" style={{ width: `${(day / CI_DAYS) * 100}%` }} />
+                    {Array.from({ length: CI_DAYS + 1 }, (_, d) => {
+                      const due = d > 0 && d % r.every === 0
+                      const past = day >= d
+                      return due
+                        ? <span key={d} className={cx('relative w-5 h-5 rounded-full border-2 transition-all duration-300',
+                            past ? (r.hot ? 'bg-terra border-terra scale-110' : 'bg-ink border-ink scale-110') : 'bg-paper border-ink/30')} />
+                        : <span key={d} className={cx('relative w-1 h-1 rounded-full', past ? 'bg-ink' : 'bg-ink/20')} />
+                    })}
+                  </div>
+                </div>
+              ))}
+              <div className="relative h-5 font-type text-sm opacity-60">
+                {['Day 0', '1 wk', '2 wk', '3 wk'].map((l, i) => (
+                  <span key={l} className="absolute -translate-x-1/2 whitespace-nowrap first:translate-x-0 last:-translate-x-full" style={{ left: `${(i / 3) * 100}%` }}>{l}</span>
+                ))}
+              </div>
+            </div>
+            <div className="mt-10 flex flex-wrap gap-x-10 gap-y-3 font-type text-sm uppercase tracking-widest">
+              <span className="flex items-center gap-2"><span className="w-7 h-4 rounded-full bg-mustard relative"><span className="absolute right-0.5 top-0.5 w-3 h-3 rounded-full bg-paper" /></span>You switch it on</span>
+              <span className="opacity-70">Only what you told us</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <div className="relative w-[280px] h-[480px] lg:w-[290px] lg:h-[520px] rounded-[2.75rem] bg-ink p-3 shadow-2xl rotate-[3deg]">
+              <div className="absolute top-5 left-1/2 -translate-x-1/2 w-20 h-5 rounded-full bg-ink z-10" />
+              <div className="relative h-full w-full rounded-[2.2rem] bg-paper paper-texture p-5 pt-12 flex flex-col gap-3">
+                <div className="text-center font-serif text-5xl lining-nums tabular-nums opacity-80">9:41</div>
+                <div className={cx('transition-all duration-500 rounded-2xl bg-ink text-paper p-4 shadow-lg', ping ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4')}>
+                  <div className="font-type text-sm uppercase tracking-widest text-mustard">Ajoissa</div>
+                  <p key={two ? 2 : 1} className="mt-1 font-sans text-[15px] leading-snug">{two ? 'Hi, two weeks ago you mentioned a cough. Is it still there? Has anything changed?' : 'Hi, last week you mentioned a cough. How is it now?'}</p>
+                </div>
+                <div className={cx('self-end max-w-[85%] transition-all duration-500 rounded-2xl rounded-br-sm bg-mustard px-4 py-2.5 font-sans text-[15px] leading-snug', reply ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4')}>
+                  Still there. Worse at night.
+                </div>
+                <div className={cx('mt-auto border-t border-ink/15 pt-3 transition-opacity duration-500', saved ? 'opacity-100' : 'opacity-0')}>
+                  <div className="label">Diary · day 16</div>
+                  <p className="mt-1 font-serif text-xl leading-tight">Cough, worse at night</p>
+                  <div className="mt-3 inline-block font-type text-sm uppercase tracking-widest text-terra border border-terra rounded-full px-3 py-1">→ See a doctor</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

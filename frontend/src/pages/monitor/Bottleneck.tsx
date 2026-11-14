@@ -67,9 +67,9 @@ function Year2031({ r, res }: { r: ScreeningRow; res: Result }) {
       {on ? (
         <div className="mt-4 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 items-start rise">
           <div>
-            <p className="font-serif text-4xl sm:text-5xl leading-[1.02] flex items-baseline gap-2 flex-wrap">
-              <span>By 2031, needs <span className="italic">{signed(need, n1)}</span> colonoscopies a week</span>
-              <SourceBadge id="ourModel" kind="estimate" demo={false} how={how} />
+            <p className="font-serif text-4xl sm:text-5xl leading-[1.02]">
+              By 2031, needs <span className="italic">{signed(need, n1)}</span> colonoscopies a week{' '}
+              <SourceBadge id="ourModel" kind="estimate" demo={false} how={how} className="align-middle" />
             </p>
             <p className="font-sans text-[16px] leading-snug mt-3 opacity-90">
               Over today&apos;s {n1(y.todayWeek)} a week{y.hasFixes ? <>, with the chosen fixes scaled the same way</> : <>, at today&apos;s rates and before any fix</>}.

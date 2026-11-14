@@ -144,7 +144,7 @@ export function Fixes({ r, plan, setPlan, res }: { r: ScreeningRow; plan: Plan; 
   )
   const total = res.total.colonoscopies
   return (
-    <div className="max-w-4xl">
+    <div>
       {first.map((s) => <Group key={s} s={s} />)}
       {!first.length && <p className="font-sans text-[16px] opacity-75">No step is falling behind in {r.name}. All options are below.</p>}
       {rest.length > 0 && (

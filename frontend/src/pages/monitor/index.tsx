@@ -233,11 +233,11 @@ const OURS: [string, string][] = [
 /** Where the numbers come from, in plain words, plus what we calculated ourselves. Always visible at the bottom. */
 function SourcesFooter() {
   return (
-    <footer className="mt-16 pt-8 border-t border-black/15 max-w-5xl">
+    <footer className="mt-16 pt-8 border-t border-black/15">
       <p className="font-serif text-3xl">Where the numbers come from</p>
       <ul className="mt-4 divide-y divide-black/10">
         {WHERE.map((x) => (
-          <li key={x.url} className="py-3 grid sm:grid-cols-[13rem_minmax(0,1fr)] gap-x-6 gap-y-1">
+          <li key={x.url} className="py-3 grid sm:grid-cols-[13rem_minmax(0,1fr)] gap-x-6 gap-y-1 pr-[max(0px,calc(100%-64rem))]">
             <p className="font-serif text-lg leading-tight">{x.who}<span className="block font-sans text-[13px] opacity-60 mt-0.5">{x.year}</span></p>
             <div className="font-sans text-[15px] leading-snug">
               <p>{x.what}.</p>
@@ -247,7 +247,7 @@ function SourcesFooter() {
         ))}
       </ul>
       <p className="mt-8 font-serif text-2xl">What we calculated ourselves</p>
-      <ul className="mt-3 space-y-2 font-sans text-[15px] leading-snug">
+      <ul className="mt-3 space-y-2 font-sans text-[15px] leading-snug max-w-5xl">
         {OURS.map(([t, d]) => <li key={t}><b className="font-medium">{t}.</b> <span className="opacity-80">{d}</span></li>)}
       </ul>
       <p className="mt-6 font-sans text-[13px] opacity-60 max-w-3xl">

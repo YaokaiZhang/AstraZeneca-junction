@@ -1,0 +1,163 @@
+Sex;Cancer site;ICD-10;Age group (5y.);Cancer deaths;Mortality per 100,000
+Male;Lung, trachea;C33-34;0-4;0;0
+Male;Lung, trachea;C33-34;5-9;0;0
+Male;Lung, trachea;C33-34;10-14;0;0
+Male;Lung, trachea;C33-34;15-19;0;0
+Male;Lung, trachea;C33-34;20-24;;0,13
+Male;Lung, trachea;C33-34;25-29;0;0
+Male;Lung, trachea;C33-34;30-34;;0,11
+Male;Lung, trachea;C33-34;35-39;13;1,38
+Male;Lung, trachea;C33-34;40-44;18;1,96
+Male;Lung, trachea;C33-34;45-49;48;5,65
+Male;Lung, trachea;C33-34;50-54;97;11,56
+Male;Lung, trachea;C33-34;55-59;285;31,38
+Male;Lung, trachea;C33-34;60-64;608;69,33
+Male;Lung, trachea;C33-34;65-69;1041;123,56
+Male;Lung, trachea;C33-34;70-74;1678;207,67
+Male;Lung, trachea;C33-34;75-79;1519;259,22
+Male;Lung, trachea;C33-34;80-84;1076;312,69
+Male;Lung, trachea;C33-34;85+;752;289,02
+Male;Breast;C50;0-4;0;0
+Male;Breast;C50;5-9;0;0
+Male;Breast;C50;10-14;0;0
+Male;Breast;C50;15-19;0;0
+Male;Breast;C50;20-24;0;0
+Male;Breast;C50;25-29;0;0
+Male;Breast;C50;30-34;0;0
+Male;Breast;C50;35-39;0;0
+Male;Breast;C50;40-44;0;0
+Male;Breast;C50;45-49;0;0
+Male;Breast;C50;50-54;;0,12
+Male;Breast;C50;55-59;0;0
+Male;Breast;C50;60-64;7;0,8
+Male;Breast;C50;65-69;;0,47
+Male;Breast;C50;70-74;5;0,62
+Male;Breast;C50;75-79;;0,17
+Male;Breast;C50;80-84;;0,58
+Male;Breast;C50;85+;6;2,31
+Male;Colon and rectum;C18-20;0-4;0;0
+Male;Colon and rectum;C18-20;5-9;0;0
+Male;Colon and rectum;C18-20;10-14;0;0
+Male;Colon and rectum;C18-20;15-19;0;0
+Male;Colon and rectum;C18-20;20-24;0;0
+Male;Colon and rectum;C18-20;25-29;;0,11
+Male;Colon and rectum;C18-20;30-34;9;0,95
+Male;Colon and rectum;C18-20;35-39;13;1,38
+Male;Colon and rectum;C18-20;40-44;31;3,38
+Male;Colon and rectum;C18-20;45-49;41;4,83
+Male;Colon and rectum;C18-20;50-54;85;10,13
+Male;Colon and rectum;C18-20;55-59;185;20,37
+Male;Colon and rectum;C18-20;60-64;304;34,66
+Male;Colon and rectum;C18-20;65-69;447;53,05
+Male;Colon and rectum;C18-20;70-74;672;83,17
+Male;Colon and rectum;C18-20;75-79;742;126,62
+Male;Colon and rectum;C18-20;80-84;595;172,91
+Male;Colon and rectum;C18-20;85+;660;253,66
+Male;Anus;C21;0-4;0;0
+Male;Anus;C21;5-9;0;0
+Male;Anus;C21;10-14;0;0
+Male;Anus;C21;15-19;0;0
+Male;Anus;C21;20-24;0;0
+Male;Anus;C21;25-29;0;0
+Male;Anus;C21;30-34;0;0
+Male;Anus;C21;35-39;0;0
+Male;Anus;C21;40-44;;0,22
+Male;Anus;C21;45-49;;0,12
+Male;Anus;C21;50-54;;0,12
+Male;Anus;C21;55-59;;0,44
+Male;Anus;C21;60-64;;0,34
+Male;Anus;C21;65-69;;0,36
+Male;Anus;C21;70-74;10;1,24
+Male;Anus;C21;75-79;6;1,02
+Male;Anus;C21;80-84;9;2,62
+Male;Anus;C21;85+;11;4,23
+Female;Lung, trachea;C33-34;0-4;0;0
+Female;Lung, trachea;C33-34;5-9;0;0
+Female;Lung, trachea;C33-34;10-14;0;0
+Female;Lung, trachea;C33-34;15-19;0;0
+Female;Lung, trachea;C33-34;20-24;;0,13
+Female;Lung, trachea;C33-34;25-29;0;0
+Female;Lung, trachea;C33-34;30-34;;0,11
+Female;Lung, trachea;C33-34;35-39;;0,34
+Female;Lung, trachea;C33-34;40-44;9;1,04
+Female;Lung, trachea;C33-34;45-49;20;2,47
+Female;Lung, trachea;C33-34;50-54;69;8,39
+Female;Lung, trachea;C33-34;55-59;177;19,44
+Female;Lung, trachea;C33-34;60-64;351;38,64
+Female;Lung, trachea;C33-34;65-69;653;71,59
+Female;Lung, trachea;C33-34;70-74;929;101,4
+Female;Lung, trachea;C33-34;75-79;900;124,85
+Female;Lung, trachea;C33-34;80-84;625;126,46
+Female;Lung, trachea;C33-34;85+;644;120,44
+Female;Breast;C50;0-4;0;0
+Female;Breast;C50;5-9;0;0
+Female;Breast;C50;10-14;0;0
+Female;Breast;C50;15-19;0;0
+Female;Breast;C50;20-24;;0,13
+Female;Breast;C50;25-29;;0,24
+Female;Breast;C50;30-34;16;1,81
+Female;Breast;C50;35-39;43;4,87
+Female;Breast;C50;40-44;73;8,43
+Female;Breast;C50;45-49;119;14,69
+Female;Breast;C50;50-54;195;23,7
+Female;Breast;C50;55-59;289;31,74
+Female;Breast;C50;60-64;314;34,56
+Female;Breast;C50;65-69;484;53,06
+Female;Breast;C50;70-74;662;72,26
+Female;Breast;C50;75-79;683;94,75
+Female;Breast;C50;80-84;691;139,82
+Female;Breast;C50;85+;941;175,98
+Female;Cervix uteri;C53;0-4;0;0
+Female;Cervix uteri;C53;5-9;0;0
+Female;Cervix uteri;C53;10-14;;0,13
+Female;Cervix uteri;C53;15-19;0;0
+Female;Cervix uteri;C53;20-24;;0,13
+Female;Cervix uteri;C53;25-29;0;0
+Female;Cervix uteri;C53;30-34;;0,23
+Female;Cervix uteri;C53;35-39;10;1,13
+Female;Cervix uteri;C53;40-44;16;1,85
+Female;Cervix uteri;C53;45-49;21;2,59
+Female;Cervix uteri;C53;50-54;13;1,58
+Female;Cervix uteri;C53;55-59;20;2,2
+Female;Cervix uteri;C53;60-64;32;3,52
+Female;Cervix uteri;C53;65-69;17;1,86
+Female;Cervix uteri;C53;70-74;28;3,06
+Female;Cervix uteri;C53;75-79;34;4,72
+Female;Cervix uteri;C53;80-84;29;5,87
+Female;Cervix uteri;C53;85+;30;5,61
+Female;Colon and rectum;C18-20;0-4;0;0
+Female;Colon and rectum;C18-20;5-9;0;0
+Female;Colon and rectum;C18-20;10-14;0;0
+Female;Colon and rectum;C18-20;15-19;0;0
+Female;Colon and rectum;C18-20;20-24;;0,27
+Female;Colon and rectum;C18-20;25-29;;0,36
+Female;Colon and rectum;C18-20;30-34;;0,45
+Female;Colon and rectum;C18-20;35-39;16;1,81
+Female;Colon and rectum;C18-20;40-44;22;2,54
+Female;Colon and rectum;C18-20;45-49;35;4,32
+Female;Colon and rectum;C18-20;50-54;56;6,81
+Female;Colon and rectum;C18-20;55-59;133;14,61
+Female;Colon and rectum;C18-20;60-64;201;22,12
+Female;Colon and rectum;C18-20;65-69;284;31,14
+Female;Colon and rectum;C18-20;70-74;443;48,35
+Female;Colon and rectum;C18-20;75-79;556;77,13
+Female;Colon and rectum;C18-20;80-84;573;115,94
+Female;Colon and rectum;C18-20;85+;911;170,37
+Female;Anus;C21;0-4;0;0
+Female;Anus;C21;5-9;0;0
+Female;Anus;C21;10-14;0;0
+Female;Anus;C21;15-19;0;0
+Female;Anus;C21;20-24;0;0
+Female;Anus;C21;25-29;0;0
+Female;Anus;C21;30-34;0;0
+Female;Anus;C21;35-39;0;0
+Female;Anus;C21;40-44;0;0
+Female;Anus;C21;45-49;;0,12
+Female;Anus;C21;50-54;;0,12
+Female;Anus;C21;55-59;;0,33
+Female;Anus;C21;60-64;7;0,77
+Female;Anus;C21;65-69;;0,44
+Female;Anus;C21;70-74;6;0,65
+Female;Anus;C21;75-79;9;1,25
+Female;Anus;C21;80-84;11;2,23
+Female;Anus;C21;85+;18;3,37

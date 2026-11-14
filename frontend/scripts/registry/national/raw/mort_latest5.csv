@@ -1,0 +1,10 @@
+Sex;Cancer site;ICD-10;Cancer deaths;Mortality per 100,000;Mortality per 100,000, age-standardised (Finland 2014);Mortality per 100,000, age-standardised (world standard population)
+Male;Lung, trachea;C33-34;7137;51,85;50,08;18,62
+Male;Breast;C50;26;0,19;0,2;0,08
+Male;Colon and rectum;C18-20;3785;27,5;27,51;10
+Male;Anus;C21;50;0,36;0,37;0,14
+Female;Lung, trachea;C33-34;4382;31,15;24,73;9,65
+Female;Breast;C50;4513;32,08;26,1;11,22
+Female;Cervix uteri;C53;254;1,81;1,6;0,9
+Female;Colon and rectum;C18-20;3239;23,03;17,71;6,51
+Female;Anus;C21;60;0,43;0,33;0,12

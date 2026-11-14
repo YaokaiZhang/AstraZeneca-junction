@@ -184,14 +184,19 @@ export const PROGRAMMES = [
 
 // ---------- bowel / breast / cervical Estimate ----------
 // NOT a clinical model. No free, validated model exists for these cancers, so (spec 3.1) we combine
-// rough Finnish Cancer Registry incidence by age and sex with relative risks from published
+// Finnish Cancer Registry incidence by age and sex with approximate relative risks from published
 // meta-analyses. Labelled "Estimate" wherever it surfaces. The person never sees the number.
 type Cancer3 = 'bowel' | 'breast' | 'cervical'
-/** New cases per 100 000 per year, by 10-year age band starting at 0, 10, 20 … 80+. Rounded, demo-grade. */
+/**
+ * New cases per 100 000 per year, by 10-year age band 0–9, 10–19 … 70–79, 80+.
+ * Finnish Cancer Registry statistics app, whole country, 2020–2024 (retrieved 14 Nov 2026): published
+ * 5-year-band rates collapsed to 10-year bands, weighted by person-years. Bowel = C18–20, breast = C50,
+ * cervix = C53.
+ */
 const INCIDENCE: Record<Cancer3, { f: number[]; m: number[] }> = {
-  bowel: { f: [0, 0, 1, 5, 18, 45, 100, 190, 290], m: [0, 0, 1, 5, 20, 60, 150, 280, 380] },
-  breast: { f: [0, 0, 2, 50, 190, 270, 320, 280, 250], m: [0, 0, 0, 0, 1, 1, 2, 2, 3] },
-  cervical: { f: [0, 0, 6, 11, 9, 7, 7, 6, 6], m: [0, 0, 0, 0, 0, 0, 0, 0, 0] },
+  bowel: { f: [0.15, 1.71, 3.53, 6.62, 17.37, 46.79, 118.75, 191.93, 263.19], m: [0, 0.94, 2.72, 6.81, 19.25, 58.09, 184.71, 288.67, 390.7] },
+  breast: { f: [0, 0.06, 5.42, 42.84, 143.59, 278.18, 392.51, 378.06, 379.23], m: [0, 0, 0.06, 0.16, 0.34, 1.03, 2.38, 3.73, 4.64] },
+  cervical: { f: [0, 0.07, 2.4, 15.42, 15.4, 7.79, 6.37, 6.78, 6.61], m: [0, 0, 0, 0, 0, 0, 0, 0, 0] },
 }
 /** Relative risks (approximate, from published meta-analyses). Multiplied together. */
 export const ESTIMATE_RR = {
@@ -246,7 +251,7 @@ export function estimateHigh(c: Cancer3, i: EstimateInput) {
   for (let a = p.from; a <= p.to; a++) bar = Math.min(bar, baseline10y(c, i.sex, a))
   return e !== null && e >= bar
 }
-export const ESTIMATE_HOW = 'Estimate, not a clinical score. 10-year chance = Finnish Cancer Registry incidence for your age and sex × relative risks (smoking, alcohol, BMI, family history) from published meta-analyses. Screening is suggested when this is at least as high as the average risk of people Finland already screens.'
+export const ESTIMATE_HOW = 'Estimate, not a clinical score. 10-year chance = Finnish Cancer Registry incidence for your age and sex (whole country, 2020–2024) × approximate relative risks (smoking, alcohol, BMI, family history) from published meta-analyses. Screening is suggested when this is at least as high as the average risk of people Finland already screens.'
 
 export const bmiOf = (heightCm: number, weightKg: number) => +(weightKg / Math.pow(heightCm / 100, 2)).toFixed(1)
 export const DEFAULT_CHECK: CheckInputs = {

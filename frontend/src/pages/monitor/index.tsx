@@ -6,8 +6,9 @@ import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { Btn, Display, Drawer, KindLegend, Label, Picker, SourceBadge, cx } from '../../components/ui'
 import { GROUPS, SCREENING, SCREENING_FI, screeningById, MISSED_CANCERS_2022 } from './data'
-import { EMPTY_PLAN, GROUP_FACTS, evaluate, flags, n1, type Plan } from './model'
-import { Chain, headline } from './Chain'
+import { EMPTY_PLAN, GROUP_FACTS, evaluate, n1, type Plan } from './model'
+import { Chain } from './Chain'
+import { Recommend, SimpleChain, Verdict, WhatItTakes } from './Simple'
 import { Missed } from './Missed'
 import { MixGap } from './MixGap'
 import { Fixes } from './Fixes'
@@ -33,14 +34,27 @@ function Section({ n, a, b, children, id, aside }: { n: string; a: ReactNode; b?
   )
 }
 
+function Block({ a, b, children }: { a: ReactNode; b?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="mt-16 sm:mt-20">
+      <Display a={a} b={b} className="!text-4xl lg:!text-5xl mb-6" />
+      {children}
+    </section>
+  )
+}
+
 export default function MonitorPage() {
   const [q, setQ] = useSearchParams()
   const countyId = screeningById(q.get('c') ?? '') ? q.get('c')! : 'helsinki'
   const r = screeningById(countyId)!
   const [plan, setPlan] = useState<Plan>(EMPTY_PLAN)
   const [sheet, setSheet] = useState(false)
+  const [evidence, setEvidence] = useState(false)
+  const openEvidence = (id: string) => {
+    setEvidence(true)
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
+  }
   const res = useMemo(() => evaluate(r, plan), [r, plan])
-  const f = flags(r)
   const select = (id: string) => setQ((p) => { const n = new URLSearchParams(p); n.set('c', id); return n }, { replace: true })
   const touched = JSON.stringify(plan) !== JSON.stringify(EMPTY_PLAN)
 
@@ -53,58 +67,87 @@ export default function MonitorPage() {
           <div className="flex items-center gap-4 min-w-0">
             <Picker label="County" value={countyId} onChange={select} options={OPTIONS}
               className="font-serif text-2xl sm:text-3xl italic py-0.5 max-w-[70vw] sm:max-w-none" />
-            <span className="hidden sm:flex items-center gap-1" aria-label="Leaking steps">
-              {(['detection', 'referral', 'capacity'] as const).map((s) => <span key={s} className={cx('w-2.5 h-2.5 rounded-full', f[s] ? 'bg-terra' : 'bg-stone')} />)}
-            </span>
           </div>
           <div className="flex items-center gap-3">
             {touched && <button onClick={() => setPlan(EMPTY_PLAN)} className="font-type text-sm uppercase tracking-widest opacity-70 hover:opacity-100 hover:text-terra">Reset fixes</button>}
             <button onClick={() => setSheet(true)}
               className="font-type text-[15px] uppercase tracking-widest flex items-center gap-2 rounded-full bg-ink text-paper pl-4 pr-1.5 py-1.5 hover:bg-terra transition-colors">
-              Action sheet <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">↓</span>
+              One-page plan <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">↓</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* 01 · the chain */}
-      <section className="mt-8">
-        <Label className="mb-3">Bowel cancer screening · 2024 round, ages 60–70 · Screening chain monitor</Label>
-        <div className={cx('grid gap-8 items-start', SHOW_FULL_STORY && 'xl:grid-cols-[minmax(0,1fr)_300px]')}>
-          <div className="min-w-0 rise" key={countyId}>
-            <p className="font-serif text-3xl sm:text-[2.6rem] leading-[1.1] max-w-4xl">{headline(r)}</p>
-            <div className="mt-8"><Chain r={r} /></div>
-          </div>
-          {SHOW_FULL_STORY && <div className="hidden xl:block">
-            <LeakMap selected={countyId} onSelect={select} />
-          </div>}
-        </div>
+      {/* 1 · the verdict */}
+      <section className="mt-10 sm:mt-14">
+        <Label className="mb-4">Bowel cancer screening · {r.name} · 2024</Label>
+        <p key={countyId} className="rise font-serif text-3xl sm:text-[2.8rem] leading-[1.12] max-w-5xl"><Verdict r={r} /></p>
       </section>
 
-      <Section n="02" a="Who is" b="being missed">
-        <Missed />
-        <div key={countyId} className="rise"><MixGap r={r} /></div>
-      </Section>
+      {/* 2 · the chain, simplified */}
+      <section className="mt-10 sm:mt-12">
+        <SimpleChain r={r} />
+      </section>
 
-      <Section n="03" a="Proven fixes," b={`in ${r.name}`}
-        aside={<p className="font-sans text-[15px] opacity-70 max-w-sm">Each card shows the measured effect and its source. Tap to apply; the numbers are for {r.name}&apos;s 2024 volumes.</p>}>
-        <Fixes r={r} plan={plan} setPlan={setPlan} res={res} />
-      </Section>
+      {/* 3 · what to do */}
+      <Block a="What" b="to do">
+        <Recommend r={r} plan={plan} setPlan={setPlan} res={res}
+          otherOptions={<button onClick={() => openEvidence('evidence-fixes')} className="font-sans text-[15px] underline underline-offset-4 opacity-75 hover:opacity-100 hover:text-terra">See other proven options</button>} />
+      </Block>
 
-      <Section n="04" a="The bottleneck" b="warning" id="bottleneck">
-        <Bottleneck r={r} plan={plan} setPlan={setPlan} res={res} />
-        <div className="mt-6 flex justify-end">
-          <Btn variant="terra" onClick={() => setSheet(true)}>Open the action sheet</Btn>
-        </div>
-      </Section>
+      {/* 4 · what it will take */}
+      <Block a="What it" b="will take">
+        <WhatItTakes r={r} plan={plan} setPlan={setPlan} res={res} />
+      </Block>
 
-      {SHOW_FULL_STORY ? <Section n="05" a="Every county," b="same tool">
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-8 items-start">
-          <Ranking selected={countyId} onSelect={(id) => { select(id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
-          <div className="xl:hidden"><LeakMap selected={countyId} onSelect={select} className="max-w-md mx-auto" /></div>
-          <About />
-        </div>
-      </Section> : <SourcesFooter />}
+      {/* 5 · the plan */}
+      <div className="mt-14 flex flex-wrap items-center gap-4">
+        <button onClick={() => setSheet(true)}
+          className="group inline-flex items-center gap-3 bg-ink text-paper rounded-full pl-7 pr-2 py-2 font-type uppercase text-sm tracking-widest hover:bg-terra transition-colors">
+          Get the one-page plan
+          <span className="w-10 h-10 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-y-0.5 transition-transform">↓</span>
+        </button>
+        <span className="font-sans text-[15px] opacity-60">Everything above, with the numbers and sources, ready to print.</span>
+      </div>
+
+      {/* 6 · the evidence */}
+      <details id="evidence" open={evidence} onToggle={(e) => setEvidence((e.target as HTMLDetailsElement).open)} className="mt-16 border-t border-black/15 group">
+        <summary className="cursor-pointer list-none py-6 flex items-center justify-between gap-4 select-none">
+          <span className="font-serif text-3xl sm:text-4xl">See the evidence</span>
+          <span className="font-type text-sm uppercase tracking-widest opacity-70 flex items-center gap-2">
+            {evidence ? 'Hide' : 'Numbers, methods, sources'} <span className={cx('inline-block transition-transform', evidence && 'rotate-180')}>↓</span>
+          </span>
+        </summary>
+        {evidence && <div className="pb-6">
+          <Section n="A" a="The chain," b="in detail">
+            <Chain r={r} />
+          </Section>
+          <Section n="B" a="Who is" b="being missed">
+            <Missed />
+            <div key={countyId} className="rise"><MixGap r={r} /></div>
+          </Section>
+          <Section n="C" a="All proven fixes," b={`in ${r.name}`} id="evidence-fixes"
+            aside={<p className="font-sans text-[15px] opacity-70 max-w-sm">Each card shows the measured effect and its source. Tap to apply; the numbers are for {r.name}&apos;s 2024 volumes.</p>}>
+            <Fixes r={r} plan={plan} setPlan={setPlan} res={res} />
+          </Section>
+          <Section n="D" a="Colonoscopy" b="capacity" id="bottleneck">
+            <Bottleneck r={r} plan={plan} setPlan={setPlan} res={res} />
+          </Section>
+          {SHOW_FULL_STORY && <Section n="E" a="Every county," b="same tool">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-8 items-start">
+              <Ranking selected={countyId} onSelect={(id) => { select(id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
+              <div className="xl:hidden"><LeakMap selected={countyId} onSelect={select} className="max-w-md mx-auto" /></div>
+              <About />
+            </div>
+          </Section>}
+          <SourcesFooter />
+        </div>}
+      </details>
+
+      <p className="mt-10 font-sans text-[14px] opacity-60">
+        Sources: Finnish Cancer Registry, Statistics Finland, two meta-analyses.{' '}
+        <button onClick={() => openEvidence('evidence')} className="underline underline-offset-2 hover:text-terra">See the evidence</button> for details.
+      </p>
 
       <Drawer open={sheet} onClose={() => setSheet(false)} label="County action sheet">
         <div className="p-6 pt-16">
@@ -135,7 +178,7 @@ const FOOTER_SOURCES: [string, string][] = [
 /** Small sources footer, shown instead of section 05 while the full story is switched off. */
 function SourcesFooter() {
   return (
-    <footer className="mt-20 pt-5 border-t border-black/15 font-sans text-[13px] leading-snug opacity-75">
+    <footer className="mt-16 pt-5 border-t border-black/15 font-sans text-[13px] leading-snug opacity-75">
       <Label className="mb-2">Sources</Label>
       <ul className="space-y-1">
         {FOOTER_SOURCES.map(([t, u]) => (

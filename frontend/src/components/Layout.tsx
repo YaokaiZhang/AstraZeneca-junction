@@ -14,6 +14,7 @@ const NAV = SHOW_FULL_STORY ? ALL_NAV : ALL_NAV.filter((n) => n.to === '/monitor
 export default function Layout() {
   const { pathname } = useLocation()
   const reset = useStore((s) => s.reset)
+  if (!SHOW_FULL_STORY) return <SlimLayout pathname={pathname} />
   return (
     <div className="w-full min-h-screen flex flex-col lg:flex-row">
       <aside className="w-full lg:w-[260px] xl:w-[300px] lg:h-screen lg:sticky lg:top-0 border-b lg:border-b-0 lg:border-r border-stone/60 flex lg:flex-col justify-between gap-3 sm:gap-6 p-4 sm:p-5 lg:p-10 z-20 bg-paper shrink-0">
@@ -57,6 +58,31 @@ export default function Layout() {
       </main>
       <Toaster />
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/%3E%3C/svg%3E')" }} />
+    </div>
+  )
+}
+
+/** Slim top bar: logo, name and the one view we show. The content gets the full width. */
+function SlimLayout({ pathname }: { pathname: string }) {
+  return (
+    <div className="w-full min-h-screen">
+      <header className="flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-10 py-3 border-b border-stone/60 bg-paper">
+        <NavLink to="/" className="flex items-center gap-2.5">
+          <span className="w-8 h-8 border border-current rounded-full flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2" /></svg>
+          </span>
+          <span className="font-serif text-2xl italic leading-none">Ajoissa</span>
+        </NavLink>
+        <nav className="flex items-center gap-5">
+          {NAV.map((n) => (
+            <NavLink key={n.to} to={n.to} className={cx('font-type uppercase text-sm tracking-widest hover:text-terra flex items-center gap-2', !pathname.startsWith(n.to) && 'opacity-50')}>
+              {pathname.startsWith(n.to) && <span className="w-1.5 h-1.5 bg-terra rounded-full" />}{n.label}
+            </NavLink>
+          ))}
+        </nav>
+      </header>
+      <main className="min-w-0 relative overflow-x-clip"><Outlet /></main>
+      <Toaster />
     </div>
   )
 }

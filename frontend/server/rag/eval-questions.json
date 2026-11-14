@@ -1,0 +1,42 @@
+{
+  "_note": "Retrieval eval set for /api/briefing, run against the real knowledge/ corpus by eval.test.ts. Each question is driven only by the controlled facts pathway_step + action_ids. requiredSourceIds: every one must be in the retrieved passages. Ids match knowledge/manifest.json.",
+  "corpusVersion": "2026-11-14.1",
+  "questions": [
+    {
+      "id": "q1-referral-navigation",
+      "question": "Positive tests are not followed up: what happens after a positive test in Finland, and what is the evidence for patient navigation?",
+      "facts": { "pathway_step": "referral", "action_ids": "navigation" },
+      "requiredSourceIds": ["chua-2026-followup-colonoscopy-meta", "fcr-colorectal-2024"]
+    },
+    {
+      "id": "q2-referral-reminders",
+      "question": "Do reminders to people with a positive test who have not booked a colonoscopy improve follow-up?",
+      "facts": { "pathway_step": "referral", "action_ids": "patient-reminder" },
+      "requiredSourceIds": ["chua-2026-followup-colonoscopy-meta"]
+    },
+    {
+      "id": "q3-capacity-catch-up",
+      "question": "The wait for a colonoscopy after a positive test is too long: what does Finnish policy say about access, and what helps?",
+      "facts": { "pathway_step": "capacity", "action_ids": "catch-up" },
+      "requiredSourceIds": ["stm-cancer-strategy-2026-2035-fi", "naserrudin-2026-followup-colonoscopy-review"]
+    },
+    {
+      "id": "q4-detection-reminder",
+      "question": "Few people send the test kit back: does a reminder raise participation, and what does the national plan fund?",
+      "facts": { "pathway_step": "detection", "action_ids": "reminder" },
+      "requiredSourceIds": ["dougherty-2018-crc-screening-interventions", "fican-cancer-strategy-roadmap-2026-2031"]
+    },
+    {
+      "id": "q5-detection-multilingual",
+      "question": "Participation is lower among people whose mother tongue is not Finnish or Swedish: what does the strategy and roadmap say?",
+      "facts": { "pathway_step": "detection", "action_ids": "multilingual" },
+      "requiredSourceIds": ["fican-cancer-strategy-roadmap-2026-2031", "stm-cancer-strategy-2026-2035-fi"]
+    },
+    {
+      "id": "q6-on-track",
+      "question": "Every step is on track: how does the programme work and what is worth keeping?",
+      "facts": { "pathway_step": "none", "action_ids": "" },
+      "requiredSourceIds": ["fcr-crc-screening-programme"]
+    }
+  ]
+}

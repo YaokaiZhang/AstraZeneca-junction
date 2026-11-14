@@ -1,6 +1,7 @@
 // County action sheet: one printable page. Template text; every number comes from model.ts.
 import { SCREENING_FI, type ScreeningRow } from './data'
-import { briefingLines } from './briefing'
+import { briefingLines, type BriefingLine } from './briefing'
+import { sourceBadge, type EvidenceLevel, type EvidenceRef } from './evidence'
 import { DETECTION_FIXES, GROUP_FACTS, flags, in2031, losses, n0, n1, signed, type Plan, type Result, type Step, STEP_META } from './model'
 
 const SOURCES = [
@@ -13,7 +14,62 @@ const SOURCES = [
   ['Statistics Finland, population by age and language (vaerak/11rz), 2025, rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/'],
 ]
 
-export interface Briefing { text: string; source: 'ai' | 'template'; note?: string }
+export interface Briefing {
+  text: string
+  source: 'ai' | 'template'
+  note?: string
+  /** the parsed lines with their citation numbers (AI text only) */
+  lines?: BriefingLine[]
+  /** the cited passages; only for AI text the server grounded in evidence */
+  evidence?: EvidenceRef[]
+  evidenceLevel?: EvidenceLevel
+  limitations?: string[]
+}
+
+function fmtDate(d?: string) {
+  if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return d
+  const t = new Date(`${d}T00:00:00Z`)
+  return isNaN(+t) ? d : t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+}
+
+function EvidenceList({ evidence, level, limitations }: { evidence: EvidenceRef[]; level?: EvidenceLevel; limitations?: string[] }) {
+  return (
+    <div className="mt-3 pt-2 border-t border-black/15">
+      <p className="font-type uppercase tracking-widest text-[11px] opacity-60">
+        Evidence · {level === 'evidence_backed' ? 'Evidence-backed' : 'Limited evidence'}
+      </p>
+      <ol className="mt-1 space-y-1.5">
+        {evidence.map((e) => {
+          const meta = [
+            e.publisher,
+            fmtDate(e.publicationDate),
+            e.dataPeriod && `data: ${e.dataPeriod}`,
+            e.page ? `p. ${e.page}` : e.section,
+          ].filter(Boolean)
+          return (
+            <li key={e.n} className="grid grid-cols-[1.25rem_minmax(0,1fr)] text-[12px] leading-snug break-inside-avoid">
+              <span className="font-type opacity-60">{e.n}</span>
+              <div className="min-w-0">
+                <p>
+                  <span className="font-medium">{e.title}</span>
+                  {meta.map((m) => <span key={m}> · {m}</span>)}
+                  {' '}<span className="font-type uppercase text-[10px] tracking-wider border border-black/20 rounded px-1 whitespace-nowrap align-[1px]">{sourceBadge(e)}</span>
+                </p>
+                {e.excerpt && <p className="opacity-70 line-clamp-2">“{e.excerpt}”</p>}
+                <a href={e.url} target="_blank" rel="noreferrer" className="opacity-70 underline decoration-black/30 break-all">{e.url}</a>
+              </div>
+            </li>
+          )
+        })}
+      </ol>
+      {!!limitations?.length && (
+        <div className="mt-1.5 text-[11px] leading-snug opacity-70 space-y-0.5">
+          {limitations.map((x) => <p key={x}>{x}</p>)}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan: Plan; res: Result; briefing?: Briefing }) {
   const f = flags(r)
@@ -27,6 +83,7 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
   if (res.detection.pts > 0) fixes.push(`${det ? det.name : 'Raise kit return'} (${det ? det.effect : 'chosen target'}): kit return ${n1(r.participationPct)}% → ${n1(r.participationPct + res.detection.pts)}%, ≈ ${n0(res.detection.kits)} more kits, ${signed(res.detection.colonoscopies)} colonoscopies a year.`)
   if (plan.catchUp && q.catchUp >= 0.5) fixes.push(`Catch-up colonoscopy sessions: ${n0(q.catchUp)} one-off colonoscopies (≈ ${n1(q.catchUpPerWeek)} a week for ${plan.catchUpWeeks} weeks) to bring the median wait to ${n1(plan.targetMonths)} months.`)
   const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  const grounded = briefing?.source === 'ai' && !!briefing.evidence?.length
 
   const row = (s: Step) => {
     const v = s === 'detection' ? `${n1(r.participationPct)}%` : s === 'referral' ? `${n1(r.colonoscopyOfPositivesPct)}%` : `${n1(r.medianMonths)} mo`
@@ -48,16 +105,22 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
       {briefing && (
         <section className="mt-5">
           <dl className="grid sm:grid-cols-[6.5rem_minmax(0,1fr)] gap-x-4 gap-y-1 sm:gap-y-2.5">
-            {(briefingLines(briefing.text) ?? [{ label: 'Briefing', text: briefing.text }]).map((l) => (
+            {(briefing.lines ?? briefingLines(briefing.text) ?? [{ label: 'Briefing', text: briefing.text, cites: [] }]).map((l) => (
               <div key={l.label} className="contents">
                 <dt className="font-type uppercase tracking-widest text-[11px] opacity-60 pt-2 sm:pt-1">{l.label}</dt>
-                <dd className={l.label === 'Do this' ? 'text-[16px] leading-snug font-medium' : 'text-[16px] leading-snug'}>{l.text}</dd>
+                <dd className={l.label === 'Do this' ? 'text-[16px] leading-snug font-medium' : 'text-[16px] leading-snug'}>
+                  {l.text}
+                  {grounded && l.cites.length > 0 && <sup className="font-type text-[10px] font-normal opacity-60 ml-0.5">{l.cites.join(',')}</sup>}
+                </dd>
               </div>
             ))}
           </dl>
           <p className="text-[11px] opacity-50 mt-2">
-            {briefing.source === 'ai' ? 'Worded by AI · every number checked against our calculations' : briefing.note ?? 'From our calculations'}
+            {briefing.source === 'ai'
+              ? grounded ? 'Worded by AI from the sources below · every number checked against our calculations' : 'Worded by AI · every number checked against our calculations'
+              : briefing.note ?? 'From our calculations'}
           </p>
+          {grounded && <EvidenceList evidence={briefing.evidence!} level={briefing.evidenceLevel} limitations={briefing.limitations} />}
         </section>
       )}
 
@@ -122,7 +185,7 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
 
       <section className="mt-4">
         <h2 className="font-type uppercase tracking-widest text-[12px] opacity-70 mb-1">Policy fit</h2>
-        <p className="text-[13px] leading-snug">National Cancer Strategy 2026–2035: Goal 2, 80% screening participation in every wellbeing services county; Goal 3, treatment within target times; other mother tongues to reach the participation of Finnish and Swedish speakers (strategy pp. 5, 20). Implementation roadmap 2026–2031: measure 1.3.1, multilingual screening outreach, €400,000 (p. 33); 3.1.4, pathway quality indicators (p. 58); 3.5.3, digital tools and AI (p. 73).</p>
+        <p className="text-[13px] leading-snug">National Cancer Strategy 2026–2035: Goal 2, 80% screening participation in every wellbeing services county; Goal 3, treatment within target times (strategy p. 5); other mother tongues to reach the participation of Finnish and Swedish speakers (sub-objective 1.3, p. 20). Implementation roadmap 2026–2031: measure 1.3.1, multilingual screening outreach, estimated €400,000 (p. 33); 2.4.5, monthly reporting to the screening registers (pp. 50–51); 3.1.4, pathway quality indicators (p. 58); 3.5.3, digital tools and AI (pp. 73–74).</p>
       </section>
 
       <footer className="mt-4 pt-2 border-t border-black/20 text-[11px] leading-snug opacity-80">
@@ -130,7 +193,8 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
         <ol className="list-decimal pl-4 space-y-0.5">
           {SOURCES.map(([t, u]) => <li key={u}>{t}. {u}</li>)}
         </ol>
-        {briefing?.source === 'ai' && <p className="mt-1">The briefing text is written by AI from our calculated numbers; it adds no numbers of its own, and it is checked against them.</p>}
+        {briefing?.source === 'ai' && <p className="mt-1">The briefing text is written by AI from our calculated numbers{grounded ? ' and the evidence passages cited under it' : ''}; it adds no numbers of its own, and it is checked against them.</p>}
+        <p className="mt-1">2024 is the latest complete screening chain. Preliminary 2025 figures (Finnish Cancer Registry, 29 Oct 2026) cover only kit return (Finland 73.3%); colonoscopy follow-up for 2025 is due in spring 2027, so the two years are not combined here.</p>
         <p className="mt-1">Effects come from mostly US studies and are estimates. Waits were read from a chart (± 0.1 month). Group figures are national. The queue model (Little&apos;s law) uses the median wait as if it were the mean. &quot;No colonoscopy&quot; may include private colonoscopies not reported to the register. Every number on this sheet is calculated from the sources above; none is written by a language model.</p>
       </footer>
     </article>

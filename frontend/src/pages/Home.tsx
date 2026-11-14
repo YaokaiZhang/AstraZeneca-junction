@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
-import { CheckIns, Clock, Marquee, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
+import { Actions, CheckIns, Clock, Marquee, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
 import { WordsUp, useScrollProgress } from './home/reveal'
 import { Radar } from './home/Radar'
 import FinlandCanvas, { HOSPITALS, type Hover, type Tally } from './home/FinlandCanvas'
@@ -209,6 +209,7 @@ export default function Home() {
       <CheckIns />
       <Privacy />
       <ThreeDates />
+      <Actions />
       <Transparency />
 
       <section id="doors" className="relative px-5 lg:px-12 py-24 lg:py-32 flex flex-col items-center">

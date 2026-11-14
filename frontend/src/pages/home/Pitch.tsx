@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Card, EdgeText, KindLegend, KindDot, Label, SourceBadge, Stamp, cx } from '../../components/ui'
-import { CANCERS, COUNTIES } from '../../data/counties'
+import { Card, EdgeText, KindLegend, KindDot, Label, Picker, SourceBadge, Stamp, cx } from '../../components/ui'
+import { CANCERS, COUNTIES, type RadarCancerId } from '../../data/counties'
+import { buildBrief } from '../county/Brief'
+import { RADAR_CANCERS, stepInfo } from '../county/model'
 import { REGISTRY_FI } from '../../data/registry.generated'
 import { SOURCES } from '../../data/sources'
 import { PATHWAY } from '../../data/pathway'
@@ -574,6 +576,146 @@ export function Transparency() {
             </ul>
           </Card>
         </Reveal>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────── 7 · from finding to action ───────────── */
+type Effort = 1 | 2 | 3
+const PLAYBOOK: { step: string; finding: string; action: string; who: string; lever: string; effort: Effort; target: string; badge: React.ReactNode }[] = [
+  {
+    step: 'Step 2', finding: 'Low screening turnout', action: 'Reminder letter + second test kit to non-attenders, lowest towns first',
+    who: 'Screening unit', lever: 'National screening programme invitations', effort: 1, target: '80% turnout in every county',
+    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 80% screening turnout in every county. Tracked with THL Sotkanet 6103 / 3621 / 3620, already on the radar." />,
+  },
+  {
+    step: 'Pathway', finding: 'Waiting time unknown', action: 'Log three dates; a nurse coordinator calls anyone past a step target',
+    who: 'Hospital nurse coordinator', lever: 'The 6-week referral-to-treatment rule', effort: 1, target: 'Treated within 6 weeks of referral',
+    badge: <SourceBadge id="thlTargets" kind="direct" demo={false} how="Referral arriving → first treatment within 6 weeks, tests included (STM report 2010:6). Tracked by the hospital off-track list." />,
+  },
+  {
+    step: 'Step 3', finding: 'Found after spread', action: 'Direct CT referral for weight loss + new diabetes or jaundice',
+    who: 'Health centre GP', lever: 'Regional care pathway (hoitoketju), urgent referral', effort: 2, target: '70% found at stage I–II',
+    badge: <SourceBadge id="strategy" kind="direct" demo={false} how="Strategy target by 2035: 70% of cancers found at stage I–II. Tracked on the radar as the Registry's spread share (step 3)." />,
+  },
+  {
+    step: 'Step 1', finding: 'Many at high risk', action: 'Self-check in the app, then a GP visit; lung CT only above the risk cut-off',
+    who: 'Health centre nurse', lever: 'PLCOm2012 risk cut-off ≥ 1.51%', effort: 2, target: 'High-risk people reached',
+    badge: <SourceBadge id="plco" kind="direct" demo={false} how="Cut-off ≥ 1.51% six-year lung cancer risk (Tammemägi et al. 2014). Built on US data; not validated in Finland. Lung CT screening is only piloted in Finland." />,
+  },
+  {
+    step: 'Step 4', finding: 'Cases rise to 2035', action: 'Book scan + specialist slots before the overload year',
+    who: 'County', lever: 'Annual budget and service plan', effort: 3, target: 'Fewer waiting > 6 months',
+    badge: <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how="THL Sotkanet 3336: waited over 6 months for specialist care, per 10 000 residents. Shown with the 2035 projection on the Overload tab." />,
+  },
+]
+const EFFORT = ['', 'Low', 'Medium', 'High']
+
+function EffortDots({ n }: { n: Effort }) {
+  return (
+    <span className="inline-flex items-center gap-2" aria-label={`Effort ${EFFORT[n]}`}>
+      <span className="flex gap-1">{[1, 2, 3].map((i) => <i key={i} className={cx('w-2 h-2 rounded-full border border-ink', i <= n ? 'bg-ink' : 'bg-transparent')} />)}</span>
+      <span className="font-type text-xs uppercase tracking-widest opacity-70">{EFFORT[n]}</span>
+    </span>
+  )
+}
+
+const EASY: [string, string, React.ReactNode][] = [
+  ['Open data', 'Cancer Registry CC BY 4.0 · Statistics Finland · THL', <SourceBadge key="r" id="cancerRegistry" kind="direct" demo={false} />],
+  ['No record link', 'The radar uses public totals only', null],
+  ['A browser', 'Nothing to install', null],
+  ['Yearly refresh', 'Committed Registry scripts + open THL / StatFin APIs', null],
+  ['Diary first', 'Works without records; AI optional', null],
+]
+
+export function Actions() {
+  const [cid, setCid] = useState('pohjois-karjala')
+  const [k, setK] = useState<RadarCancerId>('lung')
+  const county = COUNTIES.find((c) => c.id === cid)!
+  const brief = buildBrief(county, k)
+  return (
+    <section id="act" className="relative px-5 lg:px-24 py-28 lg:py-40" aria-label="Actions">
+      <div className="flex flex-wrap items-end justify-between gap-6">
+        <h2 className="font-serif font-light text-6xl lg:text-8xl leading-[0.95]">
+          <WordsUp text="A gap found." /><br /><WordsUp text="A step to take." className="italic text-terra" delay={180} />
+        </h2>
+        <Reveal fx="blur" delay={300} className="flex flex-wrap gap-x-6 gap-y-2"><EffortDots n={1} /><EffortDots n={2} /><EffortDots n={3} /></Reveal>
+      </div>
+      <Lede className="mt-8">Each radar finding comes with an action, an owner, a lever that already exists and a target the radar keeps tracking.</Lede>
+
+      {/* playbook */}
+      <div className="mt-16 lg:mt-20">
+        <div className="hidden lg:grid grid-cols-[9rem_1.6fr_1fr_1.2fr_7rem_1.2fr] gap-6 pb-3 border-b border-ink">
+          {['Finding', 'Action', 'Who', 'Existing lever', 'Effort', 'Target'].map((h) => <span key={h} className="label">{h}</span>)}
+        </div>
+        {PLAYBOOK.map((r, i) => (
+          <Reveal key={r.step + r.finding} delay={i * 90}
+            className="grid grid-cols-2 lg:grid-cols-[9rem_1.6fr_1fr_1.2fr_7rem_1.2fr] gap-x-6 gap-y-2 py-5 border-b border-dashed border-ink/20 items-baseline">
+            <div className="col-span-2 lg:col-span-1">
+              <div className="font-type text-xs uppercase tracking-widest opacity-60">{r.step}</div>
+              <div className="font-serif italic text-xl leading-tight text-terra">{r.finding}</div>
+            </div>
+            <div className="col-span-2 lg:col-span-1 font-serif text-xl lg:text-2xl leading-tight">{r.action}</div>
+            <div className="font-type text-[13px] uppercase tracking-wider"><span className="lg:hidden opacity-50">Who · </span>{r.who}</div>
+            <div className="font-sans text-[15px] leading-snug opacity-80"><span className="lg:hidden font-type text-[13px] uppercase opacity-60">Lever · </span>{r.lever}</div>
+            <div className="flex flex-wrap lg:flex-col items-start gap-2">
+              <EffortDots n={r.effort} />
+              {r.effort === 1 && <span className="font-type text-[11px] uppercase tracking-widest bg-mustard rounded-full px-2 py-0.5">Quick win</span>}
+            </div>
+            <div className="font-sans text-[15px] leading-snug flex items-baseline gap-2"><span>{r.target}</span>{r.badge}</div>
+          </Reveal>
+        ))}
+      </div>
+
+      <div className="mt-20 lg:mt-24 grid lg:grid-cols-[1.3fr_1fr] gap-12 lg:gap-20 items-start">
+        {/* real-data hook: any county → its weakest step → its three actions (same engine as the county brief) */}
+        <Reveal fx="up">
+          <Card tone="mustard" tilt={-1} className="relative p-6 pl-10 lg:p-8 lg:pl-12">
+            <EdgeText>Try it</EdgeText>
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+              <Label className="!opacity-80">Pick a county</Label>
+              <Picker label="County" value={cid} onChange={setCid} options={COUNTIES} className="font-serif italic text-2xl lg:text-3xl" />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {RADAR_CANCERS.map((c) => (
+                <button key={c.id} type="button" onClick={() => setK(c.id)} aria-pressed={k === c.id}
+                  className={cx('font-type text-xs uppercase tracking-widest rounded-full px-3 py-1 border transition-colors', k === c.id ? 'bg-ink text-paper border-ink' : 'border-ink/30 hover:border-ink')}>{c.label}</button>
+              ))}
+            </div>
+            <div className="mt-6 tear pt-4">
+              <Label className="!opacity-80">Weakest step · {stepInfo(brief.gap.step).label}</Label>
+              <p className="mt-1 font-serif text-2xl leading-tight flex flex-wrap items-center gap-2">{brief.gap.why} {brief.gap.badge}</p>
+            </div>
+            <ol className="mt-5 space-y-3">
+              {brief.actions.map((a, i) => (
+                <li key={a.id} className="flex gap-3 items-start">
+                  <span className={cx('w-8 h-8 rounded-full flex items-center justify-center font-serif shrink-0', i === 0 ? 'bg-ink text-mustard' : 'border border-ink')}>{i + 1}</span>
+                  <div className="min-w-0">
+                    <p className="font-serif text-xl leading-tight flex items-center gap-2">{a.title} {a.badge}</p>
+                    <p className="font-type text-[13px] opacity-75 mt-0.5">{a.detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <a href={`#/county?c=${cid}&rc=${k}`} className="group mt-6 inline-flex items-center gap-3 font-type uppercase text-xs tracking-widest">
+              Full brief, printable <span className="w-9 h-9 rounded-full border border-ink flex items-center justify-center group-hover:bg-ink group-hover:text-mustard transition">→</span>
+            </a>
+          </Card>
+        </Reveal>
+
+        {/* what it takes to start */}
+        <div>
+          <Label>What it takes to start</Label>
+          <div className="mt-6 space-y-5">
+            {EASY.map(([a, b, badge], i) => (
+              <Reveal key={a} delay={200 + i * 100} className="border-t border-ink/20 pt-3">
+                <div className="font-serif text-3xl italic flex items-center gap-2">{a}{badge}</div>
+                <div className="font-type text-[13px] uppercase tracking-widest opacity-60 mt-1">{b}</div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   )

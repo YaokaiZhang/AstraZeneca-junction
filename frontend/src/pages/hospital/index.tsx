@@ -1,7 +1,7 @@
 // Page 2: Hospital — off-track list, automatic escalation, shared records, delay hot-spots.
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Card, Chip, Display, Drawer, EdgeText, Label, Picker, SourceBadge, Stamp, Stat, Tabs, Toggle, toast, cx } from '../../components/ui'
+import { Card, Chip, Display, Drawer, Picker, SourceBadge, Stat, Tabs, Toggle, toast, cx } from '../../components/ui'
 import { COUNTIES } from '../../data/counties'
 import { BARRIERS, PATHWAY, type BarrierId, type StepId } from '../../data/pathway'
 import { useStore, type HospitalAction } from '../../lib/store'
@@ -111,77 +111,66 @@ export default function HospitalPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-10 xl:p-12 max-w-[1500px]">
       {/* header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="flex items-end gap-6">
-          <div>
-            <Label className="mb-3">02 · Hospital · staff view</Label>
-            <Display a="Off" b="track" />
-          </div>
-          {escalated.length > 0 && (
-            <Stamp tone="terra" rotate={-12} className="hidden sm:flex mb-1">{escalated.length}<br />escalated</Stamp>
-          )}
-        </div>
-        <div className="flex flex-col items-start md:items-end gap-2">
-          <div className="flex items-center gap-3">
-            <span className="label">County</span>
-            <Picker label="County" align="right" value={countyId} options={COUNTIES}
-              onChange={(v) => { setParams((p) => { p.set('county', v); return p }, { replace: true }); setOpenId(null) }}
-              className="font-serif text-2xl italic py-0.5" />
-          </div>
-          <span className="flex items-center gap-2 font-type text-xs uppercase tracking-widest opacity-70">
-            Synthetic caseload <SourceBadge id="demoPatients" kind="estimate" demo={false}
-              how={`${patients.length - (you ? 1 : 0)} made-up patients, volume scaled from ${county.name}'s yearly lung, bowel, pancreas and liver cases.`} />
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6">
+        <Display a="Off" b="track" />
+        <div className="flex flex-col items-start md:items-end gap-1">
+          <Picker label="County" align="right" value={countyId} options={COUNTIES}
+            onChange={(v) => { setParams((p) => { p.set('county', v); return p }, { replace: true }); setOpenId(null) }}
+            className="font-serif text-2xl italic py-0.5" />
+          <span className="flex items-center gap-2 font-type text-xs opacity-70">
+            {open.length} synthetic patients
+            <SourceBadge id="demoPatients" kind="estimate" demo={false}
+              how={`${patients.length - (you ? 1 : 0)} made-up patients, volume scaled from ${county.name}'s yearly lung, bowel, pancreas and liver cases. ${open.length} open pathways.`} />
           </span>
         </div>
       </header>
 
       {/* stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4 mt-8">
-        <Stat label="Active" value={open.length}
-          badge={<SourceBadge id="demoPatients" kind="estimate" how="Open pathways in the synthetic caseload." />} />
-        <Stat label="Off track" value={<span className="text-terra">{offTrack.length}</span>}
+      <div className="grid grid-cols-3 gap-x-6 sm:gap-x-10 mt-8 max-w-3xl">
+        <Stat big label="Off track" value={<span className="text-terra lining-nums">{offTrack.length}</span>}
           badge={<SourceBadge id="thlTargets" kind="estimate" how="Days since last step > target for the next step." />} />
-        <Stat label="Escalated" value={escalated.length}
+        <Stat big label="Escalated" value={<span className="lining-nums">{escalated.length}</span>}
           badge={<SourceBadge id="ourModel" kind="estimate" demo={false} how={`Overdue ≥ ${threshold} d, or escalated by staff; not yet resolved.`} />} />
-        <Stat label="Median overdue" value={med} unit="days"
+        <Stat big label="Median late" value={<span className="lining-nums">{med}</span>} unit="d"
           badge={<SourceBadge id="demoPatients" kind="estimate" how="Median days past target among off-track patients." />} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_380px] gap-8 xl:gap-10 mt-10 items-start">
         {/* 2.1 list */}
-        <Card className="p-4 sm:p-6 pl-8 sm:pl-12 relative min-w-0">
-          <EdgeText>Worst first · {county.name}</EdgeText>
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <Card className="p-4 sm:p-6 relative min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <Tabs value={tab} onChange={setTab}
               tabs={[{ id: 'open', label: `Open · ${open.length}` }, { id: 'done', label: `Done · ${done.length}` }]} />
-            {tab === 'open' && <Toggle on={showAll} onChange={setShowAll} label={showAll ? 'All patients' : 'Off track only'} />}
+            {tab === 'open' && <Toggle on={showAll} onChange={setShowAll} label="Include on track" />}
           </div>
 
-          <div className="space-y-3 pb-4 mb-2 tear pt-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mt-5 mb-3">
             <div className="flex flex-wrap gap-1.5">
               <Chip active={cancer === 'all'} onClick={() => setCancer('all')}>All</Chip>
               {CANCER_KEYS.map((c) => <Chip key={c} active={cancer === c} onClick={() => setCancer(cancer === c ? 'all' : c)}>{CANCER_LABEL[c]}</Chip>)}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2">
+            <div className="grid grid-cols-3 gap-x-3 flex-1 min-w-[min(100%,22rem)]">
               <Select label="Step" value={step} onChange={(v) => setStep(v as StepId | 'all')}
-                options={[['all', 'Any'], ...STEPS.map((s) => [s.id, s.short] as [string, string])]} />
+                options={[['all', 'Any step'], ...STEPS.map((s) => [s.id, s.short] as [string, string])]} />
               <Select label="Reason" value={reason} onChange={setReason}
-                options={[['all', 'Any'], ['system', '· System'], ['personal', '· Personal'], ['none', '· None given'], ...BARRIERS.map((b) => [b.id, b.label] as [BarrierId, string])]} />
+                options={[['all', 'Any reason'], ['system', '· System'], ['personal', '· Personal'], ['none', '· None given'], ...BARRIERS.map((b) => [b.id, b.label] as [BarrierId, string])]} />
               <Select label="Status" value={status} onChange={(v) => setStatus(v as RowStatus | 'all')}
-                options={[['all', 'Any'], ...(Object.keys(STATUS_META) as RowStatus[]).filter((k) => k !== 'resolved').map((k) => [k, STATUS_META[k].label] as [string, string])]} />
-            </div>
-            <div className={cx('flex items-center justify-between font-type text-xs uppercase tracking-widest', !filtersOn && 'opacity-60')}>
-              <span data-testid="count">{list.length} shown</span>
-              {filtersOn && <button onClick={clear} className="underline underline-offset-2 hover:text-terra">Clear filters ✕</button>}
+                options={[['all', 'Any status'], ...(Object.keys(STATUS_META) as RowStatus[]).filter((k) => k !== 'resolved').map((k) => [k, STATUS_META[k].label] as [string, string])]} />
             </div>
           </div>
+          {filtersOn && (
+            <div className="flex items-center justify-between font-type text-xs uppercase tracking-widest mb-2">
+              <span data-testid="count">{list.length} shown</span>
+              <button onClick={clear} className="underline underline-offset-2 hover:text-terra">Clear ✕</button>
+            </div>
+          )}
 
           <OffTrackList rows={list} threshold={threshold} onOpen={setOpenId} />
         </Card>
 
         {/* side column */}
-        <div className="space-y-8 min-w-0 xl:pt-2">
-          <ThresholdCard value={threshold} onChange={(n) => set({ escalateAfterDays: n })} escalated={escalated.length} />
+        <div className="space-y-6 min-w-0">
+          <ThresholdCard value={threshold} onChange={(n) => set({ escalateAfterDays: n })} />
           <EscalationQueue rows={escalated} coords={coords} onOpen={setOpenId} onAct={act} />
           <DelayChart rows={offTrack} step={step} reason={reason}
             onStep={(s) => { setStep(s); setTab('open') }} onReason={(r) => { setReason(r); setTab('open') }} />
@@ -189,7 +178,7 @@ export default function HospitalPage() {
       </div>
 
       <Drawer open={!!selected} onClose={closeDrawer}>
-        {selected && <PatientDrawerBody row={selected} coords={coords} county={county.name} onAct={act} onReassign={reassign} onReopen={reopen} />}
+        {selected && <PatientDrawerBody row={selected} coords={coords} onAct={act} onReassign={reassign} onReopen={reopen} />}
       </Drawer>
     </div>
   )
@@ -197,12 +186,10 @@ export default function HospitalPage() {
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
   return (
-    <label className="flex items-center gap-2 min-w-0">
-      <span className="label shrink-0 w-12">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label}
-        className={cx('flex-1 min-w-0 border-b py-1 font-type text-xs outline-none focus:border-terra cursor-pointer', value !== 'all' ? 'border-ink' : 'border-black/20')}>
-        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
-    </label>
+    <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label}
+      className={cx('w-full min-w-0 bg-transparent border-b py-1.5 font-type text-xs outline-none focus:border-terra cursor-pointer truncate',
+        value !== 'all' ? 'border-ink text-ink' : 'border-black/20 text-ink/60')}>
+      {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+    </select>
   )
 }

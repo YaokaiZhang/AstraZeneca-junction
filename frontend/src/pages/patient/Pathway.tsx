@@ -1,4 +1,4 @@
-import { Btn, Card, Chip, EdgeText, Label, SourceBadge, Stamp, cx, toast } from '../../components/ui'
+import { Btn, Card, Chip, Label, SourceBadge, cx, toast } from '../../components/ui'
 import { BARRIERS, PATHWAY, daysBetween, pathwayStatus, today, type BarrierId, type StepId } from '../../data/pathway'
 import { useStore } from '../../lib/store'
 import { useT } from './i18n'
@@ -44,84 +44,56 @@ export default function Pathway() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label={t('p.cancer')}>
-        <span className="label mr-2">{t('p.cancer')}</span>
-        {CANCERS.map((c) => (
-          <Chip key={c} active={pathway.cancer === c} onClick={() => set((s) => ({ pathway: { ...s.pathway, cancer: c } }))}>{t(`cancer.${c}`)}</Chip>
-        ))}
-      </div>
-
-      {/* status: clock + now/next */}
+      {/* status: clock + what you wait for */}
+      {!started ? (
+        <Card tone="mustard" tilt={-1} className="p-8 sm:p-10 max-w-2xl">
+          <p className="font-serif text-4xl sm:text-5xl leading-tight">{t('p.start')}</p>
+          <Btn className="mt-6" onClick={() => setDate('gp', now)}>{t('c.today')}</Btn>
+        </Card>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-6 lg:gap-0 items-start">
         <Card tone={overdue ? 'terra' : finished ? 'ink' : 'mustard'} tilt={-1.5} className="p-6 sm:p-8 relative z-10 lg:mr-[-28px] lg:mt-6">
-          <div className="flex items-start justify-between gap-2">
-            <Label className="!opacity-80">{t('p.day')} · {started ? d(dates.gp, { day: 'numeric', month: 'short' }) : '—'}</Label>
-            {started && st.next && (
-              <Stamp tone={overdue ? 'paper' : 'ink'} rotate={-14} className="!w-20 !h-20 sm:!w-24 sm:!h-24 -mb-6">
-                {overdue ? t('p.overdue', { n: st.overdueBy }) : t('p.ontime')}
-              </Stamp>
-            )}
-            {finished && <Stamp tone="paper" rotate={-14}>{t('p.done')}</Stamp>}
-          </div>
-          <div className="mt-2">
-            <Clock dates={dates} size={240} dark={overdue || finished}>
-              <span className="font-type text-xs uppercase tracking-widest opacity-70">{t('p.day')}</span>
-              <span className="font-serif text-7xl leading-none">{started ? dayN : '—'}</span>
-              <span className="font-type text-xs uppercase tracking-widest opacity-70 flex items-center gap-1">{t('p.of', { n: totalTarget })} <SourceBadge id="thlTargets" kind="estimate" how={TARGET_HOW} /></span>
-            </Clock>
-          </div>
+          <Clock dates={dates} size={260} dark={overdue || finished}>
+            <span className="font-type text-xs uppercase tracking-widest opacity-70">{t('p.day')}</span>
+            <span className="font-serif text-7xl leading-none">{dayN}</span>
+            <span className="font-type text-xs uppercase tracking-widest opacity-70 flex items-center gap-1">{t('p.of', { n: totalTarget })} <SourceBadge id="thlTargets" kind="estimate" how={TARGET_HOW} /></span>
+          </Clock>
         </Card>
 
-        <Card tone="paper" tilt={1} className="p-6 sm:p-8 pl-10 sm:pl-14 lg:pl-16">
-          <EdgeText>{t('tab.pathway')} · {t(`cancer.${pathway.cancer}`)}</EdgeText>
-          {!started ? (
-            <div className="py-6">
-              <p className="font-serif italic text-3xl leading-tight">{t('p.start')}</p>
-              <Btn className="mt-6" onClick={() => setDate('gp', now)}>{t('c.today')}</Btn>
-            </div>
-          ) : (
+        <Card tone="paper" tilt={1} className="p-6 sm:p-8 lg:pl-16">
+          {st.next ? (
             <>
-              {prev && st.next && (
-                <div>
-                  <Label>{t('p.since', { step: t(`step.${prev.id}`) })}</Label>
-                  <div className="flex items-baseline gap-4 mt-1 flex-wrap">
-                    <span className={cx('font-serif text-7xl leading-none', overdue && 'text-terra')}>{st.waited}</span>
+              <Label>{t('p.next')}</Label>
+              <p className="font-serif text-5xl leading-[1.05] mt-1">{t(`step.${st.next.id}`)}</p>
+              <p className="font-serif italic text-xl opacity-80 mt-2">{t(`expect.${st.next.id}`)}</p>
+              {prev && (
+                <div className="mt-6">
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className={cx('font-serif text-6xl leading-none', overdue && 'text-terra')}>{st.waited}</span>
                     <span className="font-type text-sm uppercase tracking-widest">/ {t('p.target', { n: st.next.targetDays ?? 0 })}</span>
                     <SourceBadge id="thlTargets" kind="estimate" how={TARGET_HOW} />
                   </div>
-                  {/* waited vs target bar */}
-                  <div className="mt-4 h-3 rounded-full bg-black/10 relative overflow-hidden" aria-hidden>
+                  <div className="mt-3 h-3 rounded-full bg-black/10 relative overflow-hidden" aria-hidden>
                     <div className={cx('absolute inset-y-0 left-0 rounded-full', overdue ? 'bg-terra' : 'bg-mustard')}
                       style={{ width: `${Math.min(100, (st.waited / Math.max(st.waited, st.next.targetDays ?? 1, 1)) * 100)}%` }} />
                     {overdue && <div className="absolute inset-y-0 w-0.5 bg-ink" style={{ left: `${((st.next.targetDays ?? 0) / st.waited) * 100}%` }} />}
                   </div>
-                  <p className="font-type text-xs uppercase tracking-widest opacity-60 mt-1">
-                    {overdue ? t('p.overdue', { n: st.overdueBy }) : st.overdueBy === 0 ? t('ago.today') : t('p.dueIn', { n: -st.overdueBy })} · {d(st.dueDate ?? undefined)}
+                  <p className={cx('font-type text-xs uppercase tracking-widest mt-2', overdue ? 'text-terra' : 'opacity-60')}>
+                    {overdue ? t('p.overdue', { n: st.overdueBy }) : st.overdueBy === 0 ? t('ago.today') : t('p.dueIn', { n: -st.overdueBy })}
                   </p>
                 </div>
               )}
-              {st.next ? (
-                <div className="tear mt-6 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <Label>{t('p.next')}</Label>
-                    <p className="font-serif text-3xl leading-tight mt-1">{t(`step.${st.next.id}`)}</p>
-                    <p className="font-serif italic text-lg opacity-80 mt-1">{t(`expect.${st.next.id}`)}</p>
-                    <p className="font-type text-xs uppercase tracking-widest mt-2">→ {t(`owner.${st.next.owner}`)}</p>
-                  </div>
-                  {after && (
-                    <div className="opacity-60">
-                      <Label>{t('p.then')}</Label>
-                      <p className="font-serif text-2xl leading-tight mt-1">{t(`step.${after.id}`)}</p>
-                      <p className="font-serif italic text-base mt-1">{t(`expect.${after.id}`)}</p>
-                      <p className="font-type text-xs uppercase tracking-widest mt-2">{t('p.target', { n: after.targetDays ?? 0 })}</p>
-                    </div>
-                  )}
-                </div>
-              ) : <p className="font-serif italic text-3xl">{t('p.done')}</p>}
+              {after && (
+                <p className="tear mt-6 pt-4 opacity-60">
+                  <span className="label mr-3">{t('p.then')}</span>
+                  <span className="font-serif text-xl">{t(`step.${after.id}`)}</span>
+                </p>
+              )}
             </>
-          )}
+          ) : <p className="font-serif text-5xl leading-tight">{t('p.done')}</p>}
         </Card>
       </div>
+      )}
 
       {/* overdue → barrier + contact */}
       {overdue && st.next && (
@@ -136,13 +108,8 @@ export default function Pathway() {
             {chosen && <Support barrier={chosen.id} side={chosen.side} owner={st.next.owner} />}
           </Card>
           <Card tone="ink" tilt={-1} className="p-6 sm:p-8">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <Label className="!opacity-70">{t('p.contact')}</Label>
-                <p className="font-serif text-4xl leading-none mt-1">{t(`owner.${st.next.owner}`)}</p>
-              </div>
-              <span className="font-type text-xs uppercase tracking-widest bg-terra text-paper rounded-full px-2.5 py-1 whitespace-nowrap">{t('p.overdue', { n: st.overdueBy })}</span>
-            </div>
+            <Label className="!opacity-70">{t('p.contact')}</Label>
+            <p className="font-serif text-4xl leading-none mt-1">{t(`owner.${st.next.owner}`)}</p>
             <blockquote className="tear !border-paper/20 mt-5 pt-4 font-serif text-lg leading-snug whitespace-pre-wrap" aria-label="draft">{draft}</blockquote>
             <Btn variant="mustard" className="mt-5" onClick={async () => { if (await copyText(draft)) toast(t('p.copied')) }}>{t('p.copy')}</Btn>
           </Card>
@@ -151,6 +118,11 @@ export default function Pathway() {
 
       {/* date entry */}
       <Card tone="paper" className="p-4 sm:p-6">
+        <div className="flex flex-wrap items-center gap-2 px-2 sm:px-3 pb-4" role="radiogroup" aria-label={t('p.cancer')}>
+          {CANCERS.map((c) => (
+            <Chip key={c} active={pathway.cancer === c} onClick={() => set((s) => ({ pathway: { ...s.pathway, cancer: c } }))}>{t(`cancer.${c}`)}</Chip>
+          ))}
+        </div>
         <ol className="divide-y divide-black/10">
           {PATHWAY.map((s, i) => {
             const v = dates[s.id]
@@ -164,10 +136,11 @@ export default function Pathway() {
                   v ? 'bg-ink text-paper border-ink' : isNext ? (overdue ? 'border-terra text-terra border-2' : 'border-ink border-2') : 'border-black/20 opacity-60')}>{v ? '✓' : i + 1}</span>
                 <div className="min-w-0">
                   <label htmlFor={`d-${s.id}`} className="font-serif text-xl leading-tight block">{t(`step.${s.id}`)}</label>
-                  <span className="font-type text-xs uppercase tracking-widest opacity-60">
-                    {s.targetDays !== null && t('p.target', { n: s.targetDays })}
-                    {gap !== null && <span className={cx('ml-2', late ? 'text-terra opacity-100 font-bold' : '')}>· {gap} d</span>}
-                  </span>
+                  {s.targetDays !== null && (
+                    <span className={cx('font-type text-xs uppercase tracking-widest', late ? 'text-terra font-bold' : 'opacity-60')}>
+                      {gap !== null ? t('p.took', { n: gap, target: s.targetDays }) : t('p.target', { n: s.targetDays })}
+                    </span>
+                  )}
                 </div>
                 <div className="col-start-2 sm:col-start-3 flex items-center gap-2">
                   <input id={`d-${s.id}`} type="date" value={v ?? ''} max={now} onChange={(e) => setDate(s.id, e.target.value || undefined)}
@@ -198,7 +171,7 @@ function Support({ barrier, side, owner }: { barrier: BarrierId; side: 'system' 
     : ({ transport: [kela, social], cost: [ceiling, kela, social], unwell: [nurse, social], scared: [cancer, crisis], other: [social, cancer], 'no-contact': [] } as Record<BarrierId, Item[]>)[barrier]
   return (
     <div className="rise mt-5">
-      <Label className="mb-2">{side === 'system' ? t('b.system') : t('b.personal')}</Label>
+      {side === 'personal' && <Label className="mb-2">{t('b.personal')}</Label>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {items.map((it) => {
           const inner = <>

@@ -1,4 +1,4 @@
-import { Btn, EdgeText, Label, SourceBadge, Stamp, cx } from '../../components/ui'
+import { Btn, Label, SourceBadge, cx } from '../../components/ui'
 import { PATHWAY, daysBetween, today } from '../../data/pathway'
 import type { HospitalAction } from '../../lib/store'
 import { CANCER_LABEL, type Coordinator } from './demoPatients'
@@ -6,8 +6,8 @@ import { IconLock, IconUndo } from './icons'
 import { StatusPill, ReasonChip } from './OffTrackList'
 import { ago, barrierMeta, fmtDate, type Row } from './model'
 
-export function PatientDrawerBody({ row, coords, county, onAct, onReassign, onReopen }: {
-  row: Row; coords: Coordinator[]; county: string
+export function PatientDrawerBody({ row, coords, onAct, onReassign, onReopen }: {
+  row: Row; coords: Coordinator[]
   onAct: (r: Row, s: HospitalAction['status']) => void
   onReassign: (r: Row, coordId: string) => void
   onReopen: (r: Row) => void
@@ -15,31 +15,25 @@ export function PatientDrawerBody({ row, coords, county, onAct, onReassign, onRe
   const { p } = row
   const resolved = row.status === 'resolved'
   return (
-    <div className="relative p-6 pl-12 pt-16 pb-12 min-h-full">
-      <EdgeText>{county} · {p.isYou ? 'shared by patient' : 'synthetic record'}</EdgeText>
-
-      {row.escalated && (
-        <Stamp tone="terra" rotate={-14} className="absolute top-14 right-6">Escalated<br />+{row.overdue} d</Stamp>
-      )}
-      {resolved && <Stamp tone="ink" rotate={10} className="absolute top-14 right-6 !border-moss !text-moss">Resolved</Stamp>}
-
-      <Label>{p.isYou ? 'You · shared' : `${p.age} y · ${CANCER_LABEL[p.cancer]}`}</Label>
+    <div className="relative p-6 sm:p-8 pt-14 pb-12 min-h-full">
+      <Label>{p.isYou ? 'Shared by patient' : `${p.age} y · ${CANCER_LABEL[p.cancer]}`}</Label>
       <h2 className="font-serif font-light leading-[0.9] text-5xl mt-1">
         {p.isYou ? 'You' : p.label}
         <span className="block italic pl-6 text-4xl">{row.step ? PATHWAY.find((s) => s.id === row.step)!.short.toLowerCase() : 'treated'}</span>
       </h2>
 
-      <div className="flex flex-wrap items-center gap-2 mt-5 pr-24">
-        <StatusPill row={row} />
-        <ReasonChip row={row} />
-      </div>
-      {row.coordinator && (
-        <p className="mt-3 font-type text-xs">
-          <span className="opacity-60 uppercase tracking-widest text-xs">→ </span>
-          {row.coordinator.name} <span className="opacity-60">· {row.coordinator.role}</span>
+      {row.overdue > 0 && !resolved && (
+        <p className="mt-5 font-serif leading-none text-terra">
+          <span className="text-6xl lining-nums tabular-nums">{row.overdue}</span>
+          <span className="font-type text-xs uppercase tracking-widest ml-2">days late</span>
         </p>
       )}
-      {row.action && <p className="font-type text-xs uppercase tracking-widest opacity-50 mt-1">{row.action.status} · {ago(row.action.at)}</p>}
+      <div className="flex flex-wrap items-center gap-2 mt-4">
+        <StatusPill row={row} />
+        <ReasonChip row={row} quiet />
+      </div>
+      {p.barrier?.note && p.barrier.step === row.step && <p className="font-sans text-sm mt-2 opacity-80">“{p.barrier.note}”</p>}
+      {row.action && <p className="font-type text-xs opacity-50 mt-2">{row.action.status} · {ago(row.action.at)}</p>}
 
       {/* actions */}
       <div className="mt-6 flex flex-wrap gap-2">
@@ -56,10 +50,10 @@ export function PatientDrawerBody({ row, coords, county, onAct, onReassign, onRe
       </div>
       {!resolved && (
         <label className="mt-4 flex items-center gap-3">
-          <span className="label shrink-0">Reassign</span>
+          <span className="label shrink-0">Owner</span>
           <select value={row.coordinator?.id ?? ''} onChange={(e) => onReassign(row, e.target.value)}
             className="flex-1 min-w-0 border-b border-black/20 py-1.5 font-type text-xs outline-none focus:border-terra" aria-label="Reassign coordinator">
-            {!row.coordinator && <option value="">—</option>}
+            {!row.coordinator && <option value="">Unassigned</option>}
             {coords.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.role}</option>)}
           </select>
         </label>
@@ -68,34 +62,26 @@ export function PatientDrawerBody({ row, coords, county, onAct, onReassign, onRe
       {/* pathway */}
       <div className="tear mt-8 pt-5">
         <div className="flex items-center justify-between mb-3">
-          <Label>Pathway vs target</Label>
+          <Label>Pathway</Label>
           <SourceBadge id="thlTargets" kind="estimate" how="Days between steps compared with the target for each step." />
         </div>
         <Timeline row={row} />
       </div>
 
-      {p.barrier && (
-        <div className="mt-6">
-          <Label className="mb-2">Patient-reported barrier</Label>
-          <p className="font-serif text-xl leading-tight">{barrierMeta(p.barrier.barrier)?.label}</p>
-          <p className="font-type text-xs uppercase tracking-widest opacity-60">
-            {PATHWAY.find((s) => s.id === p.barrier!.step)?.short} · {barrierMeta(p.barrier.barrier)?.side}
-          </p>
-          {p.barrier.note && <p className="font-sans text-sm mt-1 opacity-80">“{p.barrier.note}”</p>}
-        </div>
+      {p.barrier && p.barrier.step !== row.step && (
+        <p className="mt-5 font-type text-xs opacity-70">
+          Earlier: {barrierMeta(p.barrier.barrier)?.label} · {PATHWAY.find((s) => s.id === p.barrier!.step)?.short}
+          {p.barrier.note && <span className="block font-sans text-sm mt-1">“{p.barrier.note}”</span>}
+        </p>
       )}
 
       {/* shared symptom records */}
       <div className="tear mt-8 pt-5">
-        <Label className="mb-3">Shared before visit</Label>
+        <Label className="mb-3">Diary &amp; risk</Label>
         {p.shared ? <SharedRecords row={row} /> : (
-          <div className="rounded-lg border border-dashed border-black/20 bg-black/[0.03] p-6 flex items-center gap-4">
-            <span className="w-12 h-12 rounded-full bg-ink text-mustard flex items-center justify-center shrink-0"><IconLock /></span>
-            <div>
-              <p className="font-serif italic text-2xl leading-none">Not shared</p>
-              <p className="font-type text-xs uppercase tracking-widest opacity-60 mt-1">Diary · risk score</p>
-            </div>
-          </div>
+          <p className="flex items-center gap-3 font-serif italic text-2xl opacity-50">
+            <IconLock className="w-5 h-5" /> Not shared
+          </p>
         )}
       </div>
     </div>
@@ -132,7 +118,7 @@ function Timeline({ row }: { row: Row }) {
                       style={{ width: `${Math.min(100, (Math.max(0, took) / scale) * 100)}%` }} />
                     <div className="absolute -top-1 -bottom-1 border-l-2 border-ink" style={{ left: `${(target / scale) * 100}%` }} title={`Target ${target} d`} />
                   </div>
-                  <span className={cx('font-type text-xs tabular-nums shrink-0 w-16 text-right', over && 'text-terra')}>{took} / {target} d</span>
+                  <span className={cx('font-type text-xs tabular-nums shrink-0 w-20 whitespace-nowrap text-right', over && 'text-terra')}>{took} / {target} d</span>
                 </div>
               )}
             </div>

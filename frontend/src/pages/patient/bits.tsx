@@ -69,9 +69,11 @@ export function ShareSwitch({ which, label, children }: { which: 'hospital' | 's
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="font-serif text-xl leading-tight">{label}</p>
-          <p className="font-type text-xs uppercase tracking-widest opacity-60 mt-1">
-            {on && sharing.at ? t('pr.since', { t: d(sharing.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }) : t('pr.off')}
-          </p>
+          {on && sharing.at && (
+            <p className="font-type text-xs uppercase tracking-widest opacity-60 mt-1">
+              {t('pr.since', { t: d(sharing.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) })}
+            </p>
+          )}
         </div>
         <button role="switch" aria-checked={on} aria-label={typeof label === 'string' ? label : which}
           onClick={() => (on ? apply(false) : setAsk(true))}
@@ -87,7 +89,6 @@ export function ShareSwitch({ which, label, children }: { which: 'hospital' | 's
           <Btn variant="terra" onClick={() => apply(true)}>{t('pr.yes')}</Btn>
         </div>
       )}
-      {on && <button onClick={() => apply(false)} className="mt-2 font-type text-xs uppercase tracking-widest underline underline-offset-2 hover:text-terra">{t('pr.revoke')}</button>}
     </div>
   )
 }

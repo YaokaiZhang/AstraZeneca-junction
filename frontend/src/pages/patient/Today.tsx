@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react'
-import { Card, EdgeText, Label, RoundBtn, Stamp, cx } from '../../components/ui'
-import { pathwayStatus, daysBetween, today } from '../../data/pathway'
+import { Card, Label, RoundBtn, cx } from '../../components/ui'
+import { pathwayStatus, today } from '../../data/pathway'
 import { useStore } from '../../lib/store'
-import { assess, byUrgency, firstSeen, nextCheckin, nextSteps } from './logic'
+import { assess, byUrgency, nextCheckin, nextSteps } from './logic'
 import { send } from './chat'
 import { useT } from './i18n'
 import { ArrowIcon, Clock, Tag } from './bits'
@@ -10,16 +10,18 @@ import { LEVEL_TAG } from './Check'
 
 export type TabId = 'today' | 'diary' | 'pathway' | 'check' | 'settings'
 
-function Tile({ tone, tilt, onOpen, children, className, edge }: { tone: 'paper' | 'mustard' | 'terra' | 'stone' | 'ink'; tilt: number; onOpen: () => void; children: ReactNode; className?: string; edge?: string }) {
-  const { t } = useT()
+/** Whole card opens its tab; the label names it, the corner arrow is the keyboard target. */
+function Tile({ tone, tilt, label, onOpen, children, className }: { tone: 'paper' | 'mustard' | 'terra' | 'stone' | 'ink'; tilt: number; label: string; onOpen: () => void; children: ReactNode; className?: string }) {
   return (
-    <Card tone={tone} tilt={tilt} onClick={onOpen} className={cx('p-6 flex flex-col hover:!rotate-0', edge && 'pl-11', className)}>
-      {edge && <EdgeText>{edge}</EdgeText>}
-      <div className="flex-1 flex flex-col">{children}</div>
-      <div className={cx('tear mt-5 pt-3 flex justify-between items-center', (tone === 'ink' || tone === 'terra') && '!border-paper/25')}>
-        <button onClick={(e) => { e.stopPropagation(); onOpen() }} className="font-type text-xs uppercase tracking-widest hover:underline">{t('m.open')}</button>
-        <span aria-hidden>→</span>
+    <Card tone={tone} tilt={tilt} onClick={onOpen} className={cx('p-6 sm:p-7 flex flex-col hover:!rotate-0', className)}>
+      <div className="flex items-center justify-between gap-3">
+        <Label className="!opacity-70">{label}</Label>
+        <button onClick={(e) => { e.stopPropagation(); onOpen() }} aria-label={label}
+          className="w-8 h-8 -mr-2 -mt-1 rounded-full flex items-center justify-center opacity-60 hover:opacity-100">
+          <span aria-hidden>→</span>
+        </button>
       </div>
+      <div className="flex-1 flex flex-col mt-2">{children}</div>
     </Card>
   )
 }
@@ -33,12 +35,11 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
   const started = st.lastDone >= 0
   const overdue = started && !!st.next && st.overdueBy > 0
   const { flag, reasons } = assess(s.diary)
-  const symCount = Object.keys(firstSeen(s.diary)).filter((k) => k !== 'smoking').length
-  const last = [...s.diary].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
   const nextCheck = s.checkins.enabled ? nextCheckin(s.checkins) : null
   const steps = byUrgency(nextSteps(s))
-  const top = steps[0]
-  const urgent = !!top && (top.level === 'doctor' || top.level === 'act')
+  const checked = steps.some((x) => x.level !== 'unknown')
+  const urgent = steps[0] && (steps[0].level === 'doctor' || steps[0].level === 'act')
+  const shared = s.sharing.hospital || s.sharing.stats
 
   return (
     <div className="space-y-10">
@@ -51,66 +52,65 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
         <RoundBtn type="submit" title={t('d.send')} className="shrink-0"><ArrowIcon /></RoundBtn>
       </form>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 lg:gap-8">
-        <Tile tone={overdue ? 'terra' : started ? 'mustard' : 'paper'} tilt={-1.5} onOpen={() => go('pathway')} edge={t('tab.pathway')}>
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <Label className="!opacity-80">{st.next && started ? t('p.next') : t('tab.pathway')}</Label>
-              <p className="font-serif text-3xl leading-tight mt-1">{started ? (st.next ? t(`step.${st.next.id}`) : t('p.done')) : t('m.notStarted')}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 lg:gap-8">
+        {/* symptoms: the message is the headline */}
+        <Tile tone={flag ? 'terra' : 'paper'} tilt={-1.2} label={t('tab.diary')} onOpen={() => go('diary')} className="lg:col-span-3">
+          <p className="font-serif text-4xl sm:text-5xl leading-[1.05]">{flag ? t('d.flag') : s.diary.length ? t('d.noflag') : t('d.empty')}</p>
+          {reasons.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-auto pt-6">
+              {reasons.slice(0, 4).map((r) => (
+                <span key={r.tag} className={cx('font-type text-xs uppercase tracking-wider px-2 py-0.5 rounded-full', r.red ? 'bg-paper text-terra' : 'border border-paper/50')}>
+                  {t(`sym.${r.tag}`)}
+                </span>
+              ))}
             </div>
-            {started && st.next && <Stamp tone={overdue ? 'paper' : 'ink'} rotate={-12} className="!w-20 !h-20">{overdue ? t('p.overdue', { n: st.overdueBy }) : t('p.ontime')}</Stamp>}
-          </div>
-          <div className="mt-4 flex items-center gap-5">
-            <Clock dates={s.pathway.dates} size={120} dark={overdue}>
-              <span className="font-serif text-4xl leading-none">{started ? daysBetween(s.pathway.dates.gp!, now) : '—'}</span>
-            </Clock>
-            {started && st.next && (
-              <div>
-                <p className="font-serif text-5xl leading-none">{st.waited}<span className="font-type text-xs ml-1">d</span></p>
-                <p className="font-type text-xs uppercase tracking-widest mt-1 opacity-80">{t('p.target', { n: st.next.targetDays ?? 0 })}</p>
-              </div>
-            )}
-          </div>
+          )}
         </Tile>
 
-        <Tile tone={flag ? 'stone' : 'paper'} tilt={1.2} onOpen={() => go('diary')} edge={t('tab.diary')}>
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <Label>{t('d.symptoms')}</Label>
-              <p className="font-serif text-6xl leading-none mt-1">{symCount}</p>
+        {/* pathway: what you wait for, and whether it's late */}
+        <Tile tone={overdue ? 'terra' : started && st.next ? 'mustard' : 'paper'} tilt={1} label={t('tab.pathway')} onOpen={() => go('pathway')} className="lg:col-span-3">
+          <div className="flex items-center gap-5">
+            <div className="min-w-0 flex-1">
+              <p className="font-serif text-4xl sm:text-5xl leading-[1.05]">{started ? (st.next ? t(`step.${st.next.id}`) : t('p.done')) : t('m.notStarted')}</p>
+              {started && st.next && (
+                <p className="font-type text-sm uppercase tracking-widest mt-3">
+                  {overdue ? t('p.overdue', { n: st.overdueBy }) : t('p.ontime')}
+                </p>
+              )}
             </div>
-            <Stamp tone={flag ? 'terra' : 'ink'} rotate={8}>{flag ? t('d.flag') : t('d.noflag')}</Stamp>
-          </div>
-          <div className="flex flex-wrap gap-1.5 mt-4">
-            {reasons.slice(0, 4).map((r) => <Tag key={r.tag} tone={r.red ? 'terra' : 'line'}>{t(`sym.${r.tag}`)}{!r.red && ` · ${r.days} d`}</Tag>)}
-          </div>
-          {last && <p className="font-serif italic text-lg leading-snug mt-auto pt-4 line-clamp-2"><span className="font-type not-italic text-xs opacity-60 mr-2">{d(last.date)}</span>{last.text}</p>}
-        </Tile>
-
-        <Tile tone={urgent ? 'stone' : 'paper'} tilt={-0.8} onOpen={() => go('check')} edge={t('tab.check')}>
-          <Label className="!opacity-80">{t('ck.next')}</Label>
-          {top && <p className="font-serif italic text-2xl leading-tight mt-2">{t(top.say)}</p>}
-          <div className="mt-4 space-y-2">
-            {steps.map((st) => (
-              <div key={st.id} className="flex items-center justify-between gap-3 border-b border-black/10 pb-2">
-                <span className="font-serif text-2xl">{t(`prog.${st.id}`)}</span>
-                <Tag tone={LEVEL_TAG[st.level]}>{t(st.short)}</Tag>
-              </div>
-            ))}
+            {started && <Clock dates={s.pathway.dates} size={96} dark={overdue}>
+              {st.next && <span className="font-serif text-3xl leading-none">{st.waited}<span className="font-type text-[11px] ml-0.5">d</span></span>}
+            </Clock>}
           </div>
         </Tile>
 
-        <Tile tone="ink" tilt={1.5} onOpen={() => go('diary')} edge={t('ci.title')}>
-          <Label className="!opacity-70">{t('ci.next')}</Label>
-          <p className="font-serif text-4xl leading-none mt-2">{nextCheck ? d(nextCheck, { weekday: 'short', day: 'numeric', month: 'short' }) : t('pr.off')}</p>
-          {s.checkins.enabled && <p className="font-type text-xs uppercase tracking-widest text-mustard mt-2">{t('ci.every')} {t('ci.days', { n: s.checkins.everyDays })}</p>}
+        {/* screening: one row per programme */}
+        <Tile tone={urgent ? 'stone' : 'paper'} tilt={-0.6} label={t('tab.check')} onOpen={() => go('check')} className="lg:col-span-2">
+          {checked ? (
+            <div className="space-y-2">
+              {steps.map((x) => (
+                <div key={x.id} className="flex items-center justify-between gap-3 border-b border-black/10 pb-2 last:border-0">
+                  <span className="font-serif text-2xl">{t(`prog.${x.id}`)}</span>
+                  <Tag tone={LEVEL_TAG[x.level]}>{t(x.short)}</Tag>
+                </div>
+              ))}
+            </div>
+          ) : <p className="font-serif italic text-2xl leading-tight">{t('ck.needAge')}</p>}
         </Tile>
 
-        <Tile tone="paper" tilt={0.8} onOpen={() => go('settings')} edge={t('tab.settings')}>
-          <Label>{t('pr.hospital')}</Label>
-          <p className="font-serif text-4xl mt-1">{s.sharing.hospital ? t('pr.on') : t('pr.off')}</p>
-          <Label className="mt-3">{t('pr.stats')}</Label>
-          <p className="font-serif text-4xl mt-1">{s.sharing.stats ? t('pr.on') : t('pr.off')}</p>
+        <Tile tone="ink" tilt={1.2} label={t('ci.title')} onOpen={() => go('diary')} className="lg:col-span-2">
+          <p className="font-serif text-4xl leading-none">{nextCheck ? d(nextCheck, { weekday: 'short', day: 'numeric', month: 'short' }) : t('pr.off')}</p>
+          {nextCheck && <p className="font-type text-xs uppercase tracking-widest text-mustard mt-3">{t('ci.every')} {t('ci.days', { n: s.checkins.everyDays })}</p>}
+        </Tile>
+
+        <Tile tone="paper" tilt={0.6} label={t('tab.settings')} onOpen={() => go('settings')} className="lg:col-span-2">
+          <p className="font-serif text-4xl leading-none">{shared ? t('pr.sharing') : t('pr.private')}</p>
+          {shared && (
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {s.sharing.hospital && <Tag tone="ink">{t('pr.hospital')}</Tag>}
+              {s.sharing.stats && <Tag>{t('pr.stats')}</Tag>}
+            </div>
+          )}
         </Tile>
       </div>
     </div>

@@ -2,7 +2,7 @@
 // Lung uses PLCOm2012; bowel/breast/cervical use our labelled Estimate plus the public programme ages.
 // Scores are kept in the store (a clinician may see them if the person shares) but never rendered here.
 import { useEffect, useMemo, useState } from 'react'
-import { Card, Chip, EdgeText, Label, SourceBadge, Stamp, cx } from '../../components/ui'
+import { Card, Chip, Label, SourceBadge, cx } from '../../components/ui'
 import { useStore, type CheckInputs, type RiskInputs } from '../../lib/store'
 import { useChat } from './chat'
 import {
@@ -10,7 +10,7 @@ import {
   type CheckCancer, type NextStep, type StepLevel,
 } from './logic'
 import { useT } from './i18n'
-import { Field, Tag } from './bits'
+import { Field } from './bits'
 
 type Ans = 'yes' | 'no' | 'kit' | 'unsure'
 const num = 'w-full border-b border-black/20 py-1.5 font-serif text-2xl outline-none focus:border-terra bg-transparent'
@@ -71,15 +71,11 @@ export default function Check() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <p className="font-serif italic text-2xl sm:text-3xl leading-tight max-w-2xl">{t('ck.intro')}</p>
-        <Tag tone="ink">{t('ck.noScore')}</Tag>
-      </div>
+      <p className="font-serif italic text-2xl sm:text-3xl leading-tight">{t('ck.intro')}</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-8 lg:gap-10 items-start">
         {/* ---------- questions ---------- */}
-        <Card tone="paper" tilt={-0.6} className="p-6 sm:p-8 pl-10 sm:pl-12 relative z-10">
-          <EdgeText>{t('ck.about')}</EdgeText>
+        <Card tone="paper" tilt={-0.6} className="p-6 sm:p-8 relative z-10">
           <div className="space-y-6">
             <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
               <Field label={t('r.age')} htmlFor="ck-age" className="w-24">
@@ -163,12 +159,11 @@ export default function Check() {
 
         {/* ---------- next steps ---------- */}
         <div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
             {steps.map((st) => (
               <StepCard key={st.id} st={st} answer={screening[st.id as 'bowel'] as Ans | undefined} onAnswer={(v) => answer(st.id as 'bowel', v)} />
             ))}
           </div>
-          <p className="mt-6 font-type text-xs uppercase tracking-widest opacity-60">{t('ck.doctorSees')}</p>
         </div>
       </div>
     </div>
@@ -180,7 +175,7 @@ function StepCard({ st, answer, onAnswer }: { st: NextStep; answer?: Ans; onAnsw
   const prog = PROGRAMMES.find((p) => p.id === st.id)
   const tone = st.applies ? LEVEL_TONE[st.level] : 'paper'
   const onDark = tone === 'terra'
-  const model = st.id === 'lung' ? t('ck.model.lung') : st.id === 'cervical' ? t('ck.model.prog') : t('ck.model.est')
+  const model = st.id === 'lung' ? t('ck.model.lung') : t('ck.model.est')
   const opts: { v: Ans; k: string }[] = st.id === 'bowel'
     ? [{ v: 'yes', k: 's.a.sent' }, { v: 'kit', k: 's.a.kit' }, { v: 'no', k: 'c.no' }, { v: 'unsure', k: 's.a.unsure' }]
     : [{ v: 'yes', k: 'c.yes' }, { v: 'no', k: 'c.no' }, { v: 'unsure', k: 's.a.unsure' }]
@@ -196,44 +191,34 @@ function StepCard({ st, answer, onAnswer }: { st: NextStep; answer?: Ans; onAnsw
     </Card>
   )
   return (
-    <Card tone={tone} tilt={TILTS[st.id]} className="p-6 pl-11 flex flex-col min-h-[300px]">
-      <EdgeText>{model}</EdgeText>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <Label className="!opacity-80">
-              {prog ? `${prog.from}–${prog.to}${prog.sex.length < 3 ? ` · ${t('sex.f')}` : ''}` : t('ck.next')}
-            </Label>
-            {prog && <SourceBadge id="screeningRules" kind="direct" demo={false} />}
-          </div>
-          <p className="font-serif text-4xl leading-none mt-2">{t(`prog.${st.id}`)}</p>
-        </div>
-        {st.applies && st.level !== 'unknown' && (
-          <Stamp tone={onDark ? 'paper' : 'ink'} rotate={-10} className="!w-20 !h-20 shrink-0">{t(st.short)}</Stamp>
-        )}
+    <Card tone={tone} tilt={TILTS[st.id]} className="p-6 flex flex-col">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="font-serif text-3xl leading-none">{t(`prog.${st.id}`)}</p>
+        {prog && <span className="font-type text-xs uppercase tracking-widest opacity-80 flex items-center gap-1.5 whitespace-nowrap">{prog.from}–{prog.to}<SourceBadge id="screeningRules" kind="direct" demo={false} /></span>}
       </div>
+      {st.level !== 'unknown' && <p className="font-serif text-4xl leading-[1.05] mt-5">{t(st.short)}</p>}
+      <p className={cx('font-serif italic leading-snug', st.level === 'unknown' ? 'text-2xl mt-5' : 'text-lg mt-2 opacity-85')}>{t(st.say)}</p>
 
-      <div className="mt-auto pt-6">
-        <p className="font-serif italic text-xl leading-tight">{t(st.say)}</p>
-        {st.invited && st.level !== 'doctor' && (
-          <div className="mt-4">
-            <span className="font-type text-xs uppercase tracking-widest opacity-70">{t(st.id === 'bowel' ? 's.q.bowel' : 's.q.other')}</span>
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {opts.map((o) => (
-                <Chip key={o.v} active={answer === o.v} onClick={() => onAnswer(o.v)}>{t(o.k)}</Chip>
-              ))}
-            </div>
+      {st.invited && st.level !== 'doctor' && (
+        <div className="mt-5">
+          <span className="font-type text-xs uppercase tracking-widest opacity-70">{t(st.id === 'bowel' ? 's.q.bowel' : 's.q.other')}</span>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {opts.map((o) => (
+              <Chip key={o.v} active={answer === o.v} onClick={() => onAnswer(o.v)}>{t(o.k)}</Chip>
+            ))}
           </div>
-        )}
-        {st.applies && st.id !== 'cervical' && (
-          <div className={cx('tear mt-4 pt-3 flex items-center gap-2', onDark && '!border-paper/25')}>
-            <span className="font-type text-xs uppercase tracking-widest opacity-70">{model}</span>
+        </div>
+      )}
+      {st.id !== 'cervical' && (
+        <div className="mt-auto pt-5">
+          <div className={cx('tear pt-3 flex items-center gap-2', onDark && '!border-paper/25')}>
+            <span className="font-type text-[11px] uppercase tracking-widest opacity-60">{model}</span>
             {st.id === 'lung'
               ? <SourceBadge id="plco" kind="estimate" how={PLCO_HOW} demo={false} />
               : <><SourceBadge id="ourModel" kind="estimate" how={ESTIMATE_HOW} /><SourceBadge id="cancerRegistry" kind="direct" /></>}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </Card>
   )
 }

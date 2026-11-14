@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Btn, Card, Chip, Display, EdgeText, Label, RoundBtn, Stamp, Tabs, cx } from '../../components/ui'
+import { Btn, Card, Chip, Display, Label, RoundBtn, Stamp, Tabs, cx } from '../../components/ui'
 import { PATHWAY, daysBetween, today } from '../../data/pathway'
 import { useStore } from '../../lib/store'
 import { send, simulateCheckin, useChat, type Msg } from './chat'
@@ -99,15 +99,8 @@ function FlagCard() {
   const diary = useStore((s) => s.diary)
   const { flag, reasons } = useMemo(() => assess(diary), [diary])
   return (
-    <Card tone={flag ? 'terra' : 'stone'} tilt={flag ? -1.5 : 0} className="p-6 pl-10">
-      <EdgeText>{t('d.notDiagnosis')}</EdgeText>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <Label className="!opacity-80">{t('d.symptoms')}</Label>
-          <p className="font-serif text-6xl leading-none mt-1">{Object.keys(firstSeen(diary)).filter((k) => k !== 'smoking').length}</p>
-        </div>
-        <Stamp tone={flag ? 'paper' : 'ink'} rotate={-10}>{flag ? t('d.flag') : t('d.noflag')}</Stamp>
-      </div>
+    <Card tone={flag ? 'terra' : 'stone'} tilt={flag ? -1.5 : 0} className="p-6">
+      <p className="font-serif text-3xl leading-tight">{flag ? t('d.flag') : diary.length ? t('d.noflag') : t('d.empty')}</p>
       {reasons.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-4">
           {reasons.map((r) => (
@@ -149,8 +142,7 @@ export function CheckinCard({ onSimulate }: { onSimulate?: () => void }) {
       </div>
       <div className={cx('transition-opacity', !checkins.enabled && 'opacity-35')}>
         <div className="mt-4">
-          <Label className="!opacity-60">{t('ci.next')}</Label>
-          <p className="font-serif text-4xl leading-none mt-1">{checkins.enabled ? d(nextIso, { weekday: 'short', day: 'numeric', month: 'short' }) : '—'}</p>
+          <p className="font-serif text-4xl leading-none">{checkins.enabled ? d(nextIso, { weekday: 'short', day: 'numeric', month: 'short' }) : '—'}</p>
           {checkins.enabled && <p className="font-type text-xs uppercase tracking-widest text-mustard mt-1">{nextIn <= 0 ? t('ago.today') : `+${nextIn} d`}</p>}
         </div>
         <div className="mt-4 flex items-center gap-2 flex-wrap" role="radiogroup" aria-label={t('ci.every')}>
@@ -165,9 +157,8 @@ export function CheckinCard({ onSimulate }: { onSimulate?: () => void }) {
           ))}
         </div>
       </div>
-      <div className="tear !border-paper/20 mt-5 pt-4">
-        <Btn variant="mustard" className="w-full" onClick={() => { simulateCheckin(); onSimulate?.() }}>{t('ci.simulate')}</Btn>
-      </div>
+      <button onClick={() => { simulateCheckin(); onSimulate?.() }}
+        className="mt-5 font-type text-xs uppercase tracking-widest opacity-50 hover:opacity-100 hover:text-mustard underline underline-offset-4 decoration-dashed">{t('ci.simulate')}</button>
     </Card>
   )
 }
@@ -263,7 +254,6 @@ function Summary() {
   const check = useStore((s) => s.check)
   const screening = useStore((s) => s.screening)
   const steps = nextSteps({ profile, check, screening, diary }).filter((x) => x.applies && x.level !== 'unknown')
-  const sharing = useStore((s) => s.sharing)
   const now = today()
   const first = firstSeen(diary)
   const { flag, reasons } = assess(diary)
@@ -276,11 +266,7 @@ function Summary() {
   return (
     <div className="space-y-5">
       <style>{PRINT_CSS}</style>
-      <div className="flex flex-wrap gap-3 no-print">
-        <Btn onClick={() => window.print()}>{t('d.print')}</Btn>
-      </div>
-      <Card tone="paper" className="p-6 sm:p-10 pl-10 sm:pl-14" >
-        <EdgeText className="no-print">Ajoissa · {t('d.summary')}</EdgeText>
+      <Card tone="paper" className="p-6 sm:p-10">
         <div id="patient-summary" lang={lang}>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
@@ -346,14 +332,15 @@ function Summary() {
               </ul>
             </div>
           )}
-          <p className="mt-6 font-type text-[11px] uppercase tracking-widest opacity-50">{t('d.notDiagnosis')} · {t('pr.self')}</p>
+          <p className="mt-6 font-type text-[11px] uppercase tracking-widest opacity-50">{t('d.notDiagnosis')}</p>
         </div>
       </Card>
-      <Card tone="stone" className="p-5 no-print">
-        <ShareSwitch which="hospital" label={t('d.share')}>
-          {sharing.hospital && <Tag tone="ink">{t('d.shared')}</Tag>}
-        </ShareSwitch>
-      </Card>
+      <div className="no-print grid grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)] gap-4 sm:gap-6 items-center">
+        <Btn onClick={() => window.print()}>{t('d.print')}</Btn>
+        <Card tone="stone" className="px-5 py-1">
+          <ShareSwitch which="hospital" label={t('d.share')} />
+        </Card>
+      </div>
     </div>
   )
 }

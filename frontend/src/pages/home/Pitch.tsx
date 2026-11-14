@@ -828,7 +828,7 @@ export function Actions() {
                 </li>
               ))}
             </ol>
-            <a href={`#/county?c=${cid}&rc=${k}`} className="group mt-6 inline-flex items-center gap-3 font-type uppercase text-xs tracking-widest">
+            <a href={`#/county/brief?c=${cid}&rc=${k}`} className="group mt-6 inline-flex items-center gap-3 font-type uppercase text-xs tracking-widest">
               Full brief, printable <span className="w-9 h-9 rounded-full border border-ink flex items-center justify-center group-hover:bg-ink group-hover:text-mustard transition">→</span>
             </a>
           </Card></Tilt>

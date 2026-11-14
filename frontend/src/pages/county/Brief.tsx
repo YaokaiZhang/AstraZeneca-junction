@@ -1,6 +1,6 @@
 // 3.5 County action brief: biggest gap, where it happens, three ranked actions. Printable.
 import type { ReactNode } from 'react'
-import { Btn, Display, Label, SourceBadge, cx } from '../../components/ui'
+import { Display, Label, SourceBadge, cx } from '../../components/ui'
 import { COUNTIES, type County, type RadarCancerId } from '../../data/counties'
 import { RISK, cancerLabel, fmt, metricValue, national, overloadYear, pct, projection, queueRising, queueSlope, radarFor, stepInfo, weakestSentence, NAT, type StepId } from './model'
 import { stepBadge } from './Radar'
@@ -133,7 +133,7 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
     stamp: weak.stamp,
     gap: {
       cancer: k, step: rad.weakest, stages: STEP_STAGES[rad.weakest],
-      text: `${cancerLabel(k)}: biggest gap: ${weak.label.toLowerCase()}`,
+      text: `${cancerLabel(k)} · biggest gap: ${weak.label.toLowerCase()}`,
       why: weakestSentence(rad, k),
       badge: stepBadge(rad.weakest, k, rad),
     },
@@ -148,8 +148,9 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
   }
 }
 
-export function Brief({ brief, county, print }: { brief: BriefData; county: County; print?: boolean }) {
+export function Brief({ brief, county, print, page }: { brief: BriefData; county: County; print?: boolean; page?: boolean }) {
   const hot = new Set(brief.gap.stages)
+  if (page) return <BriefPage brief={brief} county={county} />
   return (
     <div className={cx('p-6 sm:p-10', print ? 'text-ink' : 'pt-16')} style={print ? { printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } : undefined}>
       <Display a={county.name} b="in brief" className="!text-4xl sm:!text-5xl break-words" />
@@ -191,12 +192,57 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
           </div>
         ))}
       </div>
+    </div>
+  )
+}
 
-      {!print && (
-        <div className="tear mt-6 pt-4 flex justify-end">
-          <Btn onClick={() => window.print()}>Print brief</Btn>
+/** The brief as a full page: the gap and where it sits on the pathway, three actions side by side, then the numbers. */
+function BriefPage({ brief, county }: { brief: BriefData; county: County }) {
+  const hot = new Set(brief.gap.stages)
+  return (
+    <div className="pt-10 lg:pt-14">
+      <Display a={county.name} b="in brief" className="break-words" />
+
+      <div className="mt-10 grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-8 lg:gap-14 items-center">
+        <div className="rounded-xl p-6 lg:p-8 bg-terra text-paper shadow-xl -rotate-1">
+          <Label className="!opacity-80">{cancerLabel(brief.gap.cancer)} · the biggest gap</Label>
+          <p className="mt-2 font-serif text-5xl lg:text-6xl leading-[1.02]">{brief.stamp}</p>
+          <p className="font-type text-[15px] uppercase tracking-wider mt-4 flex flex-wrap items-center gap-2 opacity-90">{brief.gap.why.replace(/^[^:]+:\s*/, '')} {brief.gap.badge}</p>
         </div>
-      )}
+        <div>
+          <Label>Where on the care pathway</Label>
+          <ol className="mt-4 relative flex flex-col gap-2" aria-label="Where on the care pathway">
+            {STRIP.map((s) => (
+              <li key={s} className="flex items-center gap-3">
+                <span className={cx('w-3.5 h-3.5 rounded-full shrink-0', hot.has(s) ? 'bg-terra ring-4 ring-terra/20' : 'border-2 border-ink/25')} />
+                <span className={cx('font-type text-sm uppercase tracking-widest', hot.has(s) ? 'text-terra' : 'opacity-50')}>{s}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+
+      <div className="mt-16">
+        <Label>Do next</Label>
+        <ol className="mt-5 grid md:grid-cols-3 gap-5">
+          {brief.actions.map((a, i) => (
+            <li key={a.id} className={cx('rounded-xl p-6 flex flex-col gap-4', i === 0 ? 'bg-mustard shadow-lg' : 'bg-black/[.04]')}>
+              <span className={cx('w-10 h-10 rounded-full flex items-center justify-center font-serif text-xl shrink-0', i === 0 ? 'bg-ink text-mustard' : 'border border-ink')}>{i + 1}</span>
+              <p className="font-serif text-3xl leading-tight flex flex-wrap items-center gap-2">{a.title} {a.badge}</p>
+              <p className="font-sans text-base leading-snug opacity-75">{a.detail}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div className="mt-16 tear pt-8 grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-8">
+        {brief.stats.map((s) => (
+          <div key={s.label}>
+            <Label>{s.label}</Label>
+            <p className="font-serif text-4xl leading-none mt-2 flex items-center gap-2">{s.value}{s.badge}</p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

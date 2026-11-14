@@ -1,11 +1,11 @@
 // Page 3: County — where people are lost. Tabs share the selected county + cancer through the URL query.
-// 3.1 Radar · 3.2 Screening · 3.3 Overload · 3.4 Data gaps · 3.5 Brief (drawer).
-import { useCallback, useMemo, useState } from 'react'
+// 3.1 Radar · 3.2 Screening · 3.3 Overload · 3.4 Data gaps · 3.5 Brief (its own page: /county/brief).
+import { useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { useSearchParams } from 'react-router-dom'
-import { Drawer, Picker, Tabs } from '../../components/ui'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Picker, Tabs } from '../../components/ui'
 import { COUNTIES, countyById, type CancerId, type RadarCancerId } from '../../data/counties'
-import { CountyStyles } from './bits'
+import { CountyStyles, Seg } from './bits'
 import { RADAR_CANCERS, isCoreCancer } from './model'
 import { Radar } from './Radar'
 import { Screening } from './Screening'
@@ -48,7 +48,14 @@ export default function CountyPage() {
     }, { replace: true })
   }, [setQ])
 
-  const [briefOpen, setBriefOpen] = useState(false)
+  const onBrief = useLocation().pathname.replace(/\/$/, '').endsWith('/brief')
+  const nav = useNavigate()
+  const goBrief = (patch: Record<string, string> = {}) => {
+    const n = new URLSearchParams(q)
+    for (const [k, v] of Object.entries(patch)) n.set(k, v)
+    nav(`/county/brief?${n}`)
+    window.scrollTo(0, 0)
+  }
   const county = countyById(countyId)!
   const brief = useMemo(() => buildBrief(county, radarCancer), [county, radarCancer])
 
@@ -59,8 +66,36 @@ export default function CountyPage() {
     radarCancer,
     setRadarCancer: (c) => setParam(isCoreCancer(c) ? { rc: c, cancer: c } : { rc: c }),
     select: (id) => setParam({ c: id }),
-    openBrief: (id) => { setParam({ c: id }); setBriefOpen(true) },
+    openBrief: (id) => goBrief({ c: id }),
   }
+
+  if (onBrief) return (
+    <div className="county-root px-4 sm:px-6 lg:px-10 pb-16 max-w-[1400px] overflow-x-clip">
+      <CountyStyles />
+      <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-10 px-4 sm:px-6 lg:px-10 pt-4 pb-3 bg-paper/95 backdrop-blur-sm border-b border-stone/60">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+          <div className="flex items-center gap-4 min-w-0">
+            <Link to={`/county?${q}`} aria-label="Back to the county overview"
+              className="w-10 h-10 shrink-0 rounded-full border border-ink flex items-center justify-center hover:bg-ink hover:text-paper transition-colors">←</Link>
+            <Picker label="County" value={countyId} onChange={(v) => tp.select(v)} options={COUNTIES}
+              className="font-serif text-2xl sm:text-3xl italic py-0.5 max-w-[62vw] sm:max-w-none" />
+          </div>
+          <button onClick={() => window.print()}
+            className="font-type text-[15px] uppercase tracking-widest flex items-center gap-2 rounded-full bg-ink text-paper pl-4 pr-1.5 py-1.5 hover:bg-terra transition-colors">
+            Print <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">↓</span>
+          </button>
+        </div>
+        <div className="mt-3 overflow-x-auto"><Seg items={RADAR_CANCERS} value={radarCancer} onChange={tp.setRadarCancer} /></div>
+      </div>
+      <div className="rise relative z-10" key={countyId + radarCancer}>
+        <Brief brief={brief} county={county} page />
+      </div>
+      {createPortal(
+        <div id="county-print"><Brief brief={brief} county={county} print /></div>,
+        document.body,
+      )}
+    </div>
+  )
 
   return (
     <div className="county-root px-4 sm:px-6 lg:px-10 pb-16 max-w-[1400px] overflow-x-clip">
@@ -73,7 +108,7 @@ export default function CountyPage() {
             <Picker label="County" value={countyId} onChange={(v) => tp.select(v)} options={COUNTIES}
               className="font-serif text-2xl sm:text-3xl italic py-0.5 max-w-[78vw] sm:max-w-none" />
           </div>
-          <button onClick={() => setBriefOpen(true)}
+          <button onClick={() => goBrief()}
             className="font-type text-[15px] uppercase tracking-widest flex items-center gap-2 rounded-full bg-ink text-paper pl-4 pr-1.5 py-1.5 hover:bg-terra transition-colors">
             Brief <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">→</span>
           </button>
@@ -90,9 +125,6 @@ export default function CountyPage() {
         </div>
       </div>
 
-      <Drawer open={briefOpen} onClose={() => setBriefOpen(false)}>
-        <Brief brief={brief} county={county} />
-      </Drawer>
       {createPortal(
         <div id="county-print"><Brief brief={brief} county={county} print /></div>,
         document.body,

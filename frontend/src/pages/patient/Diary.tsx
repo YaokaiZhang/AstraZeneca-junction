@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Btn, Card, Chip, Display, Label, RoundBtn, Stamp, Tabs, cx } from '../../components/ui'
-import { PATHWAY, daysBetween, today } from '../../data/pathway'
+import { Btn, Card, Chip, Display, Label, RoundBtn, Stamp, Tabs, cx, toast } from '../../components/ui'
+import { PATHWAY, daysBetween, pathwayStatus, today } from '../../data/pathway'
 import { useStore } from '../../lib/store'
-import { send, simulateCheckin, useChat, type Msg } from './chat'
-import { assess, firstSeen, nextCheckin, nextSteps, packYears, parseKg } from './logic'
+import { msgText, send, useChat, type Msg } from './chat'
+import { assess, firstSeen, nextSteps, packYears, parseKg } from './logic'
 import { split2, useT, type Key } from './i18n'
-import { ArrowIcon, ShareSwitch, Tag } from './bits'
+import { ArrowIcon, Tag, copyText } from './bits'
+import { CheckinCard, CheckinPrompt } from './checkins'
 
 type Sub = 'chat' | 'timeline' | 'summary'
 
@@ -17,6 +18,7 @@ export default function Diary() {
       <div className="min-w-0">
         <Tabs className="mb-5" value={sub} onChange={setSub}
           tabs={[{ id: 'chat', label: t('d.chat') }, { id: 'timeline', label: t('d.timeline') }, { id: 'summary', label: t('d.summary') }]} />
+        <CheckinPrompt className="mb-6 !max-w-none" />
         {sub === 'chat' && <ChatView />}
         {sub === 'timeline' && <Timeline />}
         {sub === 'summary' && <Summary />}
@@ -31,18 +33,8 @@ export default function Diary() {
 
 // ---------------- chat ----------------
 export function useMsgText() {
-  const { t, d } = useT()
-  return (m: Msg) => {
-    if (!m.key) return m.text ?? ''
-    const vars: Record<string, string | number> = {}
-    for (const [k, v] of Object.entries(m.vars ?? {})) {
-      if (k === 'date') vars[k] = d(String(v), { day: 'numeric', month: 'long' })
-      else if (k === 'ago') vars[k] = Number(v) <= 0 ? t('ago.today') : t('ago.days', { n: v })
-      else if (typeof v === 'string' && v.startsWith('@')) vars[k] = v.split(',').map((x) => t(`sym.${x.slice(1)}`).toLowerCase()).join(', ')
-      else vars[k] = v
-    }
-    return t(m.key, vars)
-  }
+  const { lang } = useT()
+  return (m: Msg) => msgText(lang, m)
 }
 
 function ChatView() {
@@ -114,53 +106,7 @@ function FlagCard() {
   )
 }
 
-export function recommendedEvery(highRisk: boolean, flag: boolean) { return highRisk || flag ? 3 : 7 }
-
-export function CheckinCard({ onSimulate }: { onSimulate?: () => void }) {
-  const { t, d } = useT()
-  const checkins = useStore((s) => s.checkins)
-  const diary = useStore((s) => s.diary)
-  const profile = useStore((s) => s.profile)
-  const check = useStore((s) => s.check)
-  const set = useStore((s) => s.set)
-  // more check-ins when the screening check flags high risk (spec 1.6) or the diary flags a symptom
-  const doctor = nextSteps({ profile, check, diary }).some((x) => x.level === 'doctor' || x.level === 'act')
-  const rec = recommendedEvery(doctor, assess(diary).flag)
-  const nextIso = nextCheckin(checkins)
-  const nextIn = daysBetween(today(), nextIso.slice(0, 10))
-  const upd = (p: Partial<typeof checkins>) => set((s) => ({ checkins: { ...s.checkins, ...p } }))
-  return (
-    <Card tone="ink" tilt={1} className="p-6">
-      <div className="flex items-center justify-between gap-3">
-        <Label className="!opacity-70">{t('ci.title')}</Label>
-        <button role="switch" aria-checked={checkins.enabled} aria-label={t('ci.title')}
-          onClick={() => upd(checkins.enabled ? { enabled: false } : { enabled: true, everyDays: rec })}
-          className={cx('w-11 h-6 rounded-full relative transition-colors', checkins.enabled ? 'bg-mustard' : 'bg-paper/25')}>
-          <span className={cx('absolute top-0.5 w-5 h-5 rounded-full bg-paper shadow transition-all', checkins.enabled ? 'left-[22px]' : 'left-0.5')} />
-        </button>
-      </div>
-      <div className={cx('transition-opacity', !checkins.enabled && 'opacity-35')}>
-        <div className="mt-4">
-          <p className="font-serif text-4xl leading-none">{checkins.enabled ? d(nextIso, { weekday: 'short', day: 'numeric', month: 'short' }) : '—'}</p>
-          {checkins.enabled && <p className="font-type text-sm uppercase tracking-widest text-mustard mt-1">{nextIn <= 0 ? t('ago.today') : `+${nextIn} d`}</p>}
-        </div>
-        <div className="mt-4 flex items-center gap-2 flex-wrap" role="radiogroup" aria-label={t('ci.every')}>
-          <span className="font-type text-sm uppercase tracking-widest opacity-60 mr-1">{t('ci.every')}</span>
-          {[3, 7, 14].map((n) => (
-            <button key={n} role="radio" aria-checked={checkins.everyDays === n} disabled={!checkins.enabled} onClick={() => upd({ everyDays: n })}
-              className={cx('relative font-type text-sm px-3 py-1.5 rounded-full border transition-colors',
-                checkins.everyDays === n ? 'bg-mustard text-ink border-mustard' : 'border-paper/30 hover:border-paper')}>
-              {t('ci.days', { n })}
-              {n === rec && <span title={t('ci.rec')} className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-terra border border-ink" />}
-            </button>
-          ))}
-        </div>
-      </div>
-      <button onClick={() => { simulateCheckin(); onSimulate?.() }}
-        className="mt-5 font-type text-sm uppercase tracking-widest opacity-70 hover:opacity-100 hover:text-mustard underline underline-offset-4 decoration-dashed">{t('ci.simulate')}</button>
-    </Card>
-  )
-}
+export { CheckinCard } from './checkins'
 
 // ---------------- timeline ----------------
 function Timeline() {
@@ -202,7 +148,7 @@ function Timeline() {
           <span />
           <div className="relative h-4 border-t border-black/15">
             {ticks.map((tk, i) => (
-              <span key={i} className={cx('absolute top-1 font-type text-[13px] opacity-60 whitespace-nowrap', i === 0 ? '' : i === 4 ? '-translate-x-full' : '-translate-x-1/2')} style={{ left: `${i * 25}%` }}>{d(tk)}</span>
+              <span key={i} className={cx('absolute top-1 font-type text-sm opacity-60 whitespace-nowrap', i === 0 ? '' : i === 4 ? '-translate-x-full' : '-translate-x-1/2')} style={{ left: `${i * 25}%` }}>{d(tk)}</span>
             ))}
           </div>
         </div>
@@ -260,6 +206,40 @@ function Summary() {
   const py = risk ? packYears(risk.inputs.cigsPerDay, risk.inputs.yearsSmoked) : packYears(smoke.cpd, smoke.years)
   const h = split2(t('h.summary'))
   const symptoms = Object.keys(first).filter((k) => k !== 'smoking').sort((a, b) => first[a].localeCompare(first[b]))
+  const sharing = useStore((s) => s.sharing)
+  const set = useStore((s) => s.set)
+  const ps = pathwayStatus(pathway.dates, now)
+  const waitingFor = ps.lastDone >= 0 && ps.next ? ps.next : null
+  const pathLines = PATHWAY.filter((s) => pathway.dates[s.id])
+  const sentAt = sharing.hospital ? (sharing.summaryAt ?? sharing.at) : undefined
+
+  // one tap = explicit, timestamped opt-in (spec: sharing is opt-in, each time)
+  const sendToCentre = () => {
+    const at = new Date().toISOString()
+    set((s) => ({ sharing: { ...s.sharing, hospital: true, at: s.sharing.hospital && s.sharing.at ? s.sharing.at : at, summaryAt: at } }))
+    toast(t('d.sent'))
+  }
+  const stopSharing = () => { set((s) => ({ sharing: { ...s.sharing, hospital: false, at: new Date().toISOString(), summaryAt: undefined } })); toast(t('pr.off')) }
+
+  const asText = () => {
+    const L: string[] = []
+    const long = { day: 'numeric', month: 'long', year: 'numeric' } as const
+    L.push(`${h.a} ${h.b}`.toUpperCase(), `${t('d.prepared')} ${d(now, long)}${profile.age ? ` · ${t('r.age')} ${profile.age}` : ''}`, '')
+    L.push(`>> ${flag ? t('d.flag') : t('d.noflag')}`, '')
+    L.push(`${t('d.symptoms')}:`)
+    if (symptoms.length) for (const s of symptoms) L.push(`- ${t(`sym.${s}`)}${s === 'weight-loss' && kg ? ` (−${kg} kg)` : ''} · ${t('d.since')} ${d(first[s], long)} · ${daysBetween(first[s], now)} d`)
+    else L.push(`- ${t('d.empty')}`)
+    if (py) L.push('', `${t('r.packYears')}: ${py}`)
+    if (steps.length) { L.push('', `${t('tab.check')}:`); for (const st of steps) L.push(`- ${t(`prog.${st.id}`)}: ${t(st.short)}`) }
+    if (pathLines.length) {
+      L.push('', `${t('tab.pathway')}:`)
+      for (const s of pathLines) L.push(`- ${t(`step.${s.id}`)}: ${d(pathway.dates[s.id], long)}`)
+      if (waitingFor) L.push(`- ${t('d.pathwayNow')}: ${t(`step.${waitingFor.id}`)} (${ps.overdueBy > 0 ? t('p.overdue', { n: ps.overdueBy }) : t('p.ontime')})`)
+    }
+    if (diary.length) { L.push('', `${t('d.notes')}:`); for (const e of [...diary].sort((a, b) => a.date.localeCompare(b.date))) L.push(`${d(e.date)}  ${e.text}`) }
+    L.push('', t('d.notDiagnosis'))
+    return L.join('\n')
+  }
 
   return (
     <div className="space-y-5">
@@ -311,9 +291,14 @@ function Summary() {
               <div>
                 <Label>{t('tab.pathway')}</Label>
                 <ul className="mt-1 space-y-0.5">
-                  {PATHWAY.filter((s) => pathway.dates[s.id]).map((s) => (
+                  {pathLines.map((s) => (
                     <li key={s.id} className="font-type text-sm flex justify-between gap-2"><span>{t(`step.${s.id}`)}</span><span>{d(pathway.dates[s.id])}</span></li>
                   ))}
+                  {waitingFor && (
+                    <li className={cx('font-type text-sm flex justify-between gap-2 pt-1', ps.overdueBy > 0 && 'text-terra')}>
+                      <span>→ {t(`step.${waitingFor.id}`)}</span><span className="text-right">{ps.overdueBy > 0 ? t('p.overdue', { n: ps.overdueBy }) : t('p.ontime')}</span>
+                    </li>
+                  )}
                   {!Object.values(pathway.dates).some(Boolean) && <li className="font-type text-sm opacity-70">—</li>}
                 </ul>
               </div>
@@ -330,14 +315,26 @@ function Summary() {
               </ul>
             </div>
           )}
-          <p className="mt-6 font-type text-[13px] uppercase tracking-widest opacity-70">{t('d.notDiagnosis')}</p>
+          <p className="mt-6 font-type text-sm uppercase tracking-widest opacity-70">{t('d.notDiagnosis')}</p>
         </div>
       </Card>
-      <div className="no-print grid grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)] gap-4 sm:gap-6 items-center">
-        <Btn onClick={() => window.print()}>{t('d.print')}</Btn>
-        <Card tone="stone" className="px-5 py-1">
-          <ShareSwitch which="hospital" label={t('d.share')} />
+      <div className="no-print grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-5 items-start">
+        <Card tone={sentAt ? 'ink' : 'mustard'} tilt={-0.5} className="p-5 sm:p-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <Btn variant={sentAt ? 'mustard' : 'ink'} onClick={sendToCentre}>{sentAt ? t('d.sendAgain') : t('d.send2')}</Btn>
+            {sentAt && (
+              <span className="font-type text-sm uppercase tracking-widest opacity-80">
+                ✓ {t('d.sentAt', { t: d(sentAt, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) })}
+              </span>
+            )}
+          </div>
+          <p className="font-serif italic text-lg leading-snug mt-3 opacity-85">{t('d.sendWhat')}</p>
+          {sentAt && <button onClick={stopSharing} className="mt-2 font-type text-sm uppercase tracking-widest opacity-70 hover:opacity-100 hover:text-mustard underline underline-offset-4 decoration-dashed">{t('d.stop')}</button>}
         </Card>
+        <div className="flex flex-wrap md:flex-col gap-3">
+          <Btn variant="ghost" onClick={() => window.print()}>{t('d.print')}</Btn>
+          <Btn variant="ghost" onClick={async () => { if (await copyText(asText())) toast(t('p.copied')) }}>{t('d.copyText')}</Btn>
+        </div>
       </div>
     </div>
   )

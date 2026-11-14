@@ -318,3 +318,31 @@ export function nextCheckin(c: { lastAt?: string; everyDays: number }, nowIso = 
   const next = new Date(new Date(base).getTime() + c.everyDays * DAY).toISOString()
   return next < nowIso ? nowIso : next
 }
+
+// ---------- caring check-ins (spec 1.6) ----------
+/** More often for people the screening check sends to a doctor / screening, or who logged a worrying symptom. */
+export function checkinRecommended(s: Pick<State, 'profile' | 'check' | 'diary'>): { every: number; why: 'risk' | 'symptom' | null } {
+  if (assess(s.diary).flag) return { every: 3, why: 'symptom' }
+  if (nextSteps(s).some((x) => x.level === 'doctor' || x.level === 'act')) return { every: 3, why: 'risk' }
+  return { every: 7, why: null }
+}
+
+/** When the next check-in is due (ISO), or null if off / not started. Not clamped to now. */
+export function checkinDueAt(c: State['checkins']): string | null {
+  if (!c.enabled || !c.lastAt) return null
+  const due = new Date(new Date(c.lastAt).getTime() + c.everyDays * DAY).toISOString()
+  return c.snoozedUntil && c.snoozedUntil > due ? c.snoozedUntil : due
+}
+export const checkinIsDue = (c: State['checkins'], nowIso = new Date().toISOString()) => {
+  const due = checkinDueAt(c)
+  return !!due && due <= nowIso
+}
+
+/** What the check-in asks about: the most worrying symptom from the most recent entry, and when it was first mentioned. */
+export function checkinSubject(diary: DiaryEntry[], now = today()): { tag: string | null; ago: number } {
+  const last = [...diary].filter((e) => e.tags.some((t) => t !== 'smoking')).sort((a, b) => a.createdAt.localeCompare(b.createdAt)).pop()
+  if (!last) return { tag: null, ago: 0 }
+  const tag = ['blood-cough', 'blood-stool', 'blood', 'jaundice', 'weight-loss'].find((t) => last.tags.includes(t)) ?? last.tags.find((t) => t !== 'smoking')!
+  const firstMention = diary.filter((e) => e.tags.includes(tag)).map((e) => e.createdAt.slice(0, 10)).sort()[0] ?? now
+  return { tag, ago: daysBetween(firstMention, now) }
+}

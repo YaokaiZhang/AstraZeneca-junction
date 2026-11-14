@@ -3,9 +3,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useStore, uid, type DiaryEntry } from '../../lib/store'
-import { today, daysBetween } from '../../data/pathway'
-import { extractTags, parseKg, parseSmoking, parseWhen, packYears, minusDays, type SmokeInfo } from './logic'
-import { tr, type Key, type Vars } from './i18n'
+import { today } from '../../data/pathway'
+import { checkinSubject, extractTags, parseKg, parseSmoking, parseWhen, packYears, minusDays, type SmokeInfo } from './logic'
+import { fmtDate, tr, type Key, type Vars } from './i18n'
+import type { Lang } from '../../lib/store'
 
 export interface Chip { key: Key; value: string }
 export interface Msg {
@@ -34,6 +35,19 @@ interface ChatState {
   asked: string[]
   smoke: SmokeInfo
   set: (p: Partial<ChatState>) => void
+}
+
+/** A message as plain text in the given language (used by the chat view and by notifications). */
+export function msgText(lang: Lang, m: Msg): string {
+  if (!m.key) return m.text ?? ''
+  const vars: Record<string, string | number> = {}
+  for (const [k, v] of Object.entries(m.vars ?? {})) {
+    if (k === 'date') vars[k] = fmtDate(String(v), lang, { day: 'numeric', month: 'long' })
+    else if (k === 'ago') vars[k] = Number(v) <= 0 ? tr(lang, 'ago.today') : tr(lang, 'ago.days', { n: v })
+    else if (typeof v === 'string' && v.startsWith('@')) vars[k] = v.split(',').map((x) => tr(lang, `sym.${x.slice(1)}`).toLowerCase()).join(', ')
+    else vars[k] = v
+  }
+  return tr(lang, m.key, vars)
 }
 
 export const helloMsg = (): Msg => ({ id: uid(), from: 'bot', at: new Date().toISOString(), key: 'bot.hello' })
@@ -99,7 +113,6 @@ function saveSmoking(info: SmokeInfo, out: Msg[]) {
 /** Handle one user turn. `value` is set when a chip was tapped; `label` is what to echo. */
 export function send(label: string, value?: string) {
   const st = useChat.getState()
-  const lang = useStore.getState().lang
   const me: Msg = { id: uid(), from: 'me', at: new Date().toISOString(), text: label }
   const out: Msg[] = []
   let pending: Pending | null = null
@@ -159,14 +172,7 @@ export function send(label: string, value?: string) {
     saveSmoking({ status: p.status, ...info, ...(info.status === 'current' && p.status === 'former' ? { status: 'former' } : {}) }, out)
     finish()
   } else if (p?.kind === 'checkin') {
-    const answer = value ?? ''
-    const symLabel = p.tag ? tr(lang, `sym.${p.tag}`) : tr(lang, 'd.checkin')
-    const extra = extractTags(text).filter((t) => t !== 'smoking')
-    const keep = p.tag && (answer === 'still' || answer === 'worse' || (!answer && !/gone|better|ohi|parempi|borta|bättre/i.test(text)))
-    const tags = [...new Set([...(keep && p.tag ? [p.tag] : []), ...extra])]
-    const entryText = value ? `${symLabel}: ${label}` : `${symLabel}: ${text}`
-    addEntry(entryText, tags, parseWhen(text) ?? today(), 'checkin')
-    useStore.getState().set((s) => ({ checkins: { ...s.checkins, lastAt: new Date().toISOString() } }))
+    saveCheckin(p.tag, value ?? null, label)
     out.push(bot('bot.thanks'))
   } else {
     // free text, nothing pending
@@ -191,16 +197,44 @@ export function send(label: string, value?: string) {
   useChat.getState().set({ msgs: [...history, me, ...out], pending, asked })
 }
 
+export const CHECKIN_CHIPS: Chip[] = [{ key: 'c.still', value: 'still' }, { key: 'c.better', value: 'better' }, { key: 'c.worse', value: 'worse' }, { key: 'c.gone', value: 'gone' }]
+
+/** The warm check-in question as a chat message (falls back to a generic one when the diary has no symptom). */
+export function checkinQuestion(withChips = true): { msg: Msg; tag: string | null } {
+  const { tag, ago } = checkinSubject(useStore.getState().diary)
+  const msg = tag ? bot('bot.checkin', { ago, sym: '@' + tag }, withChips ? { chips: CHECKIN_CHIPS } : undefined) : bot('bot.checkinGeneric')
+  return { msg, tag }
+}
+
+/**
+ * Save one check-in answer as a diary entry (source 'checkin') and restart the check-in clock.
+ * `value` = a tapped chip (still/better/worse/gone); otherwise `label` is the person's own words.
+ */
+export function saveCheckin(tag: string | null, value: string | null, label: string) {
+  const lang = useStore.getState().lang
+  const symLabel = tag ? tr(lang, `sym.${tag}`) : tr(lang, 'd.checkin')
+  const text = value ? '' : label
+  const extra = extractTags(text).filter((t) => t !== 'smoking')
+  const keep = tag && (value === 'still' || value === 'worse' || (!value && !/gone|better|ohi|parempi|borta|bättre/i.test(text)))
+  const tags = [...new Set([...(keep && tag ? [tag] : []), ...extra])]
+  addEntry(`${symLabel}: ${label}`, tags, (text && parseWhen(text)) || today(), 'checkin')
+  useStore.getState().set((s) => ({ checkins: { ...s.checkins, lastAt: new Date().toISOString(), snoozedUntil: undefined } }))
+}
+
+/** Answer a due check-in from a prompt card (Today / Diary): saves it and mirrors the exchange in the chat transcript. */
+export function answerCheckin(value: string | null, label: string) {
+  const st = useChat.getState()
+  const { msg, tag } = checkinQuestion(false)
+  saveCheckin(tag, value, label)
+  const history = st.msgs.map((m) => (m.chips || m.datePicker ? { ...m, chips: undefined, datePicker: false } : m))
+  const me: Msg = { id: uid(), from: 'me', at: new Date().toISOString(), text: label }
+  st.set({ msgs: [...history, msg, me, bot('bot.thanks')], pending: st.pending?.kind === 'checkin' ? null : st.pending })
+}
+
 /** Push a caring check-in into the chat, referencing the last logged symptom. */
 export function simulateCheckin() {
-  const diary = useStore.getState().diary
-  const last = [...diary].filter((e) => e.tags.some((t) => t !== 'smoking')).sort((a, b) => a.createdAt.localeCompare(b.createdAt)).pop()
-  const tag = last ? (['blood-cough', 'blood-stool', 'weight-loss'].find((t) => last.tags.includes(t)) ?? last.tags.find((t) => t !== 'smoking')!) : null
   const st = useChat.getState()
   const history = st.msgs.map((m) => (m.chips || m.datePicker ? { ...m, chips: undefined, datePicker: false } : m))
-  const chips: Chip[] = [{ key: 'c.still', value: 'still' }, { key: 'c.better', value: 'better' }, { key: 'c.worse', value: 'worse' }, { key: 'c.gone', value: 'gone' }]
-  const msg = tag && last
-    ? bot('bot.checkin', { ago: daysBetween(last.createdAt.slice(0, 10), today()), sym: '@' + tag }, { chips })
-    : bot('bot.checkinGeneric')
+  const { msg, tag } = checkinQuestion()
   st.set({ msgs: [...history, msg], pending: { kind: 'checkin', tag } })
 }

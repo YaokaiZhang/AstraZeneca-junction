@@ -6,7 +6,7 @@ import { Card, Chip, Label, SourceBadge, cx } from '../../components/ui'
 import { useStore, type CheckInputs, type RiskInputs } from '../../lib/store'
 import { useChat } from './chat'
 import {
-  bmiOf, DEFAULT_CHECK, estimates, ESTIMATE_HOW, nextSteps, plco, PLCO_HOW, toRiskInputs,
+  bmiOf, DEFAULT_CHECK, estimates, nextSteps, plco, PLCO_HOW, toRiskInputs,
   type CheckCancer, type NextStep, type StepLevel,
 } from './logic'
 import { useT } from './i18n'
@@ -193,10 +193,10 @@ function StepCard({ st }: { st: NextStep }) {
       {(
         <div className="mt-auto pt-5">
           <div className={cx('tear pt-3 flex items-center gap-2', onDark && '!border-paper/25')}>
-            <span className="font-type text-[13px] uppercase tracking-widest opacity-60">{model}</span>
+            <span className="font-type text-sm uppercase tracking-widest opacity-60">{model}</span>
             {st.id === 'lung'
               ? <SourceBadge id="plco" kind="estimate" how={PLCO_HOW} demo={false} />
-              : <><SourceBadge id="ourModel" kind="estimate" how={ESTIMATE_HOW} /><SourceBadge id="cancerRegistry" kind="direct" /></>}
+              : <><SourceBadge id="ourModel" kind="estimate" how={t('how.estimate')} /><SourceBadge id="cancerRegistry" kind="direct" /></>}
           </div>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Btn, Card, Chip, Label, SourceBadge, cx, toast } from '../../components/ui'
 import { BARRIERS, PATHWAY, daysBetween, pathwayStatus, today, type BarrierId, type StepId } from '../../data/pathway'
 import { useStore } from '../../lib/store'
@@ -5,7 +6,6 @@ import { useT } from './i18n'
 import { Clock, copyText } from './bits'
 
 const CANCERS = ['lung', 'bowel', 'pancreas', 'liver', 'other'] as const
-const TARGET_HOW = 'Days counted from the previous step: referral 7, scan 14, diagnosis 14, planning 7, treatment 14. THL 21/2016, still to verify.'
 
 export default function Pathway() {
   const { t, d } = useT()
@@ -56,7 +56,7 @@ export default function Pathway() {
           <Clock dates={dates} size={260} dark={overdue || finished}>
             <span className="font-type text-sm uppercase tracking-widest opacity-70">{t('p.day')}</span>
             <span className="font-serif text-7xl leading-none">{dayN}</span>
-            <span className="font-type text-sm uppercase tracking-widest opacity-70 flex items-center gap-1">{t('p.of', { n: totalTarget })} <SourceBadge id="thlTargets" kind="estimate" how={TARGET_HOW} /></span>
+            <span className="font-type text-sm uppercase tracking-widest opacity-70 flex items-center gap-1">{t('p.of', { n: totalTarget })} <SourceBadge id="thlTargets" kind="estimate" how={t('how.targets')} /></span>
           </Clock>
         </Card>
 
@@ -71,7 +71,7 @@ export default function Pathway() {
                   <div className="flex items-baseline gap-3 flex-wrap">
                     <span className={cx('font-serif text-6xl leading-none', overdue && 'text-terra')}>{st.waited}</span>
                     <span className="font-type text-sm uppercase tracking-widest">/ {t('p.target', { n: st.next.targetDays ?? 0 })}</span>
-                    <SourceBadge id="thlTargets" kind="estimate" how={TARGET_HOW} />
+                    <SourceBadge id="thlTargets" kind="estimate" how={t('how.targets')} />
                   </div>
                   <div className="mt-3 h-3 rounded-full bg-black/10 relative overflow-hidden" aria-hidden>
                     <div className={cx('absolute inset-y-0 left-0 rounded-full', overdue ? 'bg-terra' : 'bg-mustard')}
@@ -84,10 +84,14 @@ export default function Pathway() {
                 </div>
               )}
               {after && (
-                <p className="tear mt-6 pt-4 opacity-60">
-                  <span className="label mr-3">{t('p.then')}</span>
-                  <span className="font-serif text-xl">{t(`step.${after.id}`)}</span>
-                </p>
+                <div className="tear mt-6 pt-4 opacity-70">
+                  <p>
+                    <span className="label mr-3">{t('p.then')}</span>
+                    <span className="font-serif text-xl">{t(`step.${after.id}`)}</span>
+                    {after.targetDays !== null && <span className="font-type text-sm uppercase tracking-widest ml-3 opacity-80">{t('p.target', { n: after.targetDays })}</span>}
+                  </p>
+                  <p className="font-serif italic text-lg leading-snug mt-1">{t(`expect.${after.id}`)}</p>
+                </div>
               )}
             </>
           ) : <p className="font-serif text-5xl leading-tight">{t('p.done')}</p>}
@@ -106,12 +110,18 @@ export default function Pathway() {
               ))}
             </div>
             {chosen && <Support barrier={chosen.id} side={chosen.side} owner={st.next.owner} />}
+            {chosen && stepBarrier && <BarrierNote key={stepBarrier.at} at={stepBarrier.at} initial={stepBarrier.note ?? ''} />}
           </Card>
           <Card tone="ink" tilt={-1} className="p-6 sm:p-8">
             <Label className="!opacity-70">{t('p.contact')}</Label>
             <p className="font-serif text-4xl leading-none mt-1">{t(`owner.${st.next.owner}`)}</p>
+            <p className="font-type text-sm leading-snug mt-3 opacity-80"><span className="uppercase tracking-widest text-mustard mr-2">{t('p.howWhere')}</span>{t(`how.${st.next.owner}`)}</p>
             <blockquote className="tear !border-paper/20 mt-5 pt-4 font-serif text-lg leading-snug whitespace-pre-wrap" aria-label="draft">{draft}</blockquote>
-            <Btn variant="mustard" className="mt-5" onClick={async () => { if (await copyText(draft)) toast(t('p.copied')) }}>{t('p.copy')}</Btn>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Btn variant="mustard" onClick={async () => { if (await copyText(draft)) toast(t('p.copied')) }}>{t('p.copy')}</Btn>
+              <a href={`mailto:?subject=${encodeURIComponent(t('p.subject', { step: t(`step.${st.next.id}`).toLowerCase() }))}&body=${encodeURIComponent(draft)}`}
+                className="font-type text-sm uppercase tracking-widest opacity-80 hover:opacity-100 hover:text-mustard underline underline-offset-4 decoration-dashed">{t('p.email')} ↗</a>
+            </div>
           </Card>
         </div>
       )}
@@ -154,6 +164,27 @@ export default function Pathway() {
         </ol>
       </Card>
     </div>
+  )
+}
+
+/** Optional free-text detail for the latest barrier report (store field `note`). */
+function BarrierNote({ at, initial }: { at: string; initial: string }) {
+  const { t } = useT()
+  const set = useStore((s) => s.set)
+  const [v, setV] = useState(initial)
+  const save = () => {
+    set((s) => ({ barriers: s.barriers.map((b) => (b.at === at ? { ...b, note: v.trim() || undefined } : b)) }))
+    toast(t('b.thanks'))
+  }
+  return (
+    <form className="mt-5 flex items-end gap-3" onSubmit={(e) => { e.preventDefault(); save() }}>
+      <div className="flex-1 min-w-0">
+        <label htmlFor="b-note" className="label block mb-1">{t('b.note')}</label>
+        <input id="b-note" value={v} onChange={(e) => setV(e.target.value)} maxLength={280}
+          className="w-full bg-transparent border-b border-black/25 py-1.5 font-serif text-lg outline-none focus:border-terra" />
+      </div>
+      <Btn variant="ghost" type="submit" className="!px-4 !py-2">{t('b.save')}</Btn>
+    </form>
   )
 }
 

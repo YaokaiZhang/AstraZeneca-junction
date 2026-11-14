@@ -10,6 +10,7 @@ import Pathway from './Pathway'
 import Check from './Check'
 import Privacy from './Privacy'
 import { seedDemo } from './seed'
+import { useCheckinEngine } from './checkins'
 
 const TABS: TabId[] = ['today', 'diary', 'pathway', 'check', 'settings']
 // old links: the lung-risk and screening tabs were merged into the screening check
@@ -25,6 +26,7 @@ export default function PatientPage() {
   const tab: TabId = TABS.includes(raw) ? raw : 'today'
   const go = (id: TabId) => { navigate(id === 'today' ? '/patient' : `/patient/${id}`); window.scrollTo({ top: 0 }) }
   const [gen, setGen] = useState(0) // remount forms after seed / erase
+  useCheckinEngine()
   const h = split2(t(`h.${tab}`))
 
   return (

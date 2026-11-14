@@ -59,6 +59,22 @@ export interface CheckResult { inputs: CheckInputs; est: Estimates; at: string }
 
 export interface BarrierReport { step: StepId; barrier: BarrierId; note?: string; at: string }
 
+/** Caring check-ins (spec 1.6). Only the person can switch them on; nothing is read from registers. */
+export interface Checkins {
+  enabled: boolean
+  everyDays: number
+  /** last answered check-in (or when they were switched on) */
+  lastAt?: string
+  /** true (default) = frequency follows the recommendation (more often for high risk / worrying symptom) */
+  auto?: boolean
+  /** "Not now" pushes the prompt to this time */
+  snoozedUntil?: string
+  /** also show a browser notification while the app is open (needs the person's permission) */
+  notify?: boolean
+  /** due time we already notified about, so a notification fires once */
+  notifiedFor?: string
+}
+
 export interface HospitalAction {
   status: 'new' | 'contacted' | 'booked' | 'escalated' | 'resolved'
   coordinator?: string
@@ -76,8 +92,8 @@ export interface State {
   check: CheckResult | null
   pathway: { cancer: CancerId | 'other'; dates: Partial<Record<StepId, string>> }
   barriers: BarrierReport[]
-  checkins: { enabled: boolean; everyDays: number; lastAt?: string }
-  sharing: { hospital: boolean; stats: boolean; at?: string }
+  checkins: Checkins
+  sharing: { hospital: boolean; stats: boolean; at?: string; /** last one-tap "send summary to health centre" */ summaryAt?: string }
 
   // hospital
   escalateAfterDays: number
@@ -96,7 +112,7 @@ const initial = {
   check: null as CheckResult | null,
   pathway: { cancer: 'lung' as const, dates: {} },
   barriers: [] as BarrierReport[],
-  checkins: { enabled: false, everyDays: 7 },
+  checkins: { enabled: false, everyDays: 7 } as Checkins,
   sharing: { hospital: false, stats: false },
   escalateAfterDays: 5,
   actions: {} as Record<string, HospitalAction>,

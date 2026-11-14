@@ -26,7 +26,7 @@ export function seedDemo() {
     check: { inputs: check, est, at: new Date().toISOString() },
     pathway: { cancer: 'lung', dates: { gp: ago(28), referral: ago(21) } },
     barriers: [],
-    checkins: { enabled: true, everyDays: 3, lastAt: at(16) },
+    checkins: { enabled: true, everyDays: 3, auto: true, lastAt: at(16) },
   })
   const m = (from: Msg['from'], d: number, x: Partial<Msg>): Msg => ({ id: uid(), from, at: at(d), ...x })
   useChat.getState().set({

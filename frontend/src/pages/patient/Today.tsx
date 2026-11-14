@@ -2,7 +2,8 @@ import { useState, type ReactNode } from 'react'
 import { Card, Label, RoundBtn, cx } from '../../components/ui'
 import { pathwayStatus, today } from '../../data/pathway'
 import { useStore } from '../../lib/store'
-import { assess, byUrgency, nextCheckin, nextSteps } from './logic'
+import { assess, byUrgency, checkinDueAt, checkinIsDue, nextCheckin, nextSteps } from './logic'
+import { CheckinPrompt } from './checkins'
 import { send } from './chat'
 import { useT } from './i18n'
 import { ArrowIcon, Clock, Tag } from './bits'
@@ -35,7 +36,8 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
   const started = st.lastDone >= 0
   const overdue = started && !!st.next && st.overdueBy > 0
   const { flag, reasons } = assess(s.diary)
-  const nextCheck = s.checkins.enabled ? nextCheckin(s.checkins) : null
+  const nextCheck = s.checkins.enabled ? (checkinDueAt(s.checkins) ?? nextCheckin(s.checkins)) : null
+  const checkDue = checkinIsDue(s.checkins)
   const steps = byUrgency(nextSteps(s))
   const checked = steps.some((x) => x.level !== 'unknown')
   const urgent = steps[0] && (steps[0].level === 'doctor' || steps[0].level === 'act')
@@ -51,6 +53,8 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
           className="flex-1 min-w-0 border-b-2 border-black/20 py-2 font-serif text-2xl sm:text-3xl italic outline-none focus:border-terra placeholder:text-black/30" />
         <RoundBtn type="submit" title={t('d.send')} className="shrink-0"><ArrowIcon /></RoundBtn>
       </form>
+
+      <CheckinPrompt />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 lg:gap-8">
         {/* symptoms: the message is the headline */}
@@ -79,7 +83,7 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
               )}
             </div>
             {started && <Clock dates={s.pathway.dates} size={96} dark={overdue}>
-              {st.next && <span className="font-serif text-3xl leading-none">{st.waited}<span className="font-type text-[13px] ml-0.5">d</span></span>}
+              {st.next && <span className="font-serif text-3xl leading-none">{st.waited}<span className="font-type text-sm ml-0.5">d</span></span>}
             </Clock>}
           </div>
         </Tile>
@@ -99,7 +103,7 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
         </Tile>
 
         <Tile tone="ink" tilt={1.2} label={t('ci.title')} onOpen={() => go('diary')} className="lg:col-span-2">
-          <p className="font-serif text-4xl leading-none">{nextCheck ? d(nextCheck, { weekday: 'short', day: 'numeric', month: 'short' }) : t('pr.off')}</p>
+          <p className="font-serif text-4xl leading-none">{checkDue ? t('ci.now') : nextCheck ? d(nextCheck, { weekday: 'short', day: 'numeric', month: 'short' }) : t('pr.off')}</p>
           {nextCheck && <p className="font-type text-sm uppercase tracking-widest text-mustard mt-3">{t('ci.every')} {t('ci.days', { n: s.checkins.everyDays })}</p>}
         </Tile>
 

@@ -78,6 +78,16 @@ export const SOURCES: Record<string, Source> = {
     note: '6-year lung cancer risk for people who smoke or used to. Built on US trial data (PLCO); not validated in Finland. Cut-off ≥ 1.51% from Tammemägi et al., PLOS Medicine 2014.',
     links: [{ label: 'Model, NEJM 2013', url: 'https://doi.org/10.1056/NEJMoa1211776' }, { label: '1.51% cut-off, PLOS Med 2014', url: 'https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.1001764' }],
   },
+  plcoValidation: {
+    id: 'plcoValidation', name: 'PLCOm2012 – validation and use',
+    note: 'US validation (Tammemägi et al., NEJM 2013): AUC 0.797; with the same number of people screened it caught 83.0% of later lung cancers vs 71.1% for the age-and-pack-years rule (NLST criteria), PPV 4.0% vs 3.4%. EPIC-Germany prospective cohort (20 700 ever-smokers): C-index 0.81, expected/observed 1.03, the best of four models. England: the NHS Lung Cancer Screening Programme invites ever-smokers 55–74 with PLCOm2012 ≥ 1.51% (or LLPv2 ≥ 2.5%) to a low-dose CT. Not yet checked against Finnish outcomes.',
+    links: [{ label: 'NEJM 2013', url: 'https://doi.org/10.1056/NEJMoa1211776' }, { label: 'NHS eligibility assessment (2023)', url: 'https://nationalscreening.blog.gov.uk/wp-content/uploads/sites/254/2023/11/Eligibility-Assessment-Dr-Richard-Lee.pdf' }, { label: 'NHS lung health check', url: 'https://www.lhch.nhs.uk/invitation-and-lung-health-check' }],
+  },
+  fhir: {
+    id: 'fhir', name: 'HL7 FHIR R4', url: 'https://hl7.org/fhir/R4/',
+    note: 'Open health-data standard. Referral = ServiceRequest, diagnosis = Condition, first treatment = Procedure. Kanta, Finland’s national health-data service, uses FHIR for its personal health record (Kanta PHR).',
+    links: [{ label: 'FHIR R4', url: 'https://hl7.org/fhir/R4/' }, { label: 'Kanta PHR', url: 'https://www.kanta.fi/en/system-developers/kanta-phr' }],
+  },
   thlTargets: {
     id: 'thlTargets', name: 'Cancer care target times',
     url: 'https://urn.fi/URN:ISBN:978-952-00-2971-5',

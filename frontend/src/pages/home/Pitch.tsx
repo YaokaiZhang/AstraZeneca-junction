@@ -14,7 +14,7 @@ import { Reveal, Tilt, WordsUp, useCount, useInView, useScrollProgress } from '.
 export const PAGE = 'relative min-h-[100svh] flex flex-col justify-center px-5 lg:px-24 py-16 lg:py-10'
 export const H2 = 'font-serif font-light text-6xl lg:text-[min(6rem,9.5svh)] leading-[0.95]'
 
-function Lede({ children, className, delay = 250 }: { children: React.ReactNode; className?: string; delay?: number }) {
+export function Lede({ children, className, delay = 250 }: { children: React.ReactNode; className?: string; delay?: number }) {
   return (
     <Reveal fx="up" delay={delay} className={cx('max-w-xl font-sans text-base lg:text-lg leading-relaxed opacity-75', className)}>
       <p>{children}</p>

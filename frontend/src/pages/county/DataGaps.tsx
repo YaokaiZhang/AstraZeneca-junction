@@ -6,7 +6,7 @@ import { CANCERS, countyById } from '../../data/counties'
 import { PATHWAY, type StepId } from '../../data/pathway'
 import type { SourceKind } from '../../data/sources'
 import { useStore } from '../../lib/store'
-import { baseRecords, fmt, pct } from './model'
+import { STAGE_MODEL_CANCERS, baseRecords, cancerLabel, fmt, pct, stageModel } from './model'
 import type { TabProps } from './index'
 
 type Cell = { k: SourceKind | 'na'; src?: string; how?: string }
@@ -155,6 +155,32 @@ export function DataGaps({ countyId }: TabProps) {
           </div>
         </Card>
       </div>
+
+      {/* missing stage, modelled for this county */}
+      <Card tone="paper" className="mt-8 p-6 border border-ink/10">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <p className="font-serif text-3xl sm:text-4xl leading-none">Missing stage, <span className="italic">modelled</span></p>
+          <span className="flex items-center gap-2 font-type text-sm uppercase tracking-wider opacity-70">Fitted on all 22 counties
+            <SourceBadge id="ourModel" kind="estimate" demo={false} how="Recorded share found after spread vs share with stage missing, weighted least squares across the 22 counties (cases with known stage as weights), tested by leaving each county out. Expected = what this county's missing records alone predict. Beyond records = recorded − expected." /></span>
+        </div>
+        <div className="mt-5 grid sm:grid-cols-3 gap-4">
+          {STAGE_MODEL_CANCERS.map((k) => {
+            const p = stageModel(k).points.find((x) => x.c.id === countyId)!
+            const hot = p.resid > 0.03
+            return (
+              <div key={k} className={cx('rounded-lg p-4', hot ? 'bg-terra text-paper' : 'bg-black/[0.04]')}>
+                <Label className={hot ? '!opacity-80' : undefined}>{cancerLabel(k)} · stage missing {pct(p.missing)}</Label>
+                <div className="mt-3 grid grid-cols-3 gap-2 items-end">
+                  <div><p className="font-serif text-3xl leading-none">{pct(p.late)}</p><p className="font-type text-xs uppercase tracking-wider mt-1 opacity-70">recorded</p></div>
+                  <div><p className="font-serif text-3xl leading-none opacity-70">{pct(p.fit)}</p><p className="font-type text-xs uppercase tracking-wider mt-1 opacity-70">expected</p></div>
+                  <div><p className="font-serif text-3xl leading-none italic">{p.resid >= 0 ? '+' : '−'}{fmt(Math.abs(p.resid) * 100)}</p><p className="font-type text-xs uppercase tracking-wider mt-1 opacity-70">beyond records</p></div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <p className="mt-4 font-sans text-sm opacity-70">Red: found late beyond what missing records explain. Recording stage for every case is the cheapest fix for the rest.</p>
+      </Card>
     </div>
   )
 }

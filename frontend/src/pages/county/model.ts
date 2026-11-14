@@ -380,3 +380,51 @@ export function screeningGain() {
   })
   return { rows, total: rows.reduce((s, r) => s + r.extra, 0) }
 }
+
+// ---------- missing stage, modelled (data-gap model) ----------
+/** Cancers with enough known-stage cases in every county for the model. */
+export const STAGE_MODEL_CANCERS = (['breast', 'bowel', 'lung'] as const)
+export type StageModelCancer = typeof STAGE_MODEL_CANCERS[number]
+export interface StagePoint { c: County; missing: number; late: number; w: number; fit: number; resid: number; loo: number }
+export interface StageModel {
+  k: StageModelCancer; a: number; b: number; points: StagePoint[]
+  /** weighted share of the county-to-county variance explained */
+  r2: number
+  /** leave-one-county-out mean absolute error: national average vs model */
+  maeBase: number; maeModel: number
+  /** recorded spread share predicted at the best-recorded county's level of missing stage */
+  atBest: number; bestMissing: number
+}
+function wls(pts: { x: number; y: number; w: number }[]) {
+  const W = pts.reduce((s, p) => s + p.w, 0)
+  const mx = pts.reduce((s, p) => s + p.w * p.x, 0) / W, my = pts.reduce((s, p) => s + p.w * p.y, 0) / W
+  const b = pts.reduce((s, p) => s + p.w * (p.x - mx) * (p.y - my), 0) / pts.reduce((s, p) => s + p.w * (p.x - mx) ** 2, 0)
+  return { a: my - b * mx, b, my }
+}
+const stageCache = new Map<StageModelCancer, StageModel>()
+/**
+ * Weighted least squares across the 22 counties: recorded spread share (of known stage) ~ share with stage missing,
+ * weighted by cases with known stage. Tested by leaving each county out in turn and predicting it from the other 21.
+ * Residual = spread beyond what missing records explain. Ecological model on county totals; record-level
+ * imputation inside the Registry (age, sex, treatment, survival) would be the next step.
+ */
+export function stageModel(k: StageModelCancer): StageModel {
+  const hit = stageCache.get(k)
+  if (hit) return hit
+  const raw = COUNTIES.map((c) => { const f = figures(c, k); return { c, x: f.unknownStage, y: f.lateShare, w: f.stageKnown } })
+  const { a, b, my } = wls(raw)
+  let e0 = 0, e1 = 0, ssr = 0, sst = 0
+  const points = raw.map((p, i): StagePoint => {
+    const rest = raw.filter((_, j) => j !== i)
+    const m = wls(rest)
+    const loo = m.a + m.b * p.x
+    e0 += Math.abs(p.y - m.my); e1 += Math.abs(p.y - loo)
+    const fit = a + b * p.x
+    ssr += p.w * (p.y - fit) ** 2; sst += p.w * (p.y - my) ** 2
+    return { c: p.c, missing: p.x, late: p.y, w: p.w, fit, resid: p.y - fit, loo }
+  })
+  const bestMissing = Math.min(...raw.map((p) => p.x))
+  const out: StageModel = { k, a, b, points, r2: 1 - ssr / sst, maeBase: e0 / raw.length, maeModel: e1 / raw.length, atBest: a + b * bestMissing, bestMissing }
+  stageCache.set(k, out)
+  return out
+}

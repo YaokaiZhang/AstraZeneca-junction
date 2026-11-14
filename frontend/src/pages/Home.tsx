@@ -1,3 +1,4 @@
+import { PlugsIn, RiskInPractice, StageGap } from './home/Practical'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, TextRing } from '../components/ui'
@@ -128,8 +129,10 @@ export default function Home() {
       {/* 02 · what we built (execution): one record, three views */}
       <Transition chapter="ch-built" text="So we built one tool that follows a person from first symptom to first treatment." hot={6} />
       <Radar />
+      <StageGap />
       <Views />
       <CheckIns />
+      <RiskInPractice />
       <Privacy />
 
       {/* 03 · what to do (actionability) */}
@@ -137,6 +140,7 @@ export default function Home() {
       <ThreeDates />
       <Actions />
       <TryActions />
+      <PlugsIn />
 
       {/* 04 · the impact */}
       <Transition chapter="ch-impact" text="What happens if every county catches up with the best?" hot={5} />

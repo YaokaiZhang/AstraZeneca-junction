@@ -150,7 +150,7 @@ export function KindLegend({ kinds = ['direct', 'estimate', 'gap', 'example'], l
  */
 export function SourceBadge({ id, kind, how, demo = true, className }: { id: keyof typeof SOURCES | string; kind: SourceKind; how?: ReactNode; demo?: boolean; className?: string }) {
   const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState({ x: 0, y: 0 })
+  const [pos, setPos] = useState<{ x: number; top?: number; bottom?: number }>({ x: 0 })
   const ref = useRef<HTMLSpanElement>(null)
   const btn = useRef<HTMLButtonElement>(null)
   const pop = useRef<HTMLSpanElement>(null)
@@ -161,18 +161,22 @@ export function SourceBadge({ id, kind, how, demo = true, className }: { id: key
   useEffect(() => {
     if (!open) { pinned.current = false; return }
     const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node) && !pop.current?.contains(e.target as Node)) setOpen(false) }
-    const hide = () => setOpen(false)
+    // page scroll closes it; scrolling inside the popup itself must not
+    const hide = (e: Event) => { if (!pop.current?.contains(e.target as Node)) setOpen(false) }
+    const shut = () => setOpen(false)
     document.addEventListener('mousedown', close)
     window.addEventListener('scroll', hide, true)
-    window.addEventListener('resize', hide)
-    return () => { document.removeEventListener('mousedown', close); window.removeEventListener('scroll', hide, true); window.removeEventListener('resize', hide) }
+    window.addEventListener('resize', shut)
+    return () => { document.removeEventListener('mousedown', close); window.removeEventListener('scroll', hide, true); window.removeEventListener('resize', shut) }
   }, [open])
   useEffect(() => () => clearTimeout(timer.current), [])
   const place = () => {
     const r = btn.current!.getBoundingClientRect()
-    const x = Math.min(Math.max(r.left + r.width / 2 - 128, 8), window.innerWidth - 264)
-    const y = r.bottom + 256 > window.innerHeight ? Math.max(8, r.top - 8 - 240) : r.bottom + 8
-    setPos({ x, y })
+    const w = Math.min(320, window.innerWidth - 16), h = Math.min(400, window.innerHeight - 16)
+    const x = Math.min(Math.max(r.left + r.width / 2 - w / 2, 8), window.innerWidth - w - 8)
+    // below if it fits, else above (anchored by its bottom edge so a short popup sits right at the badge)
+    const below = window.innerHeight - r.bottom - 16, above = r.top - 16
+    setPos(below >= h || below >= above ? { x, top: r.bottom + 8 } : { x, bottom: window.innerHeight - r.top + 8 })
   }
   const enter = (e: RPointerEvent) => {
     if (e.pointerType !== 'mouse') return
@@ -201,7 +205,7 @@ export function SourceBadge({ id, kind, how, demo = true, className }: { id: key
       {open && createPortal(
         <span ref={pop} role="dialog" aria-label={src?.name ?? id} onClick={(e) => { e.stopPropagation(); pinned.current = true }}
           onPointerEnter={() => clearTimeout(timer.current)} onPointerLeave={leave}
-          style={{ left: pos.x, top: pos.y }} className="rise fixed z-[70] w-64 max-h-[240px] overflow-y-auto bg-paper text-ink border border-black/15 rounded-lg shadow-2xl p-4 text-left font-sans text-sm normal-case tracking-normal not-italic">
+          style={{ left: pos.x, top: pos.top, bottom: pos.bottom, maxHeight: `min(400px, ${pos.top != null ? `calc(100vh - ${pos.top + 8}px)` : `calc(100vh - ${(pos.bottom ?? 0) + 8}px)`})` }} className="rise fixed z-[70] w-[min(320px,calc(100vw-16px))] overflow-y-auto overscroll-contain bg-paper text-ink border border-black/15 rounded-lg shadow-2xl p-4 text-left font-sans text-sm normal-case tracking-normal not-italic">
           <span className={cx('inline-block font-type uppercase tracking-widest text-sm px-2 py-0.5 rounded-full mb-2', k.cls)}>{k.label}</span>
           <span className="block font-serif text-base leading-tight mb-1">{src?.name ?? id}</span>
           {src?.note && <span className="block opacity-70 mb-1">{src.note}</span>}

@@ -22,6 +22,8 @@ export interface Source {
   reviewStatus: ReviewStatus
   reviewedBy?: string
   reuseNotes?: string
+  /** programmes this source is about; absent = general (e.g. the cancer strategy), retrieved for every programme */
+  programmes?: ProgrammeId[]
 }
 
 export interface Chunk {
@@ -51,7 +53,9 @@ export interface ChunkIndexFile {
   chunks: Chunk[]
 }
 
-export type PathwayStep = 'referral' | 'capacity' | 'detection' | 'none'
+export type PathwayStep = 'referral' | 'capacity' | 'detection' | 'reporting' | 'none'
+/** Screening programmes; a source tagged with some of these is only retrieved for them (untagged = all). */
+export type ProgrammeId = 'bowel' | 'breast' | 'cervical'
 
 export interface ScoredChunk {
   chunk: Chunk

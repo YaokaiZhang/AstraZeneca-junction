@@ -25,3 +25,18 @@ for (const q of evalSet.questions) {
     assert.ok(r.chunks.every((c) => c.source.reviewStatus === 'approved'))
   })
 }
+
+test('each programme only retrieves its own sources (plus general ones)', () => {
+  const own: Record<string, string> = { bowel: 'fcr-colorectal-2024', breast: 'fcr-breast-2024', cervical: 'fcr-cervical-2024' }
+  for (const programme of ['bowel', 'breast', 'cervical']) {
+    for (const step of ['detection', 'referral', 'capacity', 'reporting']) {
+      const r = retrieve(corpus, { programme, data_year: 2024, pathway_step: step, action_ids: '' })
+      if (r.status !== 'ok') continue
+      for (const c of r.chunks) {
+        const tags = c.source.programmes ?? []
+        assert.ok(!tags.length || tags.includes(programme as 'bowel'), `${programme}/${step} retrieved ${c.source.id}`)
+      }
+      assert.ok(r.chunks.some((c) => c.source.id === own[programme]), `${programme}/${step} missed its registry statistics`)
+    }
+  }
+})

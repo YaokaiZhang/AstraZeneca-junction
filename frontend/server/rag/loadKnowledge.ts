@@ -35,6 +35,7 @@ export function cleanSource(raw: unknown): Source | null {
     id, title, publisher, sourceType, setting, url, reviewStatus,
     country: str(r.country), publicationDate: str(r.publicationDate), dataPeriod: str(r.dataPeriod), retrievedAt: str(r.retrievedAt),
     language: str(r.language), version: str(r.version), reviewedBy: str(r.reviewedBy), reuseNotes: str(r.reuseNotes),
+    ...(Array.isArray(r.programmes) ? { programmes: r.programmes.filter((p): p is 'bowel' | 'breast' | 'cervical' => p === 'bowel' || p === 'breast' || p === 'cervical') } : {}),
   }
 }
 

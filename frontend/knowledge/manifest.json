@@ -1,5 +1,5 @@
 {
-  "corpusVersion": "2026-11-14.1",
+  "corpusVersion": "2026-11-15.1",
   "sources": [
     {
       "id": "fcr-colorectal-2024",
@@ -16,7 +16,10 @@
       "version": "1",
       "reviewStatus": "approved",
       "reviewedBy": "team",
-      "reuseNotes": "Full reference: Suomen Syöpärekisteri (Finnish Cancer Registry). Verbatim Finnish text from the official annual statistics page (English version: https://stats.cancerregistry.fi/joukkistilastot/colorectal.html). Table values are copied unchanged from the HTML tables, laid out as text lines. Full screening chain incl. colonoscopy attendance among test positives. Åland not included. Figures may be revised retrospectively in later releases. Not paginated."
+      "reuseNotes": "Full reference: Suomen Syöpärekisteri (Finnish Cancer Registry). Verbatim Finnish text from the official annual statistics page (English version: https://stats.cancerregistry.fi/joukkistilastot/colorectal.html). Table values are copied unchanged from the HTML tables, laid out as text lines. Full screening chain incl. colonoscopy attendance among test positives. Åland not included. Figures may be revised retrospectively in later releases. Not paginated.",
+      "programmes": [
+        "bowel"
+      ]
     },
     {
       "id": "fcr-colorectal-2025-preliminary",
@@ -33,7 +36,10 @@
       "version": "1",
       "reviewStatus": "approved",
       "reviewedBy": "team",
-      "reuseNotes": "Full reference: Suomen Syöpärekisteri (Finnish Cancer Registry). PRELIMINARY statistics: primary phase only. No colonoscopy, findings or treatment data; the complete 2025 screening chain will be published in spring 2027, and the figures may still change. English version: https://stats.cancerregistry.fi/joukkistilastot/ennakkotilastot/colorectal_preliminary.html. First round with 72-year-olds included. Table values copied unchanged from the HTML tables. Not paginated."
+      "reuseNotes": "Full reference: Suomen Syöpärekisteri (Finnish Cancer Registry). PRELIMINARY statistics: primary phase only. No colonoscopy, findings or treatment data; the complete 2025 screening chain will be published in spring 2027, and the figures may still change. English version: https://stats.cancerregistry.fi/joukkistilastot/ennakkotilastot/colorectal_preliminary.html. First round with 72-year-olds included. Table values copied unchanged from the HTML tables. Not paginated.",
+      "programmes": [
+        "bowel"
+      ]
     },
     {
       "id": "fcr-crc-screening-programme",
@@ -49,7 +55,10 @@
       "version": "1",
       "reviewStatus": "approved",
       "reviewedBy": "team",
-      "reuseNotes": "Programme page (page metadata: last modified 2025-07-01). Verbatim English text. Note: it says screening 'currently applies to people aged 60–70', which predates the 2025 extension to 72-year-olds reported in the 2025 preliminary statistics. The Finnish page syoparekisteri.fi/seulonta/suolistosyovan-seulonta/ returned HTTP 403 and was not used."
+      "reuseNotes": "Programme page (page metadata: last modified 2025-07-01). Verbatim English text. Note: it says screening 'currently applies to people aged 60–70', which predates the 2025 extension to 72-year-olds reported in the 2025 preliminary statistics. The Finnish page syoparekisteri.fi/seulonta/suolistosyovan-seulonta/ returned HTTP 403 and was not used.",
+      "programmes": [
+        "bowel"
+      ]
     },
     {
       "id": "stm-cancer-strategy-2026-2035-fi",
@@ -116,7 +125,10 @@
       "version": "1",
       "reviewStatus": "approved",
       "reviewedBy": "team",
-      "reuseNotes": "Full reference: JAMA Internal Medicine (Chua WY, Chew LX, Chan CKM, et al.; PMID 42832233; doi:10.1001/jamainternmed.2026.4827). PubMed abstract only, verbatim. 21 studies, 19,613 patients aged 50-75, both randomized and nonrandomized. The abstract does not name the study countries, and none are Finnish. Moderate to high heterogeneity. Pooled prevalence (47.8% vs 69.1%) compares control and intervention arms across different studies. These are not Finnish effect estimates."
+      "reuseNotes": "Full reference: JAMA Internal Medicine (Chua WY, Chew LX, Chan CKM, et al.; PMID 42832233; doi:10.1001/jamainternmed.2026.4827). PubMed abstract only, verbatim. 21 studies, 19,613 patients aged 50-75, both randomized and nonrandomized. The abstract does not name the study countries, and none are Finnish. Moderate to high heterogeneity. Pooled prevalence (47.8% vs 69.1%) compares control and intervention arms across different studies. These are not Finnish effect estimates.",
+      "programmes": [
+        "bowel"
+      ]
     },
     {
       "id": "dougherty-2018-crc-screening-interventions",
@@ -132,7 +144,10 @@
       "version": "1",
       "reviewStatus": "approved",
       "reviewedBy": "team",
-      "reuseNotes": "Full reference: JAMA Internal Medicine 2018;178(12):1645-1658 (Dougherty MK, Brenner AT, Crockett SD, et al.; PMID 30326005; doi:10.1001/jamainternmed.2018.4637). PubMed abstract only, verbatim. 73 US RCTs in clinical settings (average-risk adults), compared with usual care, mostly in opportunistic US settings, not in an organised mailed-FIT programme like Finland's. Patient navigation was NOT significantly associated with colonoscopy after an abnormal test (RR 1.21, 95% CI 0.92-1.60)."
+      "reuseNotes": "Full reference: JAMA Internal Medicine 2018;178(12):1645-1658 (Dougherty MK, Brenner AT, Crockett SD, et al.; PMID 30326005; doi:10.1001/jamainternmed.2018.4637). PubMed abstract only, verbatim. 73 US RCTs in clinical settings (average-risk adults), compared with usual care, mostly in opportunistic US settings, not in an organised mailed-FIT programme like Finland's. Patient navigation was NOT significantly associated with colonoscopy after an abnormal test (RR 1.21, 95% CI 0.92-1.60).",
+      "programmes": [
+        "bowel"
+      ]
     },
     {
       "id": "naserrudin-2026-followup-colonoscopy-review",
@@ -148,7 +163,108 @@
       "version": "1",
       "reviewStatus": "approved",
       "reviewedBy": "team",
-      "reuseNotes": "Full reference: BMJ Open 2026;16(10):e115052 (Naserrudin NA, Chong Woei Quan D, Adnan SB, et al.; PMID 42833723; doi:10.1136/bmjopen-2025-115052). PubMed abstract only, verbatim. 25 studies, mostly from high-income settings, synthesised narratively (no meta-analysis). Mostly observational, with low or very low certainty (GRADE). Describes the features of higher-performing pathways (tracking, ownership, navigation, scheduling) and gives no causal effect sizes."
+      "reuseNotes": "Full reference: BMJ Open 2026;16(10):e115052 (Naserrudin NA, Chong Woei Quan D, Adnan SB, et al.; PMID 42833723; doi:10.1136/bmjopen-2025-115052). PubMed abstract only, verbatim. 25 studies, mostly from high-income settings, synthesised narratively (no meta-analysis). Mostly observational, with low or very low certainty (GRADE). Describes the features of higher-performing pathways (tracking, ownership, navigation, scheduling) and gives no causal effect sizes.",
+      "programmes": [
+        "bowel"
+      ]
+    },
+    {
+      "id": "fcr-breast-2024",
+      "title": "Rintasyövän seulontaohjelma: vuositilasto (seulontavuosi 2024)",
+      "publisher": "Finnish Cancer Registry",
+      "sourceType": "official_statistics",
+      "setting": "finland",
+      "country": "Finland",
+      "url": "https://stats.cancerregistry.fi/joukkistilastot/rinta.html",
+      "publicationDate": "2026-07-02",
+      "dataPeriod": "2024 screening round (women 50–69; Åland not included)",
+      "language": "fi",
+      "reuseNotes": "Full reference: Suomen Syöpärekisteri (Finnish Cancer Registry). Verbatim Finnish text from the official annual statistics page (English version: https://stats.cancerregistry.fi/joukkistilastot/breast.html). County tables copied cell by cell from the HTML tables, laid out as text lines. \"Ei tietoa\" = referred women with no result reported. Not paginated.",
+      "programmes": [
+        "breast"
+      ],
+      "retrievedAt": "2026-11-15",
+      "version": "1",
+      "reviewStatus": "approved",
+      "reviewedBy": "team"
+    },
+    {
+      "id": "fcr-cervical-2024",
+      "title": "Kohdunkaulasyövän seulontaohjelma: vuositilasto (seulontavuosi 2024)",
+      "publisher": "Finnish Cancer Registry",
+      "sourceType": "official_statistics",
+      "setting": "finland",
+      "country": "Finland",
+      "url": "https://stats.cancerregistry.fi/joukkistilastot/kohtu.html",
+      "publicationDate": "2026-05-20",
+      "dataPeriod": "2024 screening round (age-group screening, women 30–65)",
+      "language": "fi",
+      "reuseNotes": "Full reference: Suomen Syöpärekisteri (Finnish Cancer Registry). Verbatim Finnish text from the official annual statistics page. County table (age-group screening) copied cell by cell from the HTML table. Colposcopy figures are as reported to the register: very low values usually mean results were not reported. Not paginated.",
+      "programmes": [
+        "cervical"
+      ],
+      "retrievedAt": "2026-11-15",
+      "version": "1",
+      "reviewStatus": "approved",
+      "reviewedBy": "team"
+    },
+    {
+      "id": "kerrison-2015-sms-breast-screening",
+      "title": "Text-message reminders increase uptake of routine breast screening appointments: a randomised controlled trial in a hard-to-reach population",
+      "publisher": "British Journal of Cancer (Kerrison RS et al.)",
+      "sourceType": "primary_study",
+      "setting": "international",
+      "country": "United Kingdom",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/25668008/",
+      "publicationDate": "2015-03-17",
+      "language": "en",
+      "reuseNotes": "PubMed abstract, verbatim. PMID 25668008. doi:10.1038/bjc.2015.36. London, women invited for their first breast screening.",
+      "programmes": [
+        "breast"
+      ],
+      "retrievedAt": "2026-11-15",
+      "version": "1",
+      "reviewStatus": "approved",
+      "reviewedBy": "team"
+    },
+    {
+      "id": "virtanen-2011-self-sampling-cervical",
+      "title": "Self-sampling versus reminder letter: effects on cervical cancer screening attendance and coverage in Finland",
+      "publisher": "International Journal of Cancer (Virtanen A et al.)",
+      "sourceType": "primary_study",
+      "setting": "finland",
+      "country": "Finland",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/20669228/",
+      "publicationDate": "2011-06-01",
+      "language": "en",
+      "reuseNotes": "PubMed abstract, verbatim. PMID 20669228. doi:10.1002/ijc.25581. Randomised among non-attenders in Espoo, 2008; authors from the Finnish Cancer Registry.",
+      "programmes": [
+        "cervical"
+      ],
+      "retrievedAt": "2026-11-15",
+      "version": "1",
+      "reviewStatus": "approved",
+      "reviewedBy": "team"
+    },
+    {
+      "id": "camilloni-2013-screening-participation-review",
+      "title": "Methods to increase participation in organised screening programs: a systematic review",
+      "publisher": "BMC Public Health (Camilloni L et al.)",
+      "sourceType": "systematic_review",
+      "setting": "international",
+      "country": "International",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/23663511/",
+      "publicationDate": "2013-05-13",
+      "language": "en",
+      "reuseNotes": "PubMed abstract, verbatim. PMID 23663511. doi:10.1186/1471-2458-13-464. Cervical, breast and colorectal screening invitations, reminders, fixed appointments.",
+      "programmes": [
+        "breast",
+        "cervical"
+      ],
+      "retrievedAt": "2026-11-15",
+      "version": "1",
+      "reviewStatus": "approved",
+      "reviewedBy": "team"
     }
   ]
 }

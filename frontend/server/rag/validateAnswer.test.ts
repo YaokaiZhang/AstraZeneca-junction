@@ -195,3 +195,10 @@ test('the problem line must cite the registry statistics for the data year (real
   assert.ok(!wrong.ok && wrong.errors.includes('problem: must cite the registry statistics for the data year'))
   assert.ok(validateAnswer(answer([STATS]), p, facts).ok)
 })
+
+test('numbers with thousands separators inside a fact text are matched whole (2,050 is one number)', () => {
+  const f = { result: 'Up to about 2,050 more women screened a year.', data_year: 2024 }
+  assert.equal(numbersMatch('About 2,050 more women screened a year.', f), true)
+  assert.equal(numbersMatch('About 2050 more women screened a year.', f), true)
+  assert.equal(numbersMatch('About 50 more women screened a year.', f), false)
+})

@@ -3,7 +3,7 @@
 // English variants. Scoring is BM25 over concept counts (heading and keywords count double), times a
 // source-type boost, then a diversity pass (max 2 passages per source, try to include a Finnish official
 // passage and an intervention passage) and a minimum-match gate.
-import { isIntervention, isOfficial, type Chunk, type Corpus, type PathwayStep, type RetrievalResult, type ScoredChunk, type SourceType } from './types.ts'
+import { isIntervention, isOfficial, type Chunk, type Corpus, type PathwayStep, type ProgrammeId, type RetrievalResult, type ScoredChunk, type SourceType } from './types.ts'
 
 export const QUERY_VERSION = 'kw-2026-11-14.2'
 export const TOP_K = 6
@@ -35,6 +35,10 @@ export const SYNONYMS: Record<string, string[]> = {
   clinician: ['clinician', 'physician', 'general practitioner', 'gp', 'primary care', 'lääkär', 'perusterveydenhu', 'provider', 'terveyskesk'],
   tracking: ['tracking', 'track', 'tracked', 'ownership', 'responsib', 'rekisteriseuranta', 'vastuuhenkil'],
   booking: ['booking', 'scheduling', 'schedul', 'ajanvara', 'varataan', 'automat', 'automaatt', 'automatic'],
+  breast: ['breast', 'mammogra', 'rintasyöp', 'rintasyöv', 'rinta'],
+  cervical: ['cervical', 'cervix', 'kohdunkaula', 'kohdunkaul', 'hpv', 'pap', 'colposcop', 'kolposkop'],
+  selfsampling: ['self sampling', 'self sample', 'selfsampl', 'omanäyte', 'omanäytteenott', 'kotitest', 'home test'],
+  register: ['register', 'registry', 'rekister', 'reporting', 'reported', 'raportoi', 'ei tietoa', 'no information', 'not reported'],
 }
 
 /** Concepts per pathway step and per action id. Weights: step and action concepts 1, background 0.4. */
@@ -42,6 +46,7 @@ const STEP_CONCEPTS: Record<PathwayStep, string[]> = {
   referral: ['positive', 'followup', 'colonoscopy', 'referral'],
   capacity: ['waiting', 'capacity', 'colonoscopy'],
   detection: ['participation', 'fit', 'screening'],
+  reporting: ['register', 'followup', 'referral'],
   none: ['screening', 'participation'],
 }
 const ACTION_CONCEPTS: Record<string, string[]> = {
@@ -53,8 +58,14 @@ const ACTION_CONCEPTS: Record<string, string[]> = {
   multilingual: ['multilingual', 'equality', 'reminder', 'participation'],
   clinician: ['clinician', 'reminder', 'participation'],
   'catch-up': ['waiting', 'capacity', 'colonoscopy'],
+  'sms-reminder': ['reminder', 'outreach', 'participation'],
+  'self-sampling': ['selfsampling', 'outreach', 'participation'],
+  reporting: ['register', 'followup'],
 }
-const BACKGROUND = ['bowel', 'screening']
+/** Programme words weigh in lightly; the programme itself also decides which sources can be retrieved. */
+const BACKGROUND: Record<ProgrammeId, string[]> = { bowel: ['bowel', 'screening'], breast: ['breast', 'screening'], cervical: ['cervical', 'screening'] }
+export const programmeOf = (facts: Record<string, number | string>): ProgrammeId =>
+  facts.programme === 'breast' || facts.programme === 'cervical' ? facts.programme : 'bowel'
 
 const BOOST: Record<SourceType, number> = {
   official_policy: 1.3, official_guidance: 1.3, official_statistics: 1.25,
@@ -77,7 +88,7 @@ export function buildQuery(facts: Record<string, number | string>): Query {
   const action = [...new Set(ids.flatMap((id) => ACTION_CONCEPTS[id]))]
   const core = [...new Set([...STEP_CONCEPTS[step], ...action])]
   const weights = new Map<string, number>()
-  for (const c of BACKGROUND) weights.set(c, 0.4)
+  for (const c of BACKGROUND[programmeOf(facts)]) weights.set(c, 0.4)
   for (const c of core) weights.set(c, 1)
   return { weights, core, action }
 }
@@ -159,7 +170,10 @@ const finnishOfficial = (s: ScoredChunk) => s.source.setting === 'finland' && is
 const interventionLike = (s: ScoredChunk, q: Query) => isIntervention(s.source.sourceType) && (!q.action.length || s.matched.some((c) => q.action.includes(c)))
 
 /** Top passages for the facts, or insufficient_evidence when too few passages match. */
-export function retrieve(corpus: Corpus, facts: Record<string, number | string>): RetrievalResult {
+export function retrieve(fullCorpus: Corpus, facts: Record<string, number | string>): RetrievalResult {
+  // only sources about this programme, plus general ones (no programme tag)
+  const prog = programmeOf(facts)
+  const corpus = { ...fullCorpus, sources: fullCorpus.sources.filter((s) => !s.programmes?.length || s.programmes.includes(prog)) }
   const q = buildQuery(facts)
   const meta = { method: 'keyword' as const, queryVersion: QUERY_VERSION, corpusVersion: corpus.corpusVersion }
   const query = [...q.weights.keys()]

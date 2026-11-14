@@ -42,7 +42,7 @@ export function numbersMatch(text: string, facts: Record<string, number | string
   const allowed: number[] = []
   for (const v of Object.values(facts)) {
     if (typeof v === 'number') allowed.push(v)
-    else for (const m of v.match(/\d+(?:\.\d+)?/g) ?? []) allowed.push(+m)
+    else for (const m of v.replace(/(\d),(?=\d{3}\b)/g, '$1').match(/\d+(?:\.\d+)?/g) ?? []) allowed.push(+m)
   }
   const found = stripMarkers(text).replace(/(\d),(?=\d{3}\b)/g, '$1').match(/\d+(?:\.\d+)?/g) ?? []
   return found.every((m) => {

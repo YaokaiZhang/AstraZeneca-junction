@@ -238,6 +238,8 @@ export function Stat({ label, value, unit, badge, className, big }: { label: Rea
 export function Drawer({ open, onClose, children, tone = 'paper', label }: { open: boolean; onClose: () => void; children: ReactNode; tone?: Tone; label?: string }) {
   const panel = useRef<HTMLElement>(null)
   const close = useRef(onClose)
+  // the backdrop closes the drawer only when a press both starts and ends on it (not a press that began inside the panel)
+  const downOnBackdrop = useRef(false)
   useEffect(() => { close.current = onClose })
   // modal while open: Escape closes, Tab stays inside, focus moves in and goes back where it came from
   useEffect(() => {
@@ -258,7 +260,9 @@ export function Drawer({ open, onClose, children, tone = 'paper', label }: { ope
   }, [open])
   return (
     <div className={cx('fixed inset-0 z-40 transition', open ? 'pointer-events-auto' : 'pointer-events-none')}>
-      <div onClick={onClose} className={cx('absolute inset-0 bg-ink/30 transition-opacity', open ? 'opacity-100' : 'opacity-0')} />
+      <div onPointerDown={(e) => { downOnBackdrop.current = e.target === e.currentTarget }}
+        onClick={(e) => { if (e.target === e.currentTarget && downOnBackdrop.current) onClose(); downOnBackdrop.current = false }}
+        className={cx('absolute inset-0 bg-ink/30 transition-opacity', open ? 'opacity-100' : 'opacity-0')} />
       <aside ref={panel} role="dialog" aria-modal="true" aria-label={label} aria-hidden={!open} inert={!open} tabIndex={-1}
         className={cx('paper-texture absolute right-0 top-0 h-full w-full sm:w-[480px] shadow-2xl overflow-y-auto transition-transform duration-500 outline-none', TONE[tone], open ? 'translate-x-0' : 'translate-x-full')}>
         <button onClick={onClose} aria-label="Close" className="absolute top-5 right-5 z-10 w-9 h-9 rounded-full border border-current flex items-center justify-center hover:bg-ink hover:text-paper">✕</button>

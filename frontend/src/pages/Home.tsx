@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
 import { Actions, CheckIns, Clock, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
 import { WordsUp } from './home/reveal'
-import { ChapterRail, Impact, Summary, Transition } from './home/Story'
+import { ChapterRail, Impact, Transition } from './home/Story'
 import { Radar } from './home/Radar'
 import FinlandCanvas, { type Hover } from './home/FinlandCanvas'
 import { pct, spreadContrast } from './county/model'
@@ -127,7 +127,7 @@ export default function Home() {
                 Start
                 <span className="w-9 h-9 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-x-1 transition-transform">→</span>
               </Link>
-              <a href="#story" className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-2 font-type uppercase text-xs tracking-widest hover:border-ink transition">Explore</a>
+              <a href="#ch-gap" className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-2 font-type uppercase text-xs tracking-widest hover:border-ink transition">Explore</a>
             </div>
           </div>
 
@@ -164,11 +164,10 @@ export default function Home() {
         </div>
 
         <Ecg />
-        <a href="#story" className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
+        <a href="#ch-gap" className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
       </section>
 
       <ChapterRail />
-      <Summary />
 
       {/* 01 · the gap (insight): where it opens, and the wait nobody counts */}
       <Transition chapter="ch-gap" text="Where you live in Finland changes how early your cancer is found." hot={5} />

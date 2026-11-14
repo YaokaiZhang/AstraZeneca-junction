@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Card, EdgeText, Label, SourceBadge, cx } from '../../components/ui'
 import { COUNTIES } from '../../data/counties'
-import { earlierFinds, fmt, pct, projection, screeningGain, spreadContrast, TURNOUT_TARGET } from '../county/model'
+import { earlierFinds, fmt, pct, projection, screeningGain, TURNOUT_TARGET } from '../county/model'
 import { Reveal, WordsUp, useCount, useInView, useScrollProgress } from './reveal'
 
 /* ───────────── the story's chapters ───────────── */
@@ -86,53 +86,9 @@ export function ChapterRail() {
   )
 }
 
-/* ───────────── the whole story on one screen (for the two-minute read) ───────────── */
-const BREAST = spreadContrast('breast')
 const FINDS = earlierFinds()
 const SCREEN = screeningGain()
-const round10 = (n: number) => Math.round(n / 10) * 10
 const round1000 = (n: number) => Math.round(n / 1000) * 1000
-
-export function Summary() {
-  const rows: [ChapterId, string][] = [
-    ['ch-gap', `Where you live changes how early cancer is found: breast cancer had already spread in ${pct(BREAST.worst.v)} of cases in ${BREAST.worst.c.name}, ${pct(BREAST.best.v)} in ${BREAST.best.c.name}. And nobody publishes how long patients wait.`],
-    ['ch-built', 'Ajoissa follows one person from first symptom to first treatment. The patient, the hospital and the county each see that journey from their side.'],
-    ['ch-do', 'For every county it names the weakest step and three actions: what to do, who does it, and which target it moves.'],
-    ['ch-impact', `If every county did as well as the best quarter already does, about ${round10(FINDS.total)} more cancers a year would be found before they spread.`],
-    ['ch-know', 'Built on open data from the Cancer Registry, Statistics Finland and THL. Every number shows its source, and the limits are listed.'],
-  ]
-  return (
-    <section id="story" className="relative px-5 lg:px-24 py-24 lg:py-32">
-      <div className="max-w-6xl mx-auto grid lg:grid-cols-[1fr_2fr] gap-10 lg:gap-20">
-        <div>
-          <Label>The short version</Label>
-          <h2 className="mt-5 font-serif font-light text-5xl lg:text-7xl leading-[0.95]">
-            <WordsUp text="The story" /><br /><WordsUp text="in five lines." className="italic text-terra" delay={150} />
-          </h2>
-          <Reveal fx="up" delay={250} className="mt-6 max-w-sm font-sans text-base lg:text-lg leading-relaxed opacity-75">
-            <p>Two minutes to the point. Scroll on for each chapter in detail, or tap a line to jump there.</p>
-          </Reveal>
-        </div>
-        <ol className="border-t border-ink">
-          {rows.map(([id, text], i) => {
-            const ch = CHAPTERS.find((c) => c.id === id)!
-            return (
-              <Reveal key={id} as="li" delay={i * 90}>
-                <a href={`#${id}`} onClick={(e) => { e.preventDefault(); document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }) }}
-                  className="group grid grid-cols-[2.5rem_1fr_auto] sm:grid-cols-[3rem_10rem_1fr_auto] gap-x-4 gap-y-1 items-baseline py-5 border-b border-dashed border-ink/25 hover:bg-ink/[0.03] transition-colors">
-                  <span className="font-type text-xs tracking-widest text-terra">{ch.n}</span>
-                  <span className="font-serif italic text-2xl leading-tight">{ch.title}</span>
-                  <span className="col-start-2 col-span-2 sm:col-start-auto sm:col-span-1 font-sans text-[15px] lg:text-base leading-snug opacity-80">{text}</span>
-                  <span className="hidden sm:block opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition">→</span>
-                </a>
-              </Reveal>
-            )
-          })}
-        </ol>
-      </div>
-    </section>
-  )
-}
 
 /* ───────────── estimated impact ───────────── */
 const COLORS: Record<string, string> = { breast: '#FFC233', bowel: '#C65D3B', lung: '#1F1F1F' }

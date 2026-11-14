@@ -706,7 +706,7 @@ const PLAYBOOK: { step: string; icon: Icon; finding: string; action: string; who
   {
     step: 'Capacity', icon: 'calendar', finding: 'More cases by 2035', action: 'Book scan and specialist time early',
     who: 'County', effort: 3, goal: '↓', target: 'Fewer waiting over 6 months',
-    badge: <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how="THL Sotkanet 3336: waited over 6 months for specialist care, per 10 000 residents. Planned in the yearly budget and service plan, using the 2035 projection on the Overload tab." />,
+    badge: <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how="THL Sotkanet 3336: waited over 6 months for specialist care, per 10 000 residents. Planned in the yearly budget and service plan." />,
   },
 ]
 const EFFORT = ['', 'Low effort', 'Medium effort', 'High effort']

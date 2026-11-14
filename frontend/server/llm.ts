@@ -191,7 +191,7 @@ function parseFacts(b: unknown): Record<string, number | string> | null {
   if (!f || typeof f !== 'object' || Array.isArray(f)) return null
   const out: Record<string, number | string> = {}
   for (const [k, v] of Object.entries(f as Record<string, unknown>).slice(0, 40)) {
-    if (!/^[a-z0-9_]{1,48}$/.test(k)) return null
+    if (!/^[a-z0-9_]{1,64}$/.test(k)) return null
     if (typeof v === 'number' && Number.isFinite(v)) out[k] = v
     else if (typeof v === 'string' && v.length <= 300) out[k] = v
     else return null

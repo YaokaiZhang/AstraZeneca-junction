@@ -75,7 +75,7 @@ export function buildFacts(r: ScreeningRow, plan: Plan, res: Result): Facts {
     about_extra_colonoscopies_per_week_by_2031: aboutNum(y.extraWithFixesWeek),
     caveat: 'The effects come mostly from studies in the United States, the 2031 figure assumes today’s rates, and some 2024 follow-up colonoscopies may not have been reported yet.',
   }
-  if (q.extraPerWeek >= 0.5) facts.about_wait_in_a_year_without_extra_colonoscopies_months = aboutNum(q.waitIn12m)
+  if (q.extraPerWeek >= 0.5) facts.about_wait_in_a_year_if_not_added_months = aboutNum(q.waitIn12m)
   if (p.plan.catchUp && q.catchUp >= 0.5) {
     facts.about_catch_up_colonoscopies_total = aboutNum(q.catchUp)
     facts.catch_up_weeks = p.plan.catchUpWeeks

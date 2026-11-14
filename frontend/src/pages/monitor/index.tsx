@@ -85,7 +85,7 @@ export default function MonitorPage() {
       const resp = await fetch('/api/briefing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ facts }) })
       const body = await resp.json().catch(() => ({}))
       if (resp.ok && typeof body.text === 'string' && numbersMatch(body.text, facts)) { setAi({ key, text: body.text }); setAiNote(null) }
-      else setAiNote({ key, note: resp.ok ? 'The AI text used a number we could not match, so it was not used.' : body.error === 'ai_off' ? 'AI is off on this server.' : body.error === 'key_format' ? 'The server’s LLM_KEY is not an Anthropic API key (it should start with sk-ant-).' : String(body.error ?? '').includes('401') ? 'The server’s LLM_KEY was not accepted by Anthropic.' : 'The AI could not be reached.' })
+      else setAiNote({ key, note: resp.ok ? 'The AI text used a number we could not match, so it was not used.' : body.error === 'ai_off' ? 'AI is off on this server.' : body.error === 'key_format' ? 'The server’s LLM_KEY is not an Anthropic API key (it should start with sk-ant-).' : String(body.error ?? '').includes('401') ? 'The server’s LLM_KEY was not accepted by Anthropic.' : `The AI could not be reached (${String(body.error ?? resp.status)}).` })
     } catch {
       setAiNote({ key, note: 'The AI could not be reached.' })
     } finally {
@@ -187,12 +187,15 @@ export default function MonitorPage() {
 
       <Drawer open={sheet} onClose={() => setSheet(false)} label="County action sheet">
         <div className="p-6 pt-16">
-          <div className="flex items-center justify-between mb-4 gap-3">
+          <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
             <Label>Preview · one printable page</Label>
             <div className="flex items-center gap-2">
-              <Btn variant="ghost" disabled={aiBusy || aiOn === false} onClick={writeBriefing}
-                title={aiOn === false ? 'Start the server with LLM_KEY to use AI' : undefined}>
-                {aiBusy ? 'Writing…' : briefing.source === 'ai' ? 'Rewrite with AI' : 'Write briefing with AI'}
+              <Btn type="button" variant="ghost" disabled={aiBusy || aiOn === false} aria-busy={aiBusy}
+                onClick={(e) => { e.stopPropagation(); void writeBriefing() }}
+                title={aiOn === false ? 'Start the server with LLM_KEY to use AI' : undefined}
+                className="whitespace-nowrap min-w-[13.5rem] justify-center">
+                {aiBusy ? <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-full border-2 border-current border-r-transparent animate-spin" />Writing briefing…</span>
+                  : briefing.source === 'ai' ? 'Rewrite with AI' : 'Write briefing with AI'}
               </Btn>
               <Btn onClick={() => window.print()}>Print</Btn>
             </div>

@@ -51,7 +51,8 @@ export interface ProgrammeView {
 const WAIT_WEIGHT = 0.05
 const n0 = (x: number) => Math.round(x).toLocaleString('en-GB')
 const n1 = (x: number) => x.toFixed(1)
-const weeks = (months: number) => Math.max(1, Math.round(months * 4.35))
+/** Days, not weeks: rounding to whole weeks made 20 days vs 17 read as "3 weeks vs 2". */
+const days = (months: number) => Math.max(1, Math.round(months * 30.44))
 const pick = (tiles: StepTile[]) => {
   const behind = tiles.map((t, i) => [t, i] as const).filter(([t]) => t.behind && !t.missing)
   const pool = behind.length ? behind : tiles.map((t, i) => [t, i] as const).filter(([t]) => !t.missing)
@@ -77,7 +78,7 @@ function breastTiles(r: BreastRow): StepTile[] {
       line: r.noHistology ? `${n0(r.noHistology)} referred women have no result on record` : 'Every referred woman has a result on record',
     },
     {
-      title: 'Wait for follow-up exam', big: wait != null ? `${weeks(wait)}` : '–', unit: 'weeks', finland: `${weeks(fiWait)} weeks`,
+      title: 'Wait for follow-up exam', big: wait != null ? `${days(wait)}` : '–', unit: 'days', finland: `${days(fiWait)} days`,
       behind: ratio >= 1.4, missing: wait == null, gap: (ratio - 1) * WAIT_WEIGHT,
       line: ratio >= 1.4 ? `About ${n1(ratio)} times the national wait` : ratio <= 0.7 ? 'Shorter than the national wait' : 'Close to the national wait',
     },
@@ -113,7 +114,7 @@ export function breastView(id: string): ProgrammeView | null {
     start = {
       title: 'Give the follow-up exam a time at recall',
       text: 'Book the follow-up mammogram and ultrasound in the recall letter, with a slot inside two weeks.',
-      result: `Target: the national ${weeks(fi.medianMonthsToExam!)} weeks, down from ${weeks(r.medianMonthsToExam!)}. The fastest counties take about a week.`,
+      result: `Target: the national ${days(fi.medianMonthsToExam!)} days, down from ${days(r.medianMonthsToExam!)}. The fastest counties take about a week.`,
       basis: { kind: 'direct', sourceId: 'breastScreening', how: `Median time from positive mammogram to follow-up exam, ${BREAST_YEAR}, read from the Registry's chart.` },
     }
   }

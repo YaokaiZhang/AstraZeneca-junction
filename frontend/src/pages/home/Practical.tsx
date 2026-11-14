@@ -124,11 +124,6 @@ export function StageGap() {
 /* ───────────── lung risk, in a real visit ───────────── */
 const IN_RECORD = ['Age', 'Height and weight', 'COPD diagnosis', 'Earlier cancer', 'Smoker or not']
 const ASKED = ['Cigarettes a day', 'Years smoked', 'Years since quitting', 'Lung cancer in family', 'Education']
-const FLOW = [
-  { n: '1', t: 'Nurse or app asks five questions', s: 'the rest comes from the record' },
-  { n: '2', t: 'Risk worked out on the device', s: 'published formula, no server' },
-  { n: '3', t: 'Over 1.51% in six years', s: 'doctor offers a lung CT referral' },
-]
 
 export function RiskInPractice() {
   return (
@@ -169,29 +164,9 @@ export function RiskInPractice() {
               <SourceBadge id="plcoValidation" kind="direct" demo={false} />
             </p>
           </Reveal>
-          <Reveal fx="up" delay={300} className="mt-6 lg:mt-[3.5svh] grid grid-cols-2 gap-6 border-t border-ink/15 pt-5">
-            <div>
-              <p className="font-serif text-4xl lg:text-5xl leading-none">0.81</p>
-              <p className="mt-2 font-sans text-sm leading-snug opacity-75">ranks a future patient above someone who stays well, 81% of the time (German cohort)</p>
-            </div>
-            <div>
-              <p className="font-serif text-4xl lg:text-5xl leading-none italic">NHS</p>
-              <p className="mt-2 font-sans text-sm leading-snug opacity-75">England already uses this model and cut-off to invite people to lung CT</p>
-            </div>
-          </Reveal>
-          <Reveal fx="up" delay={450} className="mt-6 lg:mt-[3.5svh]">
-            <ol className="grid grid-cols-3 gap-2">
-              {FLOW.map((f) => (
-                <li key={f.n} className="rounded-xl bg-ink text-paper p-4">
-                  <span className="font-type text-xs text-mustard">{f.n}</span>
-                  <p className="mt-1 font-serif text-lg leading-tight">{f.t}</p>
-                  <p className="mt-1 font-sans text-xs leading-snug opacity-60">{f.s}</p>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-3 font-sans text-sm leading-snug opacity-60">
-              Not yet tested on Finnish patients. Step one of a pilot: check it against Cancer Registry outcomes.
-            </p>
+          <Reveal fx="up" delay={300} className="mt-8 lg:mt-[5svh] border-t border-ink/15 pt-6 flex items-baseline gap-5">
+            <p className="font-serif text-5xl lg:text-6xl leading-none italic">NHS</p>
+            <p className="font-sans text-base leading-snug opacity-75 max-w-xs">England already uses this model and cut-off to invite people to lung CT</p>
           </Reveal>
         </div>
       </div>

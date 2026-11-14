@@ -84,6 +84,7 @@ export function MixGap({ r }: { r: ScreeningRow }) {
             : <>In {r.name}, <span className="italic">{t.text.charAt(0).toLowerCase() + t.text.slice(1)}</span></>}
         </p>
         {t.detail && <p className="mt-4 font-sans text-[16px] leading-relaxed opacity-80">{t.detail}</p>}
+        <p className="mt-3 font-sans text-[14px] leading-snug opacity-65">This is a lead to check locally, not a measurement: the group rates are national, and the Registry publishes no county figures by language or education.</p>
         {gap > 0.5 && rank <= 2 && (
           <p className="mt-3 font-type text-sm uppercase tracking-wider opacity-80">
             One of the two largest unexplained gaps in Finland, with {ranked[rank === 1 ? 1 : 0].name}

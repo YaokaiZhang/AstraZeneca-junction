@@ -89,11 +89,14 @@ export function Recommend({ r, plan, setPlan, res, otherOptions }: {
   const w = weakestStep(r)
   const behind = flags(r)[w]
   let title: string, text: ReactNode, result: ReactNode, on: boolean, set: (v: boolean) => void
+  let who: string, measure: string
   if (w === 'referral') {
     const alone = evaluate(r, { ...EMPTY_PLAN, referral: ['navigation'] }).referral
     title = 'Follow up every positive test'
     text = <>Give the screening nurse a daily list of everyone with a positive test who hasn&apos;t booked a colonoscopy, and call them. Every county already has screening nurses; this gives them the list.</>
     result = <>About {about(alone.colonoscopies)} more colonoscopies a year, an estimated {about(alone.cancers)} more cancers detected.</>
+    who = 'The screening nurse or screening coordinator, every working day.'
+    measure = 'Days from positive test to booking; share of positive tests with a recorded colonoscopy; people still without one.'
     on = plan.referral.includes('navigation')
     set = (v) => setPlan({ ...plan, referral: v ? [...plan.referral.filter((x) => x !== 'navigation'), 'navigation'] : plan.referral.filter((x) => x !== 'navigation') })
   } else if (w === 'detection') {
@@ -102,12 +105,16 @@ export function Recommend({ r, plan, setPlan, res, otherOptions }: {
     title = 'Remind people who haven’t sent the kit back'
     text = <>Send a second letter or text message to everyone who hasn&apos;t returned the kit a few weeks after the invitation.</>
     result = <>About {about(alone.kits)} more kits sent back a year, about {about(alone.colonoscopies)} more colonoscopies.</>
+    who = 'The screening programme team, a few weeks after each invitation batch.'
+    measure = 'Share of invited people who send the kit back, month by month.'
     on = plan.detectionFix === 'reminder'
     set = (v) => setPlan(v ? { ...plan, detectionFix: 'reminder', detectionPts: pts } : { ...plan, detectionFix: null, detectionPts: 0 })
   } else {
     const c = res.queue.catchUp
     title = 'Clear the queue for colonoscopy'
     text = <>Run extra evening or weekend colonoscopy lists for {plan.catchUpWeeks} weeks until the wait is back to about {n1(plan.targetMonths)} months.</>
+    who = 'The colonoscopy unit, for the weeks of the catch-up.'
+    measure = 'Median wait from positive test to colonoscopy; people waiting.'
     result = c < 0.5 ? <>No extra lists are needed: the wait is already at the target.</>
       : <>About {about(c)} extra colonoscopies in total, about {about(c / plan.catchUpWeeks)} a week for {plan.catchUpWeeks} weeks.</>
     on = plan.catchUp
@@ -119,7 +126,11 @@ export function Recommend({ r, plan, setPlan, res, otherOptions }: {
       <p className="mt-2 font-serif text-3xl sm:text-4xl leading-tight">{title}</p>
       <p className="mt-3 font-sans text-[17px] leading-relaxed max-w-2xl opacity-90">{text}</p>
       <p className={cx('mt-4 font-serif text-2xl leading-snug', on ? 'text-mustard' : 'text-terra')}>{result}</p>
-      <p className="mt-1 font-sans text-[14px] opacity-60">Proven in other screening programmes.</p>
+      <p className="mt-1 font-sans text-[14px] opacity-60">Proven in other screening programmes; an estimate for this county, not a promise.</p>
+      <dl className={cx('mt-4 grid sm:grid-cols-[8rem_minmax(0,1fr)] gap-x-4 gap-y-1 font-sans text-[15px] max-w-2xl', on ? 'opacity-90' : 'opacity-80')}>
+        <dt className="font-medium">Who, how often</dt><dd>{who}</dd>
+        <dt className="font-medium">How you know</dt><dd>{measure}</dd>
+      </dl>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <Toggle on={on} onChange={set} label={on ? 'Applied' : 'Apply this'} />
         {otherOptions}

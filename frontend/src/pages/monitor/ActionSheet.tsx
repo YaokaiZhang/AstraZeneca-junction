@@ -154,6 +154,13 @@ export function ActionSheet({ r, plan, res, briefing }: { r: ScreeningRow; plan:
         {fixes.length ? <ul className="list-disc pl-5 text-[13px] leading-snug space-y-1">{fixes.map((x) => <li key={x}>{x}</li>)}</ul>
           : <p className="text-[13px] italic opacity-70">No fix chosen yet. Pick one on the monitor to fill this in.</p>}
         {plan.referral.length > 1 && <p className="text-[12px] opacity-70 mt-1">Several referral fixes chosen; only the strongest is counted.</p>}
+        {fixes.length > 0 && (
+          <ul className="mt-2 text-[12px] leading-snug space-y-0.5">
+            {res.referral.fix && <li><b>Follow-up:</b> owner the screening nurse or coordinator, every working day. Measure days from positive test to booking, the share with a recorded colonoscopy, and people still without one.</li>}
+            {res.detection.pts > 0 && <li><b>Kit return:</b> owner the screening programme team, after each invitation batch. Measure the share of invited who send the kit back, month by month.</li>}
+            {plan.catchUp && q.catchUp >= 0.5 && <li><b>Catch-up:</b> owner the colonoscopy unit, for {plan.catchUpWeeks} weeks. Measure the median wait from positive test to colonoscopy and the number waiting.</li>}
+          </ul>
+        )}
       </section>
 
       <section className="mt-4 grid grid-cols-3 gap-3">

@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { Btn, Display, Drawer, KindLegend, Label, Picker, SourceBadge, cx } from '../../components/ui'
 import { GROUPS, SCREENING, SCREENING_FI, screeningById, MISSED_CANCERS_2022 } from './data'
-import { EMPTY_PLAN, GROUP_FACTS, evaluate, n1, type Plan } from './model'
+import { EMPTY_PLAN, GOAL_PARTICIPATION, GROUP_FACTS, THRESHOLDS, evaluate, n1, type Plan } from './model'
 import { HowItChanged } from './Chain'
 import { Recommend, SimpleChain, Verdict, WhatItTakes } from './Simple'
 import { Missed } from './Missed'
@@ -161,7 +161,7 @@ export default function MonitorPage() {
           <Label className="mb-4">Bowel cancer screening · {r.name} · 2024</Label>
           <p key={countyId} className="rise font-serif text-3xl sm:text-[2.6rem] leading-[1.12] max-w-4xl"><Verdict r={r} /></p>
           <div className="mt-8"><SimpleChain r={r} /></div>
-          <SourceLine>Source: Finnish Cancer Registry, bowel cancer screening statistics, 2024 round.</SourceLine>
+          <SourceLine>Source: Finnish Cancer Registry, bowel cancer screening statistics, 2024 round. &quot;Falling behind&quot; means past our own warning line (kit return below {THRESHOLDS.detection}%, follow-up below {THRESHOLDS.referral}%, wait over {THRESHOLDS.capacity} months). The only official target is {GOAL_PARTICIPATION}% kit return in every county (National Cancer Strategy, Goal 2).</SourceLine>
         </div>
       </section>
 

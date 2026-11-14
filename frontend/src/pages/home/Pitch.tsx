@@ -107,7 +107,7 @@ export function Clock() {
               return (
                 <div key={s.id} className="absolute top-0 -translate-x-1/2 flex flex-col items-center" style={{ left: `${at * 100}%` }}>
                   <span className={cx('w-6 h-6 rounded-full border-2 border-ink transition-all duration-300', lit ? 'bg-mustard scale-110' : 'bg-paper')} />
-                  <span className={cx('mt-3 font-type text-[9px] lg:text-[11px] uppercase tracking-widest whitespace-nowrap transition-opacity', lit ? 'opacity-90' : 'opacity-30', i % 2 === 1 && "max-sm:mt-10")}>{s.id}</span>
+                  <span className={cx('mt-3 font-type text-[11px] lg:text-[13px] uppercase tracking-widest whitespace-nowrap transition-opacity', lit ? 'opacity-90' : 'opacity-30', i % 2 === 1 && "max-sm:mt-10")}>{s.id}</span>
                   {i > 0 && <span className={cx('font-serif italic text-lg lg:text-xl transition-opacity', lit ? 'opacity-100' : 'opacity-20')}>+{s.d}</span>}
                 </div>
               )
@@ -178,9 +178,9 @@ export function TooLate() {
 function PhoneMock() {
   const [ref, on] = useInView<HTMLDivElement>(0.35)
   const msgs: [boolean, string][] = [
-    [true, 'Coughing three weeks. Blood once.'],
-    [false, 'Saved · cough · 21 d · blood'],
-    [true, 'Still no scan date.'],
+    [true, 'Coughing three weeks. Smoked 30 years.'],
+    [false, 'Saved. Next step: see a doctor within two weeks.'],
+    [true, 'Referral sent. Still no scan date.'],
     [false, 'Draft to the clinic is ready →'],
   ]
   return (
@@ -231,12 +231,12 @@ function HospitalMock() {
         </div>
         <div className="mt-5 space-y-1.5">
           {rows.map((r, i) => (
-            <div key={r.id} className={cx('rv rv-right flex items-center gap-3 rounded-md px-3 py-2 font-type text-[11px]', on && 'in', r.esc ? 'bg-terra text-paper' : 'bg-ink/[0.04]')}
+            <div key={r.id} className={cx('rv rv-right flex items-center gap-3 rounded-md px-3 py-2 font-type text-[13px]', on && 'in', r.esc ? 'bg-terra text-paper' : 'bg-ink/[0.04]')}
               style={{ transitionDelay: `${200 + i * 120}ms` }}>
               <span className={cx('w-2 h-2 rounded-full', r.esc ? 'bg-mustard animate-ping' : r.d > 7 ? 'bg-terra' : 'bg-mustard')} />
               <span className="w-14">{r.id}</span><span className="w-16 opacity-70">{r.c}</span><span className="flex-1 opacity-70">{r.s}</span>
               <span className="font-serif text-base tabular-nums lining-nums">+{r.d}d</span>
-              {r.esc && <span className="uppercase tracking-widest text-[9px] border border-paper/60 rounded-full px-2 py-0.5">Escalated</span>}
+              {r.esc && <span className="uppercase tracking-widest text-[11px] border border-paper/60 rounded-full px-2 py-0.5">Escalated</span>}
             </div>
           ))}
         </div>
@@ -245,7 +245,7 @@ function HospitalMock() {
             <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
               <div className={cx('w-full rounded-t-sm origin-bottom transition-transform duration-1000 ease-out', i === 1 ? 'bg-terra' : 'bg-ink/80')}
                 style={{ height: `${b * 100}%`, transform: `scaleY(${on ? 1 : 0})`, transitionDelay: `${800 + i * 100}ms` }} />
-              <span className="font-type text-[8px] uppercase opacity-50">{['Ref', 'Scan', 'Dx', 'MDT', 'Tx'][i]}</span>
+              <span className="font-type text-[10px] uppercase opacity-50">{['Ref', 'Scan', 'Dx', 'MDT', 'Tx'][i]}</span>
             </div>
           ))}
         </div>
@@ -271,7 +271,7 @@ function CountyMock() {
             <div key={c.id} title={c.name}
               className={cx('rv rv-scale rounded-md relative flex items-end p-1.5', on && 'in', isW && 'ring-2 ring-mustard ring-offset-2 ring-offset-paper')}
               style={{ gridColumn: c.col + 1, gridRow: c.row + 1, background: `color-mix(in srgb, #C65D3B ${Math.round(15 + t * 85)}%, #F4F1EA)`, transitionDelay: `${c.row * 90 + c.col * 50}ms` }}>
-              <span className={cx('font-type text-[8px] uppercase leading-none', t > 0.55 ? 'text-paper' : 'text-ink/70')}>{c.name.slice(0, 4)}</span>
+              <span className={cx('font-type text-[10px] uppercase leading-none', t > 0.55 ? 'text-paper' : 'text-ink/70')}>{c.name.slice(0, 4)}</span>
               {isW && <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-mustard animate-ping" />}
             </div>
           )
@@ -279,8 +279,9 @@ function CountyMock() {
       </div>
       <div className={cx('rv rv-stamp absolute -right-6 lg:-right-16 top-6', on && 'in')} style={{ transitionDelay: '1500ms' }}>
         <Card tone="mustard" tilt={-6} className="px-4 py-3">
-          <div className="label !opacity-80">Latest detection</div>
+          <div className="label !opacity-80">Radar · weakest step</div>
           <div className="font-serif italic text-2xl leading-tight">{worst.name}</div>
+          <div className="font-type text-xs uppercase tracking-widest mt-0.5">found late</div>
         </Card>
       </div>
     </div>
@@ -288,9 +289,9 @@ function CountyMock() {
 }
 
 const VIEWS = [
-  { k: '01', who: 'Patient', a: 'Notice it.', b: 'Say it. Chase it.', p: 'Write down symptoms in your own words, check your lung cancer risk and see how long each step of your care has taken. If a step runs late, Ajoissa drafts a message to the clinic for you.', chips: ['Symptom diary', 'Lung risk', 'Pathway clock', '5 languages'], mock: <PhoneMock />, to: '/patient' },
+  { k: '01', who: 'Patient', a: 'Notice it.', b: 'Say it. Chase it.', p: 'Write down symptoms in your own words and find out whether a screening or a doctor visit is worth it: you get a next step, never a score. See how long each step of your care has taken, and if one runs late, Ajoissa drafts a message to the clinic for you. In Finnish, Swedish or English.', chips: ['Symptom diary', 'Screening check', 'Pathway clock', '3 languages'], mock: <PhoneMock />, to: '/patient' },
   { k: '02', who: 'Hospital', a: 'See who is', b: 'falling behind.', p: 'A live list of patients whose next step is overdue, most delayed first. The worst cases are flagged for escalation, and the bars show which step causes the most delay.', chips: ['Off-track list', 'Auto-escalation', 'Shared records', 'Delay map'], mock: <HospitalMock />, to: '/hospital' },
-  { k: '03', who: 'County', a: 'Find where', b: 'people are lost.', p: 'Compares regions on how often cancers are found late, so screening and capacity go where people slip through. Darker tiles mean more late diagnoses.', chips: ['Late-detection radar', 'Screening gaps', 'Capacity', 'Action brief'], mock: <CountyMock />, to: '/county' },
+  { k: '03', who: 'County', a: 'Find where', b: 'people are lost.', p: 'The detection radar follows each county from people at risk, to screening, to stage at diagnosis, to survival, and marks the step where it loses the most people. Darker tiles mean more late diagnoses.', chips: ['Detection radar', 'Who misses screening', 'Overload warning', 'Action brief'], mock: <CountyMock />, to: '/county' },
 ]
 
 export function Views() {
@@ -315,7 +316,7 @@ export function Views() {
             <div className="mt-8 flex flex-wrap gap-2">
               {v.chips.map((c, j) => (
                 <Reveal key={c} fx="scale" delay={300 + j * 80} as="span"
-                  className="inline-block font-type text-[11px] uppercase tracking-widest border border-ink/25 rounded-full px-4 py-2 hover:bg-ink hover:text-paper transition-colors">{c}</Reveal>
+                  className="inline-block font-type text-[13px] uppercase tracking-widest border border-ink/25 rounded-full px-4 py-2 hover:bg-ink hover:text-paper transition-colors">{c}</Reveal>
               ))}
             </div>
             <Reveal fx="up" delay={700} className="mt-10">
@@ -354,7 +355,7 @@ export function Privacy() {
             {[['Hospital', 'only if you share'], ['County', 'counts, never names'], ['You', 'withdraw any time']].map(([a, b], i) => (
               <Reveal key={a} delay={400 + i * 120} className="border-t border-paper/20 pt-4">
                 <div className="font-serif text-3xl italic">{a}</div>
-                <div className="font-type text-[11px] uppercase tracking-widest opacity-60 mt-1">{b}</div>
+                <div className="font-type text-[13px] uppercase tracking-widest opacity-60 mt-1">{b}</div>
               </Reveal>
             ))}
           </div>

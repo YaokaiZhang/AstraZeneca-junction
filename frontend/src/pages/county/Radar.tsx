@@ -67,7 +67,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
       <div className="mt-6 flex flex-wrap gap-3 items-center">
         <Seg items={RADAR_CANCERS} value={k} onChange={setRadarCancer} />
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-3 font-type text-[10px] uppercase tracking-wider">
+      <div className="mt-3 flex flex-wrap items-center gap-3 font-type text-xs uppercase tracking-wider">
         <span className={cx('px-2 py-1 rounded-full', pooled ? 'bg-ink text-paper' : 'bg-black/5')}>{periodLabel(k)}</span>
         <span className="opacity-60">{RISK[k].who} · {hasProg ? `screening ${RISK[k].ages}` : 'no screening programme'}</span>
         <span className="opacity-60 flex items-center gap-1.5">· {fmt(totalHigh)} high-risk in Finland {stepBadge('risk', k)}</span>
@@ -104,7 +104,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
           />
           <div className="mt-4 space-y-3">
             {by === 'weakest' && (
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1 font-type text-[10px] uppercase tracking-wider">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 font-type text-xs uppercase tracking-wider">
                 {counts.map(({ s, n }) => (
                   <span key={s.id} className={cx('flex items-center gap-1.5', !hasProg && s.id === 'screen' && 'opacity-40')}>
                     <span className="font-serif text-base leading-none normal-case">{s.n}</span>{s.label}<span className="opacity-60">·{n}</span>
@@ -118,7 +118,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
 
         <div className="min-w-0 space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-type text-[10px] uppercase tracking-wider opacity-60">Colour map by</span>
+            <span className="font-type text-xs uppercase tracking-wider opacity-60">Colour map by</span>
             <Seg items={[{ id: 'weakest' as ColorBy, label: 'Weakest' }, ...STEPS.filter((s) => hasProg || s.id !== 'screen').map((s) => ({ id: s.id as ColorBy, label: `${s.n} ${s.short}` }))]}
               value={by} onChange={setColorBy} />
           </div>
@@ -128,7 +128,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
               <Label>Ranked · sharpest loss first</Label>
               <span className="flex items-center gap-1.5">{weakBadge}</span>
             </div>
-            <div className="grid grid-cols-[1.2rem_minmax(0,1fr)_4.2rem_4.6rem] sm:grid-cols-[1.4rem_minmax(0,1fr)_4.4rem_4.8rem_3rem] gap-2 px-2 pb-2 border-b border-black/10 font-type text-[9px] uppercase tracking-wider opacity-70">
+            <div className="grid grid-cols-[1.2rem_minmax(0,1fr)_4.2rem_4.6rem] sm:grid-cols-[1.4rem_minmax(0,1fr)_4.4rem_4.8rem_3rem] gap-2 px-2 pb-2 border-b border-black/10 font-type text-[11px] uppercase tracking-wider opacity-70">
               <span />
               <span>County</span>
               <span className="flex gap-[3px]">{STEPS.map((s) => <span key={s.id} className="w-[14px] text-center">{s.n}</span>)}</span>
@@ -143,10 +143,10 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
                     <button onClick={() => select(r.c.id)} onDoubleClick={() => openBrief(r.c.id)}
                       className={cx('w-full grid grid-cols-[1.2rem_minmax(0,1fr)_4.2rem_4.6rem] sm:grid-cols-[1.4rem_minmax(0,1fr)_4.4rem_4.8rem_3rem] items-center gap-2 py-1.5 px-2 rounded-md text-left transition-colors',
                         sel ? 'bg-mustard shadow' : 'hover:bg-black/5')}>
-                      <span className="font-type text-[10px] opacity-60">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="font-type text-xs opacity-60">{String(i + 1).padStart(2, '0')}</span>
                       <span className="font-serif text-base leading-tight truncate">{r.c.name}</span>
                       <StepDots row={r} />
-                      <span className="font-type text-[10px] uppercase tracking-wide whitespace-nowrap">
+                      <span className="font-type text-xs uppercase tracking-wide whitespace-nowrap">
                         <span className={cx('inline-block px-1.5 py-0.5 rounded-full', sel ? 'bg-ink text-paper' : 'bg-terra text-paper')}>{stepInfo(r.weakest).n} {stepInfo(r.weakest).short}</span>
                       </span>
                       <span className="hidden sm:block font-type text-xs text-right tabular-nums">{fmtK(r.highRisk)}</span>
@@ -155,7 +155,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
                 )
               })}
             </ol>
-            <p className="mt-3 font-type text-[9px] uppercase tracking-wider opacity-60">Tap to select · map tile opens the brief</p>
+            <p className="mt-3 font-type text-[11px] uppercase tracking-wider opacity-60">Tap to select · map tile opens the brief</p>
           </Card>
         </div>
       </div>
@@ -198,7 +198,7 @@ function Funnel({ row, k, onBrief }: { row: RadarRow; k: RadarCancerId; onBrief:
           </p>
         </div>
         <button onClick={onBrief}
-          className="font-type text-[11px] uppercase tracking-widest flex items-center gap-2 rounded-full border border-ink pl-4 pr-1.5 py-1.5 hover:bg-ink hover:text-paper transition-colors shrink-0">
+          className="font-type text-[13px] uppercase tracking-widest flex items-center gap-2 rounded-full border border-ink pl-4 pr-1.5 py-1.5 hover:bg-ink hover:text-paper transition-colors shrink-0">
           Brief <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">→</span>
         </button>
       </div>
@@ -228,15 +228,15 @@ function Funnel({ row, k, onBrief }: { row: RadarRow; k: RadarCancerId; onBrief:
             <li key={s.id}
               className={cx('relative rounded-lg p-3 sm:p-4 min-w-0 flex flex-col', weak ? 'bg-terra text-paper shadow-lg -rotate-1' : 'bg-black/[.04]', none && 'hatch-soft')}>
               <div className="flex items-center justify-between gap-2">
-                <span className="font-type text-[10px] uppercase tracking-wider flex items-center gap-1.5 min-w-0">
+                <span className="font-type text-xs uppercase tracking-wider flex items-center gap-1.5 min-w-0">
                   <span className={cx('w-5 h-5 rounded-full flex items-center justify-center font-serif text-sm shrink-0', weak ? 'bg-paper text-terra' : 'border border-current')}>{s.n}</span>
                   <span className="truncate">{s.label}</span>
                 </span>
                 {i < STEPS.length - 1 && <span aria-hidden className="hidden lg:block absolute -right-[11px] top-4 z-10 font-type text-sm opacity-50">→</span>}
-                {weak && <span className="absolute -top-2 right-3 font-type text-[8px] uppercase tracking-wider bg-ink text-paper rounded-full px-1.5 py-0.5 shadow">most lost</span>}
+                {weak && <span className="absolute -top-2 right-3 font-type text-[10px] uppercase tracking-wider bg-ink text-paper rounded-full px-1.5 py-0.5 shadow">most lost</span>}
               </div>
               <p className="font-serif text-3xl sm:text-4xl leading-none mt-3 flex items-baseline gap-1.5 flex-wrap">{main} {stepBadge(s.id, k, row)}</p>
-              <p className={cx('font-type text-[10px] uppercase tracking-wide mt-2 leading-snug', weak ? 'opacity-90' : 'opacity-60')}>{sub}</p>
+              <p className={cx('font-type text-xs uppercase tracking-wide mt-2 leading-snug', weak ? 'opacity-90' : 'opacity-60')}>{sub}</p>
               <div className="mt-auto pt-3">
                 {bar != null && (
                   <div className={cx('relative h-1.5 rounded-full', weak ? 'bg-paper/30' : 'bg-black/10')} aria-hidden>
@@ -244,7 +244,7 @@ function Funnel({ row, k, onBrief }: { row: RadarRow; k: RadarCancerId; onBrief:
                     {natBar != null && <div className={cx('absolute -top-1 -bottom-1 border-l border-dashed', weak ? 'border-paper' : 'border-terra')} style={{ left: `${natBar * 100}%` }} />}
                   </div>
                 )}
-                <p className={cx('font-type text-[10px] mt-2 tabular-nums', weak ? '' : 'opacity-70', (st.excess ?? 0) > 0 && !weak && 'text-terra opacity-100')}>
+                <p className={cx('font-type text-xs mt-2 tabular-nums', weak ? '' : 'opacity-70', (st.excess ?? 0) > 0 && !weak && 'text-terra opacity-100')}>
                   {none ? '—' : excessText(s.id, st.excess)}
                 </p>
               </div>
@@ -284,13 +284,13 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
     <Card tone="paper" tilt={0.3} className="mt-8 p-4 sm:p-6">
       <div className="flex flex-wrap justify-between items-baseline gap-2">
         <Label>Drill down · towns in {county.name}</Label>
-        <span className="font-type text-[10px] uppercase tracking-wider opacity-60 flex items-center gap-1.5">
+        <span className="font-type text-xs uppercase tracking-wider opacity-60 flex items-center gap-1.5">
           steps 3–4 by county only
           <SourceBadge id="cancerRegistry" kind="gap" how="Stage at diagnosis and deaths are not published for single towns in this prototype; counts would be too small. County level only." />
         </span>
       </div>
 
-      <div className="mt-3 grid grid-cols-[minmax(0,6.5rem)_4.2rem_minmax(0,1fr)_2.6rem] sm:grid-cols-[minmax(0,10rem)_6rem_minmax(0,1fr)_3.6rem] gap-2 sm:gap-3 px-1 pb-2 border-b border-black/10 font-type text-[9px] uppercase tracking-wider opacity-70 items-center">
+      <div className="mt-3 grid grid-cols-[minmax(0,6.5rem)_4.2rem_minmax(0,1fr)_2.6rem] sm:grid-cols-[minmax(0,10rem)_6rem_minmax(0,1fr)_3.6rem] gap-2 sm:gap-3 px-1 pb-2 border-b border-black/10 font-type text-[11px] uppercase tracking-wider opacity-70 items-center">
         <span>Town</span>
         <span className="flex items-center gap-1 whitespace-nowrap">1 Risk {stepBadge('risk', k)}</span>
         <span className="flex items-center gap-1 min-w-0">
@@ -321,7 +321,7 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
                     style={{ left: `${x(d.turnout!)}%` }} />
                 </span>
               ) : (
-                <span className="font-type text-[10px] uppercase tracking-wider opacity-50 truncate">no programme</span>
+                <span className="font-type text-xs uppercase tracking-wider opacity-50 truncate">no programme</span>
               )}
               <span className="font-type text-xs text-right tabular-nums">{d.turnout != null ? fmt(d.turnout, 1) : '—'}</span>
             </li>
@@ -329,7 +329,7 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
         })}
       </ul>
       {prog && range && (
-        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-type text-[10px] uppercase tracking-wider opacity-70">
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-type text-xs uppercase tracking-wider opacity-70">
           <span className="flex items-center gap-1.5"><span className="h-3 border-l border-ink/60" />county {countyT != null ? fmt(countyT, 1) : ''}%</span>
           <span className="flex items-center gap-1.5"><span className="h-3 border-l border-dashed border-terra" />FI {natT != null ? fmt(natT, 1) : ''}%</span>
           <span className="flex items-center gap-1.5">real 2024 range, 292 towns: {fmt(range[0], 1)}–{fmt(range[1], 1)}% <SourceBadge id="sotkanetScreening" kind="direct" how={`THL Sotkanet ${progInfo!.indicator}, 2024 municipal turnout. Bowel 59.5–82.4%, breast 68.1–92.5%, cervical 45.7–92.3%.`} /></span>

@@ -85,7 +85,7 @@ export function Stamp({ children, className, tone = 'ink', rotate = -12 }: { chi
   return (
     <div style={{ transform: `rotate(${rotate}deg)` }} className={cx('w-24 h-24 border rounded-full flex items-center justify-center shrink-0', c, className)}>
       <div className="w-20 h-20 border border-dashed border-current rounded-full flex items-center justify-center opacity-90">
-        <span className="font-type text-[10px] text-center leading-tight uppercase">{children}</span>
+        <span className="font-type text-xs text-center leading-tight uppercase">{children}</span>
       </div>
     </div>
   )
@@ -95,7 +95,7 @@ export function Stamp({ children, className, tone = 'ink', rotate = -12 }: { chi
 export function EdgeText({ children, side = 'left', className }: { children: ReactNode; side?: 'left' | 'right'; className?: string }) {
   return (
     <div className={cx('absolute top-0 bottom-0 flex items-center pointer-events-none', side === 'left' ? 'left-3' : 'right-3', className)}>
-      <span className="text-vertical font-type text-[9px] tracking-[0.2em] uppercase opacity-60">{children}</span>
+      <span className="text-vertical font-type text-[11px] tracking-[0.2em] uppercase opacity-60">{children}</span>
     </div>
   )
 }
@@ -150,16 +150,16 @@ export function SourceBadge({ id, kind, how, demo = true, className }: { id: key
           setPos({ x, y }); setOpen((o) => !o)
         }}
         title={k.label}
-        className={cx('w-4 h-4 rounded-full text-[9px] font-type leading-none flex items-center justify-center hover:scale-125 transition-transform', k.cls)}>
+        className={cx('w-4 h-4 rounded-full text-[11px] font-type leading-none flex items-center justify-center hover:scale-125 transition-transform', k.cls)}>
         {kind === 'direct' ? 'D' : kind === 'estimate' ? 'E' : kind === 'gap' ? '!' : 'M'}
       </button>
       {open && createPortal(
         <span ref={pop} onClick={(e) => e.stopPropagation()} style={{ left: pos.x, top: pos.y }} className="rise fixed z-[70] w-64 max-h-[240px] overflow-y-auto bg-paper text-ink border border-black/15 rounded-lg shadow-2xl p-4 text-left font-sans text-xs normal-case tracking-normal">
-          <span className={cx('inline-block font-type uppercase tracking-widest text-[9px] px-2 py-0.5 rounded-full mb-2', k.cls)}>{k.label}</span>
+          <span className={cx('inline-block font-type uppercase tracking-widest text-[11px] px-2 py-0.5 rounded-full mb-2', k.cls)}>{k.label}</span>
           <span className="block font-serif text-base leading-tight mb-1">{src?.name ?? id}</span>
           {src?.note && <span className="block opacity-70 mb-1">{src.note}</span>}
-          {how && <span className="block font-type text-[11px] bg-black/5 rounded p-2 my-2">{how}</span>}
-          {demo && kind !== 'gap' && <span className="block font-type text-[10px] text-terra uppercase tracking-wider">Demo value</span>}
+          {how && <span className="block font-type text-[13px] bg-black/5 rounded p-2 my-2">{how}</span>}
+          {demo && kind !== 'gap' && <span className="block font-type text-xs text-terra uppercase tracking-wider">Demo value</span>}
           {src?.url && <a href={src.url} target="_blank" rel="noreferrer" className="block mt-2 underline underline-offset-2 hover:text-terra">Open source ↗</a>}
         </span>, document.body,
       )}

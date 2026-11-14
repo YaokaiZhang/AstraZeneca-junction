@@ -130,7 +130,7 @@ export default function HospitalPage() {
               {COUNTIES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </label>
-          <span className="flex items-center gap-2 font-type text-[10px] uppercase tracking-widest opacity-70">
+          <span className="flex items-center gap-2 font-type text-xs uppercase tracking-widest opacity-70">
             Synthetic caseload <SourceBadge id="demoPatients" kind="estimate" demo={false}
               how={`${patients.length - (you ? 1 : 0)} made-up patients, volume scaled from ${county.name}'s yearly lung, bowel, pancreas and liver cases.`} />
           </span>
@@ -172,7 +172,7 @@ export default function HospitalPage() {
               <Select label="Status" value={status} onChange={(v) => setStatus(v as RowStatus | 'all')}
                 options={[['all', 'Any'], ...(Object.keys(STATUS_META) as RowStatus[]).filter((k) => k !== 'resolved').map((k) => [k, STATUS_META[k].label] as [string, string])]} />
             </div>
-            <div className={cx('flex items-center justify-between font-type text-[10px] uppercase tracking-widest', !filtersOn && 'opacity-60')}>
+            <div className={cx('flex items-center justify-between font-type text-xs uppercase tracking-widest', !filtersOn && 'opacity-60')}>
               <span data-testid="count">{list.length} shown</span>
               {filtersOn && <button onClick={clear} className="underline underline-offset-2 hover:text-terra">Clear filters ✕</button>}
             </div>

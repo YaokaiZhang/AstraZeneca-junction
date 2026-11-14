@@ -53,21 +53,21 @@ export function Screening({ countyId, select }: TabProps) {
       <div className="flex flex-wrap items-end justify-between gap-6">
         <Display a="Who misses" b="the letter" />
         <div className="flex gap-2 items-center">
-          <span className="font-type text-[10px] uppercase tracking-wider opacity-60">R² {fit.r2.toFixed(2)}</span>
+          <span className="font-type text-xs uppercase tracking-wider opacity-60">R² {fit.r2.toFixed(2)}</span>
           {fitBadge}
         </div>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3 items-center">
         <Seg items={PROGRAMMES.map((p) => ({ id: p.id, label: p.label }))} value={prog} onChange={(p) => setProg(p)} />
-        <span className="font-type text-[10px] uppercase tracking-wider opacity-60">ages {progInfo.ages} · Sotkanet {progInfo.indicator}</span>
+        <span className="font-type text-xs uppercase tracking-wider opacity-60">ages {progInfo.ages} · Sotkanet {progInfo.indicator}</span>
       </div>
 
       <div className="mt-8 grid xl:grid-cols-[minmax(0,1fr)_260px] gap-6 items-start">
         <Card tilt={-0.6} className="p-3 sm:p-5 min-w-0">
           <div className="flex flex-wrap justify-between items-center gap-2 mb-2 px-1">
             <Label>Actual vs predicted turnout, %</Label>
-            <div className="flex gap-3 font-type text-[10px] uppercase tracking-wider">
+            <div className="flex gap-3 font-type text-xs uppercase tracking-wider">
               {(['help', 'copy'] as Verdict[]).map((v) => (
                 <span key={v} className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: VC[v] }} />{VL[v]}</span>
               ))}
@@ -131,11 +131,11 @@ export function Screening({ countyId, select }: TabProps) {
                   <p className="font-serif text-4xl leading-none flex items-baseline gap-1">{fmt(sel.p, 1)}<span className="text-lg">%</span> {fitBadge}</p>
                 </div>
               </div>
-              <p className={cx('inline-block mt-3 font-type text-[11px] uppercase tracking-wider px-2 py-1 rounded-full',
+              <p className={cx('inline-block mt-3 font-type text-[13px] uppercase tracking-wider px-2 py-1 rounded-full',
                 sel.v === 'help' ? 'bg-terra text-paper' : sel.v === 'copy' ? 'bg-moss text-paper' : 'bg-ink/10')}>
                 {sel.res >= 0 ? '+' : '−'}{fmt(Math.abs(sel.res), 1)} pts · {VL[sel.v]}
               </p>
-              <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 font-type text-[11px]">
+              <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 font-type text-[13px]">
                 <dt className="opacity-60 uppercase">Residents</dt><dd className="text-right">{fmt(sel.t.population)} <SourceBadge id="statfinPop" kind="direct" /></dd>
                 {FEATURES.map((f) => (
                   <FeatureRow key={f.key} label={f.label} value={sel.t[f.key]} />

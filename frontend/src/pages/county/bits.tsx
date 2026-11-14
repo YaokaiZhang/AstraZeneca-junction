@@ -24,7 +24,7 @@ export function Slider({ label, value, min, max, step, onChange, display, badge 
 /** Paper → mustard → terra legend with optional hatched "wide range" swatch. */
 export function Legend({ lo, hi, mid, wide }: { lo: string; hi: string; mid?: string; wide?: boolean }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-type text-[10px] uppercase tracking-wider">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-type text-xs uppercase tracking-wider">
       <div className="flex items-center gap-2">
         <span>{lo}</span>
         <span className="relative w-28 h-2.5 rounded-full border border-black/10" style={{ background: SCALE_CSS }}>
@@ -64,7 +64,7 @@ export function Seg<T extends string>({ items, value, onChange, className }: { i
     <div role="radiogroup" className={cx('inline-flex flex-wrap rounded-full border border-black/20 p-0.5', className)}>
       {items.map((it) => (
         <button key={it.id} role="radio" aria-checked={value === it.id} onClick={() => onChange(it.id)}
-          className={cx('font-type text-[11px] uppercase tracking-wider px-3 py-1.5 rounded-full transition-colors',
+          className={cx('font-type text-[13px] uppercase tracking-wider px-3 py-1.5 rounded-full transition-colors',
             value === it.id ? 'bg-ink text-paper' : 'hover:bg-black/5')}>
           {it.label}
         </button>
@@ -75,7 +75,7 @@ export function Seg<T extends string>({ items, value, onChange, className }: { i
 
 export function Tear({ left, right, className }: { left?: ReactNode; right?: ReactNode; className?: string }) {
   return (
-    <div className={cx('tear pt-2 flex items-center justify-between font-type text-[8px] uppercase tracking-wider opacity-70', className)}>
+    <div className={cx('tear pt-2 flex items-center justify-between font-type text-[10px] uppercase tracking-wider opacity-70', className)}>
       <span>{left}</span><span>{right}</span>
     </div>
   )

@@ -161,8 +161,8 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
       <div className={cx('mt-8 rounded-lg p-5 bg-terra text-paper', !print && 'shadow-xl -rotate-1')}>
         <Label className="!opacity-80">Biggest gap</Label>
         <p className="font-serif text-3xl leading-tight mt-1">{brief.gap.text}</p>
-        <p className="font-type text-[11px] uppercase tracking-wider mt-2 flex flex-wrap items-center gap-2">{brief.gap.why} {brief.gap.badge}</p>
-        <p className="font-type text-[10px] uppercase tracking-wider mt-2 opacity-80">Detection radar · step {stepInfo(brief.gap.step).n} of 4</p>
+        <p className="font-type text-[13px] uppercase tracking-wider mt-2 flex flex-wrap items-center gap-2">{brief.gap.why} {brief.gap.badge}</p>
+        <p className="font-type text-xs uppercase tracking-wider mt-2 opacity-80">Detection radar · step {stepInfo(brief.gap.step).n} of 4</p>
       </div>
 
       <div className="mt-6">
@@ -171,7 +171,7 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
           {STRIP.map((s) => (
             <div key={s} className="min-w-0">
               <div className={cx('h-2 rounded-full', hot.has(s) ? 'bg-terra' : 'bg-black/10')} />
-              <p className={cx('font-type text-[8px] sm:text-[9px] uppercase tracking-wide mt-1 truncate', hot.has(s) ? '' : 'opacity-50')}>{s}</p>
+              <p className={cx('font-type text-[10px] sm:text-[11px] uppercase tracking-wide mt-1 truncate', hot.has(s) ? '' : 'opacity-50')}>{s}</p>
             </div>
           ))}
         </div>
@@ -186,7 +186,7 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
               <div className="min-w-0">
                 <p className="font-serif text-2xl leading-tight flex items-center gap-2">{a.title} {a.badge}</p>
                 <p className="font-type text-xs mt-1">{a.detail}</p>
-                <p className="font-type text-[10px] uppercase tracking-wider opacity-60 mt-1">{a.why}</p>
+                <p className="font-type text-xs uppercase tracking-wider opacity-60 mt-1">{a.why}</p>
               </div>
             </li>
           ))}
@@ -203,7 +203,7 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
       </div>
 
       <div className="tear mt-6 pt-4 flex items-center justify-between gap-4">
-        <span className="font-type text-[9px] uppercase tracking-wider opacity-60">Demo values · county totals only</span>
+        <span className="font-type text-[11px] uppercase tracking-wider opacity-60">Demo values · county totals only</span>
         {!print && <Btn onClick={() => window.print()}>Print brief</Btn>}
       </div>
     </div>

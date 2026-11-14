@@ -81,7 +81,7 @@ export default function CountyPage() {
             </div>
           </div>
           <button onClick={() => setBriefOpen(true)}
-            className="font-type text-[11px] uppercase tracking-widest flex items-center gap-2 rounded-full bg-ink text-paper pl-4 pr-1.5 py-1.5 hover:bg-terra transition-colors">
+            className="font-type text-[13px] uppercase tracking-widest flex items-center gap-2 rounded-full bg-ink text-paper pl-4 pr-1.5 py-1.5 hover:bg-terra transition-colors">
             Brief <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">→</span>
           </button>
         </div>
@@ -123,7 +123,7 @@ export default function CountyPage() {
                   <div>
                     <Label>Queue &gt;90 d</Label>
                     <p className="font-serif text-xl leading-none mt-1 flex items-center gap-1.5">
-                      {county.queueTrend[3]}<span className="font-type text-[10px] opacity-60">/10k</span>
+                      {county.queueTrend[3]}<span className="font-type text-xs opacity-60">/10k</span>
                       <SourceBadge id="sotkanetQueue" kind="direct" />
                     </p>
                   </div>
@@ -160,7 +160,7 @@ function MiniStat({ label, value, sub, badge }: { label: string; value: string; 
         <Label>{label}</Label>
         <p className="font-serif text-xl leading-none mt-1 flex items-center gap-1.5">{value}{badge}</p>
       </div>
-      {sub && <span className="font-type text-[10px] opacity-60 pb-0.5">{sub}</span>}
+      {sub && <span className="font-type text-xs opacity-60 pb-0.5">{sub}</span>}
     </div>
   )
 }

@@ -65,9 +65,9 @@ export default function Pathway() {
           </div>
           <div className="mt-2">
             <Clock dates={dates} size={240} dark={overdue || finished}>
-              <span className="font-type text-[10px] uppercase tracking-widest opacity-70">{t('p.day')}</span>
+              <span className="font-type text-xs uppercase tracking-widest opacity-70">{t('p.day')}</span>
               <span className="font-serif text-7xl leading-none">{started ? dayN : '—'}</span>
-              <span className="font-type text-[10px] uppercase tracking-widest opacity-70 flex items-center gap-1">{t('p.of', { n: totalTarget })} <SourceBadge id="thlTargets" kind="estimate" how={TARGET_HOW} /></span>
+              <span className="font-type text-xs uppercase tracking-widest opacity-70 flex items-center gap-1">{t('p.of', { n: totalTarget })} <SourceBadge id="thlTargets" kind="estimate" how={TARGET_HOW} /></span>
             </Clock>
           </div>
         </Card>
@@ -95,7 +95,7 @@ export default function Pathway() {
                       style={{ width: `${Math.min(100, (st.waited / Math.max(st.waited, st.next.targetDays ?? 1, 1)) * 100)}%` }} />
                     {overdue && <div className="absolute inset-y-0 w-0.5 bg-ink" style={{ left: `${((st.next.targetDays ?? 0) / st.waited) * 100}%` }} />}
                   </div>
-                  <p className="font-type text-[10px] uppercase tracking-widest opacity-60 mt-1">
+                  <p className="font-type text-xs uppercase tracking-widest opacity-60 mt-1">
                     {overdue ? t('p.overdue', { n: st.overdueBy }) : st.overdueBy === 0 ? t('ago.today') : t('p.dueIn', { n: -st.overdueBy })} · {d(st.dueDate ?? undefined)}
                   </p>
                 </div>
@@ -106,14 +106,14 @@ export default function Pathway() {
                     <Label>{t('p.next')}</Label>
                     <p className="font-serif text-3xl leading-tight mt-1">{t(`step.${st.next.id}`)}</p>
                     <p className="font-serif italic text-lg opacity-80 mt-1">{t(`expect.${st.next.id}`)}</p>
-                    <p className="font-type text-[10px] uppercase tracking-widest mt-2">→ {t(`owner.${st.next.owner}`)}</p>
+                    <p className="font-type text-xs uppercase tracking-widest mt-2">→ {t(`owner.${st.next.owner}`)}</p>
                   </div>
                   {after && (
                     <div className="opacity-60">
                       <Label>{t('p.then')}</Label>
                       <p className="font-serif text-2xl leading-tight mt-1">{t(`step.${after.id}`)}</p>
                       <p className="font-serif italic text-base mt-1">{t(`expect.${after.id}`)}</p>
-                      <p className="font-type text-[10px] uppercase tracking-widest mt-2">{t('p.target', { n: after.targetDays ?? 0 })}</p>
+                      <p className="font-type text-xs uppercase tracking-widest mt-2">{t('p.target', { n: after.targetDays ?? 0 })}</p>
                     </div>
                   )}
                 </div>
@@ -141,7 +141,7 @@ export default function Pathway() {
                 <Label className="!opacity-70">{t('p.contact')}</Label>
                 <p className="font-serif text-4xl leading-none mt-1">{t(`owner.${st.next.owner}`)}</p>
               </div>
-              <span className="font-type text-[10px] uppercase tracking-widest bg-terra text-paper rounded-full px-2.5 py-1 whitespace-nowrap">{t('p.overdue', { n: st.overdueBy })}</span>
+              <span className="font-type text-xs uppercase tracking-widest bg-terra text-paper rounded-full px-2.5 py-1 whitespace-nowrap">{t('p.overdue', { n: st.overdueBy })}</span>
             </div>
             <blockquote className="tear !border-paper/20 mt-5 pt-4 font-serif text-lg leading-snug whitespace-pre-wrap" aria-label="draft">{draft}</blockquote>
             <Btn variant="mustard" className="mt-5" onClick={async () => { if (await copyText(draft)) toast(t('p.copied')) }}>{t('p.copy')}</Btn>
@@ -160,11 +160,11 @@ export default function Pathway() {
             const isNext = st.next?.id === s.id && started
             return (
               <li key={s.id} className={cx('py-3 px-2 sm:px-3 grid grid-cols-[28px_minmax(0,1fr)] sm:grid-cols-[28px_minmax(0,1fr)_auto] gap-x-3 gap-y-2 items-center rounded', isNext && (overdue ? 'bg-terra/10' : 'bg-mustard/25'))}>
-                <span className={cx('w-6 h-6 rounded-full flex items-center justify-center font-type text-[10px] border',
+                <span className={cx('w-6 h-6 rounded-full flex items-center justify-center font-type text-xs border',
                   v ? 'bg-ink text-paper border-ink' : isNext ? (overdue ? 'border-terra text-terra border-2' : 'border-ink border-2') : 'border-black/20 opacity-60')}>{v ? '✓' : i + 1}</span>
                 <div className="min-w-0">
                   <label htmlFor={`d-${s.id}`} className="font-serif text-xl leading-tight block">{t(`step.${s.id}`)}</label>
-                  <span className="font-type text-[10px] uppercase tracking-widest opacity-60">
+                  <span className="font-type text-xs uppercase tracking-widest opacity-60">
                     {s.targetDays !== null && t('p.target', { n: s.targetDays })}
                     {gap !== null && <span className={cx('ml-2', late ? 'text-terra opacity-100 font-bold' : '')}>· {gap} d</span>}
                   </span>
@@ -172,7 +172,7 @@ export default function Pathway() {
                 <div className="col-start-2 sm:col-start-3 flex items-center gap-2">
                   <input id={`d-${s.id}`} type="date" value={v ?? ''} max={now} onChange={(e) => setDate(s.id, e.target.value || undefined)}
                     className="font-type text-sm border-b border-black/20 py-1 outline-none focus:border-terra min-w-0" />
-                  <button onClick={() => setDate(s.id, now)} className="font-type text-[10px] uppercase tracking-widest border border-black/20 rounded-full px-2.5 py-1 hover:bg-ink hover:text-paper">{t('c.today')}</button>
+                  <button onClick={() => setDate(s.id, now)} className="font-type text-xs uppercase tracking-widest border border-black/20 rounded-full px-2.5 py-1 hover:bg-ink hover:text-paper">{t('c.today')}</button>
                   {v && <button onClick={() => setDate(s.id, undefined)} aria-label={t('p.clear')} title={t('p.clear')} className="font-type text-xs opacity-40 hover:opacity-100 hover:text-terra px-1">✕</button>}
                 </div>
               </li>
@@ -203,7 +203,7 @@ function Support({ barrier, side, owner }: { barrier: BarrierId; side: 'system' 
         {items.map((it) => {
           const inner = <>
             <span className="font-serif text-lg leading-tight block">{it.title}</span>
-            <span className="font-type text-[10px] uppercase tracking-widest opacity-70">{it.sub}{it.href && ' ↗'}</span>
+            <span className="font-type text-xs uppercase tracking-widest opacity-70">{it.sub}{it.href && ' ↗'}</span>
           </>
           return it.href
             ? <a key={it.title} href={it.href} target="_blank" rel="noreferrer" className="block bg-paper rounded-lg p-3 border border-black/10 hover:border-ink">{inner}</a>

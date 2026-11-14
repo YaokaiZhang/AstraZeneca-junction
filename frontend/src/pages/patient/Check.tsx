@@ -132,7 +132,7 @@ export default function Check() {
             {smoker && (
               <div className="tear pt-4">
                 <button onClick={() => setMore((m) => !m)} aria-expanded={more}
-                  className="font-type text-[10px] uppercase tracking-widest opacity-60 hover:opacity-100 hover:text-terra">
+                  className="font-type text-xs uppercase tracking-widest opacity-60 hover:opacity-100 hover:text-terra">
                   {more ? '−' : '+'} {t('ck.more')}
                 </button>
                 {more && (
@@ -168,7 +168,7 @@ export default function Check() {
               <StepCard key={st.id} st={st} answer={screening[st.id as 'bowel'] as Ans | undefined} onAnswer={(v) => answer(st.id as 'bowel', v)} />
             ))}
           </div>
-          <p className="mt-6 font-type text-[10px] uppercase tracking-widest opacity-60">{t('ck.doctorSees')}</p>
+          <p className="mt-6 font-type text-xs uppercase tracking-widest opacity-60">{t('ck.doctorSees')}</p>
         </div>
       </div>
     </div>
@@ -190,7 +190,7 @@ function StepCard({ st, answer, onAnswer }: { st: NextStep; answer?: Ans; onAnsw
     <Card tone="paper" tilt={TILTS[st.id] / 2} className="px-6 py-4 opacity-60 self-start">
       <div className="flex items-baseline justify-between gap-3">
         <p className="font-serif text-2xl leading-none">{t(`prog.${st.id}`)}</p>
-        {prog && <span className="font-type text-[10px] uppercase tracking-widest flex items-center gap-1.5">{prog.from}–{prog.to}<SourceBadge id="screeningRules" kind="direct" demo={false} /></span>}
+        {prog && <span className="font-type text-xs uppercase tracking-widest flex items-center gap-1.5">{prog.from}–{prog.to}<SourceBadge id="screeningRules" kind="direct" demo={false} /></span>}
       </div>
       <p className="font-serif italic text-lg leading-tight mt-2">{t(st.say)}</p>
     </Card>
@@ -217,7 +217,7 @@ function StepCard({ st, answer, onAnswer }: { st: NextStep; answer?: Ans; onAnsw
         <p className="font-serif italic text-xl leading-tight">{t(st.say)}</p>
         {st.invited && st.level !== 'doctor' && (
           <div className="mt-4">
-            <span className="font-type text-[10px] uppercase tracking-widest opacity-70">{t(st.id === 'bowel' ? 's.q.bowel' : 's.q.other')}</span>
+            <span className="font-type text-xs uppercase tracking-widest opacity-70">{t(st.id === 'bowel' ? 's.q.bowel' : 's.q.other')}</span>
             <div className="flex flex-wrap gap-1.5 mt-2">
               {opts.map((o) => (
                 <Chip key={o.v} active={answer === o.v} onClick={() => onAnswer(o.v)}>{t(o.k)}</Chip>
@@ -227,7 +227,7 @@ function StepCard({ st, answer, onAnswer }: { st: NextStep; answer?: Ans; onAnsw
         )}
         {st.applies && st.id !== 'cervical' && (
           <div className={cx('tear mt-4 pt-3 flex items-center gap-2', onDark && '!border-paper/25')}>
-            <span className="font-type text-[10px] uppercase tracking-widest opacity-70">{model}</span>
+            <span className="font-type text-xs uppercase tracking-widest opacity-70">{model}</span>
             {st.id === 'lung'
               ? <SourceBadge id="plco" kind="estimate" how={PLCO_HOW} demo={false} />
               : <><SourceBadge id="ourModel" kind="estimate" how={ESTIMATE_HOW} /><SourceBadge id="cancerRegistry" kind="direct" /></>}

@@ -73,7 +73,7 @@ export function TileMap({ style, selected, onSelect, tooltip, className }: {
           }}>
           <div className="bg-ink text-paper rounded-lg shadow-2xl px-3 py-2 min-w-[150px] whitespace-nowrap">
             <p className="font-serif text-lg leading-tight">{hc.name}</p>
-            <div className="font-type text-[10px] uppercase tracking-wider opacity-80 mt-1">{tooltip(hc)}</div>
+            <div className="font-type text-xs uppercase tracking-wider opacity-80 mt-1">{tooltip(hc)}</div>
           </div>
         </div>
       )}

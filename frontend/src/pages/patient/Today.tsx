@@ -17,7 +17,7 @@ function Tile({ tone, tilt, onOpen, children, className, edge }: { tone: 'paper'
       {edge && <EdgeText>{edge}</EdgeText>}
       <div className="flex-1 flex flex-col">{children}</div>
       <div className={cx('tear mt-5 pt-3 flex justify-between items-center', (tone === 'ink' || tone === 'terra') && '!border-paper/25')}>
-        <button onClick={(e) => { e.stopPropagation(); onOpen() }} className="font-type text-[10px] uppercase tracking-widest hover:underline">{t('m.open')}</button>
+        <button onClick={(e) => { e.stopPropagation(); onOpen() }} className="font-type text-xs uppercase tracking-widest hover:underline">{t('m.open')}</button>
         <span aria-hidden>→</span>
       </div>
     </Card>
@@ -67,7 +67,7 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
             {started && st.next && (
               <div>
                 <p className="font-serif text-5xl leading-none">{st.waited}<span className="font-type text-xs ml-1">d</span></p>
-                <p className="font-type text-[10px] uppercase tracking-widest mt-1 opacity-80">{t('p.target', { n: st.next.targetDays ?? 0 })}</p>
+                <p className="font-type text-xs uppercase tracking-widest mt-1 opacity-80">{t('p.target', { n: st.next.targetDays ?? 0 })}</p>
               </div>
             )}
           </div>
@@ -84,7 +84,7 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
           <div className="flex flex-wrap gap-1.5 mt-4">
             {reasons.slice(0, 4).map((r) => <Tag key={r.tag} tone={r.red ? 'terra' : 'line'}>{t(`sym.${r.tag}`)}{!r.red && ` · ${r.days} d`}</Tag>)}
           </div>
-          {last && <p className="font-serif italic text-lg leading-snug mt-auto pt-4 line-clamp-2"><span className="font-type not-italic text-[10px] opacity-60 mr-2">{d(last.date)}</span>{last.text}</p>}
+          {last && <p className="font-serif italic text-lg leading-snug mt-auto pt-4 line-clamp-2"><span className="font-type not-italic text-xs opacity-60 mr-2">{d(last.date)}</span>{last.text}</p>}
         </Tile>
 
         <Tile tone={urgent ? 'stone' : 'paper'} tilt={-0.8} onOpen={() => go('check')} edge={t('tab.check')}>
@@ -103,7 +103,7 @@ export default function Today({ go }: { go: (t: TabId) => void }) {
         <Tile tone="ink" tilt={1.5} onOpen={() => go('diary')} edge={t('ci.title')}>
           <Label className="!opacity-70">{t('ci.next')}</Label>
           <p className="font-serif text-4xl leading-none mt-2">{nextCheck ? d(nextCheck, { weekday: 'short', day: 'numeric', month: 'short' }) : t('pr.off')}</p>
-          {s.checkins.enabled && <p className="font-type text-[10px] uppercase tracking-widest text-mustard mt-2">{t('ci.every')} {t('ci.days', { n: s.checkins.everyDays })}</p>}
+          {s.checkins.enabled && <p className="font-type text-xs uppercase tracking-widest text-mustard mt-2">{t('ci.every')} {t('ci.days', { n: s.checkins.everyDays })}</p>}
         </Tile>
 
         <Tile tone="paper" tilt={0.8} onOpen={() => go('settings')} edge={t('tab.settings')}>

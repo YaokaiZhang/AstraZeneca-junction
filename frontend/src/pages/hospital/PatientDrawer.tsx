@@ -35,11 +35,11 @@ export function PatientDrawerBody({ row, coords, county, onAct, onReassign, onRe
       </div>
       {row.coordinator && (
         <p className="mt-3 font-type text-xs">
-          <span className="opacity-60 uppercase tracking-widest text-[10px]">→ </span>
+          <span className="opacity-60 uppercase tracking-widest text-xs">→ </span>
           {row.coordinator.name} <span className="opacity-60">· {row.coordinator.role}</span>
         </p>
       )}
-      {row.action && <p className="font-type text-[10px] uppercase tracking-widest opacity-50 mt-1">{row.action.status} · {ago(row.action.at)}</p>}
+      {row.action && <p className="font-type text-xs uppercase tracking-widest opacity-50 mt-1">{row.action.status} · {ago(row.action.at)}</p>}
 
       {/* actions */}
       <div className="mt-6 flex flex-wrap gap-2">
@@ -78,7 +78,7 @@ export function PatientDrawerBody({ row, coords, county, onAct, onReassign, onRe
         <div className="mt-6">
           <Label className="mb-2">Patient-reported barrier</Label>
           <p className="font-serif text-xl leading-tight">{barrierMeta(p.barrier.barrier)?.label}</p>
-          <p className="font-type text-[10px] uppercase tracking-widest opacity-60">
+          <p className="font-type text-xs uppercase tracking-widest opacity-60">
             {PATHWAY.find((s) => s.id === p.barrier!.step)?.short} · {barrierMeta(p.barrier.barrier)?.side}
           </p>
           {p.barrier.note && <p className="font-sans text-sm mt-1 opacity-80">“{p.barrier.note}”</p>}
@@ -93,7 +93,7 @@ export function PatientDrawerBody({ row, coords, county, onAct, onReassign, onRe
             <span className="w-12 h-12 rounded-full bg-ink text-mustard flex items-center justify-center shrink-0"><IconLock /></span>
             <div>
               <p className="font-serif italic text-2xl leading-none">Not shared</p>
-              <p className="font-type text-[10px] uppercase tracking-widest opacity-60 mt-1">Diary · risk score</p>
+              <p className="font-type text-xs uppercase tracking-widest opacity-60 mt-1">Diary · risk score</p>
             </div>
           </div>
         )}
@@ -123,7 +123,7 @@ function Timeline({ row }: { row: Row }) {
             <div className="min-w-0">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-serif text-lg leading-tight">{s.label}</span>
-                <span className="font-type text-[11px] opacity-70 shrink-0">{date ? fmtDate(date) : isNext ? 'waiting' : '—'}</span>
+                <span className="font-type text-[13px] opacity-70 shrink-0">{date ? fmtDate(date) : isNext ? 'waiting' : '—'}</span>
               </div>
               {took != null && target != null && (
                 <div className="flex items-center gap-2 mt-1">
@@ -132,7 +132,7 @@ function Timeline({ row }: { row: Row }) {
                       style={{ width: `${Math.min(100, (Math.max(0, took) / scale) * 100)}%` }} />
                     <div className="absolute -top-1 -bottom-1 border-l-2 border-ink" style={{ left: `${(target / scale) * 100}%` }} title={`Target ${target} d`} />
                   </div>
-                  <span className={cx('font-type text-[10px] tabular-nums shrink-0 w-16 text-right', over && 'text-terra')}>{took} / {target} d</span>
+                  <span className={cx('font-type text-xs tabular-nums shrink-0 w-16 text-right', over && 'text-terra')}>{took} / {target} d</span>
                 </div>
               )}
             </div>
@@ -152,7 +152,7 @@ function SharedRecords({ row }: { row: Row }) {
     <div className="space-y-6">
       <div className={cx('rounded-lg p-4', risk ? (high ? 'bg-terra text-paper' : 'bg-stone') : 'bg-black/[0.04]')}>
         <div className="flex items-center justify-between">
-          <span className="font-type text-[10px] uppercase tracking-widest opacity-80">6-y lung risk</span>
+          <span className="font-type text-xs uppercase tracking-widest opacity-80">6-y lung risk</span>
           <SourceBadge id="plco" kind="estimate" how="PLCOm2012, patient-entered inputs. ≥1.51 % = screening-level risk." />
         </div>
         {pct != null ? (
@@ -162,15 +162,15 @@ function SharedRecords({ row }: { row: Row }) {
               <div className={cx('absolute inset-y-0 left-0 rounded-full', high ? 'bg-paper' : 'bg-ink')} style={{ width: `${Math.min(100, (pct / 15) * 100)}%` }} />
               <div className="absolute -top-1 -bottom-1 border-l-2 border-dashed border-current" style={{ left: `${(1.51 / 15) * 100}%` }} />
             </div>
-            <div className="flex justify-between font-type text-[9px] uppercase tracking-widest mt-1 opacity-70"><span>1.51 %</span><span>15 %</span></div>
+            <div className="flex justify-between font-type text-[11px] uppercase tracking-widest mt-1 opacity-70"><span>1.51 %</span><span>15 %</span></div>
           </>
         ) : <p className="font-serif italic text-2xl opacity-50 mt-1">—</p>}
       </div>
 
       <div>
         <div className="flex items-baseline justify-between mb-2">
-          <span className="font-type text-[10px] uppercase tracking-widest opacity-60">Symptom diary</span>
-          <span className="font-type text-[10px] opacity-60">{diary.length}</span>
+          <span className="font-type text-xs uppercase tracking-widest opacity-60">Symptom diary</span>
+          <span className="font-type text-xs opacity-60">{diary.length}</span>
         </div>
         {diary.length ? (
           <ol className="border-l border-black/15 ml-1">
@@ -178,12 +178,12 @@ function SharedRecords({ row }: { row: Row }) {
               <li key={d.id} className="relative pl-4 pb-3 last:pb-0">
                 <span className="absolute -left-[4px] top-1.5 w-2 h-2 rounded-full bg-mustard border border-ink/30" />
                 <div className="flex items-baseline gap-2">
-                  <span className="font-type text-[10px] opacity-60 w-12 shrink-0">{fmtDate(d.date)}</span>
+                  <span className="font-type text-xs opacity-60 w-12 shrink-0">{fmtDate(d.date)}</span>
                   <span className="font-serif text-lg leading-tight">{d.text}</span>
                 </div>
                 {d.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1 pl-14">
-                    {d.tags.map((t) => <span key={t} className="font-type text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/[0.06]">{t}</span>)}
+                    {d.tags.map((t) => <span key={t} className="font-type text-[11px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/[0.06]">{t}</span>)}
                   </div>
                 )}
               </li>

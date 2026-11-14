@@ -46,7 +46,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
 
   const head = (k: SortKey, label: string, cls?: string) => (
     <button onClick={() => setSort((s) => ({ k, desc: s.k === k ? !s.desc : k !== 'name' && k !== 'year' }))}
-      className={cx('font-type text-[10px] uppercase tracking-wider flex items-center gap-1 hover:text-terra', sort.k === k ? '' : 'opacity-60', cls)}>
+      className={cx('font-type text-xs uppercase tracking-wider flex items-center gap-1 hover:text-terra', sort.k === k ? '' : 'opacity-60', cls)}>
       {label}{sort.k === k && <span>{sort.desc ? '↓' : '↑'}</span>}
     </button>
   )
@@ -105,7 +105,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
             <Slider label="Spare capacity today" value={headroom} min={0.05} max={0.4} step={0.05} onChange={setHeadroom}
               display={`+${Math.round(headroom * 100)}%`} />
           </div>
-          <div className="mt-4 flex items-center gap-3 font-type text-[11px] uppercase tracking-wider">
+          <div className="mt-4 flex items-center gap-3 font-type text-[13px] uppercase tracking-wider">
             <span>Queue &gt;90 d</span>
             <Spark values={county.queueTrend} w={70} h={22} mark={3} stroke="currentColor" fill="rgba(0,0,0,.08)" />
             <span>{county.queueTrend[0]} → {county.queueTrend[3]} /10k</span>
@@ -141,7 +141,7 @@ export function Overload({ countyId, cancer, setCancer, select }: TabProps) {
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex justify-between items-center font-type text-[10px] uppercase tracking-wider opacity-70">
+          <div className="mt-3 flex justify-between items-center font-type text-xs uppercase tracking-wider opacity-70">
             <span>▲ queue rising</span>
             <span className="flex items-center gap-1">Projection <SourceBadge id="statfinPop" kind="estimate" how={HOW(headroom)} /></span>
           </div>

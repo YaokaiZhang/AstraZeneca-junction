@@ -28,7 +28,7 @@ export default function Privacy({ onErased, onSimulate }: { onErased: () => void
               <Tag>{t('pr.statsWhat')}</Tag>
             </ShareSwitch>
           </div>
-          <p className="sm:hidden mt-4 font-type text-[10px] uppercase tracking-widest opacity-60">{t('pr.gdpr')}</p>
+          <p className="sm:hidden mt-4 font-type text-xs uppercase tracking-widest opacity-60">{t('pr.gdpr')}</p>
         </Card>
 
         <div className="tear pt-5 flex flex-wrap items-center gap-3">

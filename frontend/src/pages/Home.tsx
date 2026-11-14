@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
 import { Clock, Marquee, Privacy, ThreeDates, TooLate, Views } from './home/Pitch'
 import { WordsUp, useScrollProgress } from './home/reveal'
+import { Radar } from './home/Radar'
 import FinlandCanvas, { HOSPITALS, type Hover, type Tally } from './home/FinlandCanvas'
 
 const CARDS = [
@@ -89,7 +90,7 @@ export default function Home() {
   const [scroll, setScroll] = useState(0)
   const stage = useRef<HTMLDivElement>(null)
   const cases = useCountUp(37000)
-  const share = useCountUp(151, 1800, 900)
+  const gap = useCountUp(466, 1800, 900)
 
   useEffect(() => {
     const on = () => setScroll(Math.min(1, scrollY / innerHeight))
@@ -101,7 +102,7 @@ export default function Home() {
   const latePct = total ? Math.round((tally.late / total) * 100) : 0
 
   return (
-    <div className="relative">
+    <div className="relative overflow-x-clip">
       <section className="relative h-[100svh] overflow-hidden origin-top"
         style={{ transform: `scale(${1 - scroll * 0.05})`, borderRadius: `0 0 ${scroll * 48}px ${scroll * 48}px` }}>
         <header className="absolute top-0 inset-x-0 z-20 flex items-center justify-between px-5 lg:px-12 py-5 lg:py-8">
@@ -113,7 +114,7 @@ export default function Home() {
           </Link>
           <nav className="flex gap-5 lg:gap-10">
             {CARDS.map((c) => (
-              <Link key={c.to} to={c.to} className="font-type uppercase text-[10px] lg:text-xs tracking-widest opacity-60 hover:opacity-100 hover:text-terra transition">{c.b}</Link>
+              <Link key={c.to} to={c.to} className="font-type uppercase text-xs lg:text-xs tracking-widest opacity-60 hover:opacity-100 hover:text-terra transition">{c.b}</Link>
             ))}
           </nav>
         </header>
@@ -135,8 +136,8 @@ export default function Home() {
                 <div className="mt-2 flex items-center gap-2"><Label>new cancers a year</Label><SourceBadge id="cancerRegistry" kind="estimate" /></div>
               </div>
               <div>
-                <div className="font-serif text-4xl lg:text-6xl lining-nums tabular-nums leading-none">{(share / 100).toFixed(2).replace('.', ',')}<span className="text-3xl">%</span></div>
-                <div className="mt-2 flex items-center gap-2"><Label>lung risk to screen</Label><SourceBadge id="plco" kind="direct" demo={false} /></div>
+                <div className="font-serif text-4xl lg:text-6xl lining-nums tabular-nums leading-none">{(gap / 10).toFixed(1).replace('.', ',')}<span className="text-3xl"> pts</span></div>
+                <div className="mt-2 flex items-center gap-2"><Label>cervical screening turnout gap between towns</Label><SourceBadge id="sotkanetScreening" kind="direct" demo={false} /></div>
               </div>
             </div>
 
@@ -184,7 +185,7 @@ export default function Home() {
             <div className={`hidden lg:block absolute right-10 top-24 lg:top-28 z-10 pointer-events-none transition-all duration-300 ${hover ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
               <Card tone="mustard" tilt={2} className="p-4 pl-9 w-56">
                 <EdgeText>Lens</EdgeText>
-                <div className="font-type text-[11px] tracking-wider">{hover ? `${hover.lat.toFixed(2)}°N  ${hover.lon.toFixed(2)}°E` : '—'}</div>
+                <div className="font-type text-[13px] tracking-wider">{hover ? `${hover.lat.toFixed(2)}°N  ${hover.lon.toFixed(2)}°E` : '—'}</div>
                 <div className="mt-2 font-serif text-3xl leading-none italic">{hover?.hospital ?? '—'}</div>
                 <div className="mt-3 tear pt-2 flex justify-between items-baseline">
                   <span className="label !opacity-80">nearest hospital</span>
@@ -202,6 +203,7 @@ export default function Home() {
       <Bridge />
       <Clock />
       <TooLate />
+      <Radar />
       <Marquee words={['notice', 'track', 'ask', 'escalate', 'find']} reverse />
       <Views />
       <Privacy />
@@ -222,7 +224,7 @@ export default function Home() {
                   <span className="font-serif text-5xl leading-none italic block pl-4">{c.b}</span>
                 </div>
                 <div className="tear mt-8 pt-3 flex justify-between items-center">
-                  <span className="font-type text-[10px] uppercase tracking-widest">Open</span>
+                  <span className="font-type text-xs uppercase tracking-widest">Open</span>
                   <span>→</span>
                 </div>
               </Card>

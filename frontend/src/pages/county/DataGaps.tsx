@@ -86,7 +86,7 @@ export function DataGaps({ countyId }: TabProps) {
             return (
               <div key={s.id} className="min-w-0">
                 <div className={cx('h-2 rounded-full', inGap ? 'bg-paper/25 border border-dashed border-paper' : 'bg-paper')} />
-                <p className="font-type text-[9px] sm:text-[10px] uppercase tracking-wider mt-2 truncate">{s.short}</p>
+                <p className="font-type text-[11px] sm:text-xs uppercase tracking-wider mt-2 truncate">{s.short}</p>
               </div>
             )
           })}
@@ -103,12 +103,12 @@ export function DataGaps({ countyId }: TabProps) {
         <Card tone="stone" tilt={0.5} className="p-4 sm:p-6 min-w-0">
           <div className="grid grid-cols-[minmax(0,6rem)_repeat(3,minmax(0,1fr))] gap-1.5 sm:gap-2 items-center">
             <span />
-            {COLS.map((c) => <span key={c} className="label text-center !text-[9px]">{c}</span>)}
+            {COLS.map((c) => <span key={c} className="label text-center !text-[11px]">{c}</span>)}
             {ROWS.map((r) => (
               <Row key={r.stage} stage={r.stage} cells={r.cells} hot={r.stage === 'Referral' || r.stage === 'Treatment' || r.stage === 'Diagnosis' || r.stage === 'Planning'} />
             ))}
           </div>
-          <div className="mt-4 flex flex-wrap gap-3 font-type text-[10px] uppercase tracking-wider">
+          <div className="mt-4 flex flex-wrap gap-3 font-type text-xs uppercase tracking-wider">
             {(['direct', 'estimate', 'gap'] as const).map((k) => {
               const n = ROWS.flatMap((r) => r.cells).filter((c) => c.k === k).length
               return <span key={k} className={cx('px-2 py-1 rounded-full', CELL_CLS[k])}>{CELL_TXT[k]} · {n}</span>
@@ -132,7 +132,7 @@ export function DataGaps({ countyId }: TabProps) {
                     <span className={cx('w-6 h-6 rounded-full border flex items-center justify-center text-xs shrink-0 transition-colors',
                       on ? 'bg-mustard border-mustard text-ink' : 'border-paper/50 group-hover:border-mustard')}>{on ? '✓' : i + 1}</span>
                     <span className={cx('font-serif text-xl flex-1', on && 'line-through decoration-mustard/70')}>{p.label}</span>
-                    {mine && <span className="font-type text-[9px] uppercase tracking-wider text-mustard">you ✓</span>}
+                    {mine && <span className="font-type text-[11px] uppercase tracking-wider text-mustard">you ✓</span>}
                   </button>
                 </li>
               )
@@ -144,7 +144,7 @@ export function DataGaps({ countyId }: TabProps) {
               <p className="font-serif text-4xl leading-none mt-1 flex items-baseline gap-1.5">
                 {fmt(records)} <SourceBadge id="demoPatients" kind="estimate" how="Simulated opt-in records from the patient pathway clock, + 1 if this browser shared its dates for statistics." />
               </p>
-              {you && <span className="inline-block mt-2 font-type text-[10px] uppercase tracking-wider bg-mustard text-ink px-2 py-0.5 rounded-full">+1 you</span>}
+              {you && <span className="inline-block mt-2 font-type text-xs uppercase tracking-wider bg-mustard text-ink px-2 py-0.5 rounded-full">+1 you</span>}
             </div>
             <div>
               <Label className="!opacity-70">Of yearly cases</Label>
@@ -167,7 +167,7 @@ function Row({ stage, cells, hot }: { stage: string; cells: Cell[]; hot?: boolea
     <>
       <span className={cx('font-serif text-base sm:text-lg leading-tight truncate', hot && 'italic')}>{stage}</span>
       {cells.map((c, i) => (
-        <span key={i} className={cx('relative h-9 rounded-md flex items-center justify-center gap-1.5 font-type text-[9px] sm:text-[10px] uppercase tracking-wider', CELL_CLS[c.k])}>
+        <span key={i} className={cx('relative h-9 rounded-md flex items-center justify-center gap-1.5 font-type text-[11px] sm:text-xs uppercase tracking-wider', CELL_CLS[c.k])}>
           <span className="hidden sm:inline">{CELL_TXT[c.k]}</span>
           {c.k !== 'na' && c.src && <SourceBadge id={c.src} kind={c.k} how={c.how} className="[&>button]:ring-1 [&>button]:ring-white/70" />}
         </span>

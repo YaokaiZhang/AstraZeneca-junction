@@ -111,7 +111,7 @@ function FlagCard() {
       {reasons.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-4">
           {reasons.map((r) => (
-            <span key={r.tag} className={cx('font-type text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full', r.red ? 'bg-paper text-terra' : 'border border-paper/50')}>
+            <span key={r.tag} className={cx('font-type text-xs uppercase tracking-wider px-2 py-0.5 rounded-full', r.red ? 'bg-paper text-terra' : 'border border-paper/50')}>
               {t(`sym.${r.tag}`)}{!r.red && ` · ${r.days} d`}
             </span>
           ))}
@@ -151,10 +151,10 @@ export function CheckinCard({ onSimulate }: { onSimulate?: () => void }) {
         <div className="mt-4">
           <Label className="!opacity-60">{t('ci.next')}</Label>
           <p className="font-serif text-4xl leading-none mt-1">{checkins.enabled ? d(nextIso, { weekday: 'short', day: 'numeric', month: 'short' }) : '—'}</p>
-          {checkins.enabled && <p className="font-type text-[10px] uppercase tracking-widest text-mustard mt-1">{nextIn <= 0 ? t('ago.today') : `+${nextIn} d`}</p>}
+          {checkins.enabled && <p className="font-type text-xs uppercase tracking-widest text-mustard mt-1">{nextIn <= 0 ? t('ago.today') : `+${nextIn} d`}</p>}
         </div>
         <div className="mt-4 flex items-center gap-2 flex-wrap" role="radiogroup" aria-label={t('ci.every')}>
-          <span className="font-type text-[10px] uppercase tracking-widest opacity-60 mr-1">{t('ci.every')}</span>
+          <span className="font-type text-xs uppercase tracking-widest opacity-60 mr-1">{t('ci.every')}</span>
           {[3, 7, 14].map((n) => (
             <button key={n} role="radio" aria-checked={checkins.everyDays === n} disabled={!checkins.enabled} onClick={() => upd({ everyDays: n })}
               className={cx('relative font-type text-xs px-3 py-1.5 rounded-full border transition-colors',
@@ -196,7 +196,7 @@ function Timeline() {
             const red = ['blood-cough', 'blood-stool', 'blood', 'jaundice', 'weight-loss'].includes(tag)
             return (
               <div key={tag} className="grid grid-cols-[96px_minmax(0,1fr)] sm:grid-cols-[150px_minmax(0,1fr)] items-center gap-3">
-                <span className="font-type text-[10px] sm:text-[11px] uppercase tracking-wider truncate" title={t(`sym.${tag}`)}>{t(`sym.${tag}`)}</span>
+                <span className="font-type text-xs sm:text-[13px] uppercase tracking-wider truncate" title={t(`sym.${tag}`)}>{t(`sym.${tag}`)}</span>
                 <div className="relative h-5">
                   <div className="absolute inset-y-[9px] left-0 right-0 bg-black/5 rounded" />
                   <div className={cx('absolute inset-y-[7px] rounded', red ? 'bg-terra/40' : 'bg-mustard/70')} style={{ left: x(dates[0]), right: 0 }} />
@@ -212,7 +212,7 @@ function Timeline() {
           <span />
           <div className="relative h-4 border-t border-black/15">
             {ticks.map((tk, i) => (
-              <span key={i} className={cx('absolute top-1 font-type text-[9px] opacity-60 whitespace-nowrap', i === 0 ? '' : i === 4 ? '-translate-x-full' : '-translate-x-1/2')} style={{ left: `${i * 25}%` }}>{d(tk)}</span>
+              <span key={i} className={cx('absolute top-1 font-type text-[11px] opacity-60 whitespace-nowrap', i === 0 ? '' : i === 4 ? '-translate-x-full' : '-translate-x-1/2')} style={{ left: `${i * 25}%` }}>{d(tk)}</span>
             ))}
           </div>
         </div>
@@ -224,7 +224,7 @@ function Timeline() {
             <span className={cx('absolute -left-[7px] top-2 w-3 h-3 rounded-full', e.source === 'checkin' ? 'bg-mustard border border-ink' : 'bg-ink')} />
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-type text-xs uppercase tracking-widest">{d(e.date, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-              <span className="font-type text-[10px] opacity-50">{daysBetween(e.date, now)} d</span>
+              <span className="font-type text-xs opacity-50">{daysBetween(e.date, now)} d</span>
               {e.source === 'checkin' && <Tag tone="mustard">{t('d.checkin')}</Tag>}
               {e.tags.map((g) => <Tag key={g}>{t(`sym.${g}`)}</Tag>)}
               <button onClick={() => set((s) => ({ diary: s.diary.filter((x) => x.id !== e.id) }))}
@@ -341,12 +341,12 @@ function Summary() {
               <Label className="mb-2">{t('d.notes')}</Label>
               <ul className="space-y-1 columns-1 sm:columns-2 gap-8">
                 {[...diary].sort((a, b) => a.date.localeCompare(b.date)).map((e) => (
-                  <li key={e.id} className="break-inside-avoid font-serif text-[15px] leading-snug"><span className="font-type text-[10px] opacity-60 mr-2">{d(e.date)}</span>{e.text}</li>
+                  <li key={e.id} className="break-inside-avoid font-serif text-[15px] leading-snug"><span className="font-type text-xs opacity-60 mr-2">{d(e.date)}</span>{e.text}</li>
                 ))}
               </ul>
             </div>
           )}
-          <p className="mt-6 font-type text-[9px] uppercase tracking-widest opacity-50">{t('d.notDiagnosis')} · {t('pr.self')}</p>
+          <p className="mt-6 font-type text-[11px] uppercase tracking-widest opacity-50">{t('d.notDiagnosis')} · {t('pr.self')}</p>
         </div>
       </Card>
       <Card tone="stone" className="p-5 no-print">

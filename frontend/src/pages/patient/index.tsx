@@ -35,11 +35,11 @@ export default function PatientPage() {
           <div role="group" aria-label={t('m.lang')} className="flex rounded-full border border-black/15 p-0.5">
             {LANGS.map((l) => (
               <button key={l} onClick={() => set({ lang: l })} aria-pressed={lang === l} lang={l}
-                className={cx('font-type text-[11px] uppercase tracking-wider px-2 py-1 rounded-full transition-colors', lang === l ? 'bg-ink text-paper' : 'hover:text-terra')}>{l}</button>
+                className={cx('font-type text-[13px] uppercase tracking-wider px-2 py-1 rounded-full transition-colors', lang === l ? 'bg-ink text-paper' : 'hover:text-terra')}>{l}</button>
             ))}
           </div>
           <button onClick={() => { seedDemo(); setGen((g) => g + 1); toast(t('m.seeded')) }}
-            className="font-type text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 hover:text-terra border border-dashed border-current rounded-full px-2.5 py-1">
+            className="font-type text-xs uppercase tracking-widest opacity-40 hover:opacity-100 hover:text-terra border border-dashed border-current rounded-full px-2.5 py-1">
             {t('m.seed')}
           </button>
         </div>

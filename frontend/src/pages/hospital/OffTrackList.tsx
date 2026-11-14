@@ -7,14 +7,14 @@ const stepShort = (id: string | null) => (id ? PATHWAY.find((s) => s.id === id)?
 
 export function StatusPill({ row, className }: { row: Row; className?: string }) {
   const m = STATUS_META[row.status]
-  return <span className={cx('inline-block font-type uppercase tracking-widest text-[9px] px-2 py-1 rounded-full whitespace-nowrap', m.cls, className)}>{m.label}</span>
+  return <span className={cx('inline-block font-type uppercase tracking-widest text-[11px] px-2 py-1 rounded-full whitespace-nowrap', m.cls, className)}>{m.label}</span>
 }
 
 export function ReasonChip({ row }: { row: Row }) {
   const b = row.p.barrier && row.p.barrier.step === row.step ? barrierMeta(row.p.barrier.barrier) : undefined
-  if (!b) return <span className="font-type text-[10px] opacity-30">—</span>
+  if (!b) return <span className="font-type text-xs opacity-30">—</span>
   return (
-    <span className={cx('inline-flex items-center gap-1.5 font-type text-[11px] leading-tight px-2 py-1 rounded-md',
+    <span className={cx('inline-flex items-center gap-1.5 font-type text-[13px] leading-tight px-2 py-1 rounded-md',
       b.side === 'system' ? 'bg-terra/10 text-terra' : 'bg-mustard/30 text-ink')}>
       <span className={cx('w-1.5 h-1.5 rounded-full shrink-0', b.side === 'system' ? 'bg-terra' : 'bg-mustard')} />
       {b.label}
@@ -29,7 +29,7 @@ export function OverdueBar({ row, max, threshold }: { row: Row; max: number; thr
   return (
     <div className="flex items-center gap-3 min-w-0">
       <span className={cx('font-serif text-xl tabular-nums w-14 text-right shrink-0 leading-none', d > 0 ? (d >= threshold ? 'text-terra' : '') : 'opacity-40')}>
-        {d > 0 ? `+${d}` : !row.step ? '·' : <span className="font-type text-[10px] whitespace-nowrap">{d === 0 ? 'today' : `${-d}d left`}</span>}
+        {d > 0 ? `+${d}` : !row.step ? '·' : <span className="font-type text-xs whitespace-nowrap">{d === 0 ? 'today' : `${-d}d left`}</span>}
       </span>
       <div className="relative h-2 flex-1 rounded-full bg-black/[0.06]">
         {d > 0 && <div className={cx('absolute inset-y-0 left-0 rounded-full', d >= threshold ? 'bg-terra' : 'bg-mustard')} style={{ width: `${w}%` }} />}
@@ -68,7 +68,7 @@ export function OffTrackList({ rows, threshold, onOpen }: { rows: Row[]; thresho
                     <span className="font-serif text-lg leading-none whitespace-nowrap">{r.p.isYou ? 'You' : r.p.label}</span>
                     {r.p.shared && !r.p.isYou && <span title="Shared diary" className="w-1.5 h-1.5 rounded-full bg-ink/60 shrink-0" />}
                   </span>
-                  <span className="block font-type text-[10px] opacity-60 mt-0.5 truncate">
+                  <span className="block font-type text-xs opacity-60 mt-0.5 truncate">
                     {r.p.isYou ? <span className="text-terra uppercase tracking-widest">shared</span> : r.p.age} · {CANCER_LABEL[r.p.cancer]}
                   </span>
                 </span>
@@ -82,7 +82,7 @@ export function OffTrackList({ rows, threshold, onOpen }: { rows: Row[]; thresho
                 <div className="flex items-center justify-between gap-2">
                   <span className="flex items-baseline gap-2 min-w-0">
                     <span className="font-serif text-xl leading-none whitespace-nowrap">{r.p.isYou ? 'You' : r.p.label}</span>
-                    <span className="font-type text-[10px] opacity-60 truncate">
+                    <span className="font-type text-xs opacity-60 truncate">
                       {r.p.isYou ? <span className="text-terra uppercase tracking-widest">shared</span> : r.p.age} · {CANCER_LABEL[r.p.cancer]} · {stepShort(r.step)}
                     </span>
                   </span>

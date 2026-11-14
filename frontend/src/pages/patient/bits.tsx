@@ -69,7 +69,7 @@ export function ShareSwitch({ which, label, children }: { which: 'hospital' | 's
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="font-serif text-xl leading-tight">{label}</p>
-          <p className="font-type text-[10px] uppercase tracking-widest opacity-60 mt-1">
+          <p className="font-type text-xs uppercase tracking-widest opacity-60 mt-1">
             {on && sharing.at ? t('pr.since', { t: d(sharing.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }) : t('pr.off')}
           </p>
         </div>
@@ -87,7 +87,7 @@ export function ShareSwitch({ which, label, children }: { which: 'hospital' | 's
           <Btn variant="terra" onClick={() => apply(true)}>{t('pr.yes')}</Btn>
         </div>
       )}
-      {on && <button onClick={() => apply(false)} className="mt-2 font-type text-[10px] uppercase tracking-widest underline underline-offset-2 hover:text-terra">{t('pr.revoke')}</button>}
+      {on && <button onClick={() => apply(false)} className="mt-2 font-type text-xs uppercase tracking-widest underline underline-offset-2 hover:text-terra">{t('pr.revoke')}</button>}
     </div>
   )
 }
@@ -100,7 +100,7 @@ export async function copyText(s: string) {
 }
 
 export const Tag = ({ children, tone = 'line' }: { children: ReactNode; tone?: 'line' | 'terra' | 'ink' | 'mustard' }) => (
-  <span className={cx('inline-flex items-center font-type text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap',
+  <span className={cx('inline-flex items-center font-type text-xs uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap',
     { line: 'border border-current/30 border-black/20', terra: 'bg-terra text-paper', ink: 'bg-ink text-paper', mustard: 'bg-mustard text-ink' }[tone])}>{children}</span>
 )
 

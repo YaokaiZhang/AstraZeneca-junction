@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Navigate, useLocation, useSearchParams } from 'react-router-dom'
-import { Picker, Tabs } from '../../components/ui'
+import { Btn, Drawer, Label, Picker, Tabs } from '../../components/ui'
 import { COUNTIES, countyById, type CancerId, type RadarCancerId } from '../../data/counties'
 import { CountyStyles, Seg } from './bits'
 import { RADAR_CANCERS, isCoreCancer } from './model'
@@ -13,7 +13,7 @@ import { Actions } from './Actions'
 import { screeningById } from '../monitor/data'
 import { EMPTY_PLAN, evaluate, type Plan } from '../monitor/model'
 import { ActionSheet } from '../monitor/ActionSheet'
-import { buildFacts, templateBriefing } from '../monitor/briefing'
+import { useAiBriefing } from '../monitor/useAiBriefing'
 
 type Tab = 'actions' | 'brief' | 'radar'
 const TABS: { id: Tab; label: string }[] = [
@@ -63,7 +63,8 @@ export default function CountyPage() {
   useEffect(() => { setPlan(EMPTY_PLAN) }, [countyId])
   const sr = screeningById(countyId)!
   const res = useMemo(() => evaluate(sr, plan), [sr, plan])
-  const briefing = useMemo(() => ({ text: templateBriefing(buildFacts(sr, plan, res)), source: 'template' as const }), [sr, plan, res])
+  const { briefing, write, busy, aiOn } = useAiBriefing(sr, plan, res)
+  const [sheet, setSheet] = useState(false)
 
   const tp: TabProps = {
     countyId,
@@ -88,9 +89,9 @@ export default function CountyPage() {
             <Picker label="County" value={countyId} onChange={(v) => tp.select(v)} options={COUNTIES}
               className="font-serif text-2xl sm:text-3xl italic py-0.5 max-w-[78vw] sm:max-w-none" />
           </div>
-          <button onClick={() => window.print()}
+          <button onClick={() => (tab === 'actions' ? setSheet(true) : window.print())}
             className="font-type text-[15px] uppercase tracking-widest flex items-center gap-2 rounded-full bg-ink text-paper pl-4 pr-1.5 py-1.5 hover:bg-terra transition-colors">
-            {tab === 'actions' ? 'Print plan' : 'Print brief'} <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">↓</span>
+            {tab === 'actions' ? 'One-page plan' : 'Print brief'} <span className="w-6 h-6 rounded-full bg-mustard text-ink flex items-center justify-center">↓</span>
           </button>
         </div>
         <Tabs className="mt-3" tabs={TABS} value={tab} onChange={(t) => setParam({ tab: t })} />
@@ -104,6 +105,28 @@ export default function CountyPage() {
           {tab === 'radar' && <Radar {...tp} />}
         </div>
       </div>
+
+      <Drawer open={sheet && tab === 'actions'} onClose={() => setSheet(false)} label="One-page plan">
+        <div className="p-6 pt-16">
+          <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
+            <Label>Preview · one printable page</Label>
+            <div className="flex items-center gap-2">
+              <Btn type="button" variant="ghost" disabled={busy || aiOn === false} aria-busy={busy}
+                onClick={() => void write()}
+                title={aiOn === false ? 'Start the server with LLM_KEY to use AI' : undefined}
+                className="whitespace-nowrap min-w-[13.5rem] justify-center">
+                {busy ? <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-full border-2 border-current border-r-transparent animate-spin" />Writing briefing…</span>
+                  : briefing.source === 'ai' ? 'Rewrite with AI' : 'Write briefing with AI'}
+              </Btn>
+              <Btn onClick={() => window.print()}>Print</Btn>
+            </div>
+          </div>
+          {aiOn === false && <p className="font-sans text-[13px] opacity-60 mb-3">AI is off on this server, so the briefing comes from a template. The numbers are the same either way.</p>}
+          <div className="border border-black/15 rounded-lg p-4 bg-paper shadow-inner">
+            <ActionSheet r={sr} plan={plan} res={res} briefing={briefing} />
+          </div>
+        </div>
+      </Drawer>
 
       {createPortal(
         <div id="county-print">{tab === 'actions' ? <ActionSheet r={sr} plan={plan} res={res} briefing={briefing} /> : <Brief brief={brief} county={county} print />}</div>,

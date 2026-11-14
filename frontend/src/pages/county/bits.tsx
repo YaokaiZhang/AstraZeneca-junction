@@ -95,7 +95,7 @@ export function CountyStyles() {
       .hatch { background-image: repeating-linear-gradient(45deg, rgba(31,31,31,.35) 0 1.5px, transparent 1.5px 5px); }
       #county-print { display: none; }
       @media print {
-        #root { display: none !important; }
+        body > *:not(#county-print) { display: none !important; }
         #county-print { display: block !important; }
         @page { margin: 14mm; }
         body { background: #fff !important; }

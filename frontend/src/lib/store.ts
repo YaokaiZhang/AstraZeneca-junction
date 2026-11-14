@@ -77,7 +77,6 @@ export interface State {
   pathway: { cancer: CancerId | 'other'; dates: Partial<Record<StepId, string>> }
   barriers: BarrierReport[]
   checkins: { enabled: boolean; everyDays: number; lastAt?: string }
-  screening: Partial<Record<'bowel' | 'breast' | 'cervical', 'yes' | 'no' | 'kit' | 'unsure'>>
   sharing: { hospital: boolean; stats: boolean; at?: string }
 
   // hospital
@@ -98,7 +97,6 @@ const initial = {
   pathway: { cancer: 'lung' as const, dates: {} },
   barriers: [] as BarrierReport[],
   checkins: { enabled: false, everyDays: 7 },
-  screening: {},
   sharing: { hospital: false, stats: false },
   escalateAfterDays: 5,
   actions: {} as Record<string, HospitalAction>,

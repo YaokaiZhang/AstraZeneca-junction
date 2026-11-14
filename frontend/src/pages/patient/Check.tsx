@@ -6,13 +6,12 @@ import { Card, Chip, Label, SourceBadge, cx } from '../../components/ui'
 import { useStore, type CheckInputs, type RiskInputs } from '../../lib/store'
 import { useChat } from './chat'
 import {
-  bmiOf, DEFAULT_CHECK, estimates, ESTIMATE_HOW, nextSteps, plco, PLCO_HOW, PROGRAMMES, toRiskInputs,
+  bmiOf, DEFAULT_CHECK, estimates, ESTIMATE_HOW, nextSteps, plco, PLCO_HOW, toRiskInputs,
   type CheckCancer, type NextStep, type StepLevel,
 } from './logic'
 import { useT } from './i18n'
 import { Field } from './bits'
 
-type Ans = 'yes' | 'no' | 'kit' | 'unsure'
 const num = 'w-full border-b border-black/20 py-1.5 font-serif text-2xl outline-none focus:border-terra bg-transparent'
 const sel = 'w-full border-b border-black/20 py-2 font-serif text-xl outline-none focus:border-terra bg-transparent'
 
@@ -39,7 +38,6 @@ function initialInputs(): CheckInputs {
 export default function Check() {
   const { t } = useT()
   const profile = useStore((s) => s.profile)
-  const screening = useStore((s) => s.screening)
   const diary = useStore((s) => s.diary)
   const set = useStore((s) => s.set)
   const [f, setF] = useState<CheckInputs>(initialInputs)
@@ -65,8 +63,7 @@ export default function Check() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(f), age, profile.sex, valid])
 
-  const steps = useMemo(() => nextSteps({ profile: { ...profile, age }, check: null, screening, diary }, f), [profile, age, screening, diary, f])
-  const answer = (id: 'bowel' | 'breast' | 'cervical', v: Ans) => set((s) => ({ screening: { ...s.screening, [id]: v } }))
+  const steps = useMemo(() => nextSteps({ profile: { ...profile, age }, check: null, diary }, f), [profile, age, diary, f])
   const smoker = f.smoker !== 'never'
 
   return (
@@ -161,7 +158,7 @@ export default function Check() {
         <div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
             {steps.map((st) => (
-              <StepCard key={st.id} st={st} answer={screening[st.id as 'bowel'] as Ans | undefined} onAnswer={(v) => answer(st.id as 'bowel', v)} />
+              <StepCard key={st.id} st={st} />
             ))}
           </div>
         </div>
@@ -170,22 +167,17 @@ export default function Check() {
   )
 }
 
-function StepCard({ st, answer, onAnswer }: { st: NextStep; answer?: Ans; onAnswer: (v: Ans) => void }) {
+function StepCard({ st }: { st: NextStep }) {
   const { t } = useT()
-  const prog = PROGRAMMES.find((p) => p.id === st.id)
   const tone = st.applies ? LEVEL_TONE[st.level] : 'paper'
   const onDark = tone === 'terra'
   const model = st.id === 'lung' ? t('ck.model.lung') : t('ck.model.est')
-  const opts: { v: Ans; k: string }[] = st.id === 'bowel'
-    ? [{ v: 'yes', k: 's.a.sent' }, { v: 'kit', k: 's.a.kit' }, { v: 'no', k: 'c.no' }, { v: 'unsure', k: 's.a.unsure' }]
-    : [{ v: 'yes', k: 'c.yes' }, { v: 'no', k: 'c.no' }, { v: 'unsure', k: 's.a.unsure' }]
 
   // programmes that don't apply to this person: a small, quiet slip instead of a full card
   if (!st.applies) return (
     <Card tone="paper" tilt={TILTS[st.id] / 2} className="px-6 py-4 opacity-60 self-start">
       <div className="flex items-baseline justify-between gap-3">
         <p className="font-serif text-2xl leading-none">{t(`prog.${st.id}`)}</p>
-        {prog && <span className="font-type text-sm uppercase tracking-widest flex items-center gap-1.5">{prog.from}–{prog.to}<SourceBadge id="screeningRules" kind="direct" demo={false} /></span>}
       </div>
       <p className="font-serif italic text-lg leading-tight mt-2">{t(st.say)}</p>
     </Card>
@@ -194,22 +186,11 @@ function StepCard({ st, answer, onAnswer }: { st: NextStep; answer?: Ans; onAnsw
     <Card tone={tone} tilt={TILTS[st.id]} className="p-6 flex flex-col">
       <div className="flex items-baseline justify-between gap-3">
         <p className="font-serif text-3xl leading-none">{t(`prog.${st.id}`)}</p>
-        {prog && <span className="font-type text-sm uppercase tracking-widest opacity-80 flex items-center gap-1.5 whitespace-nowrap">{prog.from}–{prog.to}<SourceBadge id="screeningRules" kind="direct" demo={false} /></span>}
       </div>
       {st.level !== 'unknown' && <p className="font-serif text-4xl leading-[1.05] mt-5">{t(st.short)}</p>}
       <p className={cx('font-serif italic leading-snug', st.level === 'unknown' ? 'text-2xl mt-5' : 'text-lg mt-2 opacity-85')}>{t(st.say)}</p>
 
-      {st.invited && st.level !== 'doctor' && (
-        <div className="mt-5">
-          <span className="font-type text-sm uppercase tracking-widest opacity-70">{t(st.id === 'bowel' ? 's.q.bowel' : 's.q.other')}</span>
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {opts.map((o) => (
-              <Chip key={o.v} active={answer === o.v} onClick={() => onAnswer(o.v)}>{t(o.k)}</Chip>
-            ))}
-          </div>
-        </div>
-      )}
-      {st.id !== 'cervical' && (
+      {(
         <div className="mt-auto pt-5">
           <div className={cx('tear pt-3 flex items-center gap-2', onDark && '!border-paper/25')}>
             <span className="font-type text-[13px] uppercase tracking-widest opacity-60">{model}</span>

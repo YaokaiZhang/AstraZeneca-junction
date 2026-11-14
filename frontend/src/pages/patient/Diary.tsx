@@ -122,10 +122,9 @@ export function CheckinCard({ onSimulate }: { onSimulate?: () => void }) {
   const diary = useStore((s) => s.diary)
   const profile = useStore((s) => s.profile)
   const check = useStore((s) => s.check)
-  const screening = useStore((s) => s.screening)
   const set = useStore((s) => s.set)
-  // more check-ins when the screening check suggests a doctor (spec 1.6) or the diary flags a symptom
-  const doctor = nextSteps({ profile, check, screening, diary }).some((x) => x.level === 'doctor')
+  // more check-ins when the screening check flags high risk (spec 1.6) or the diary flags a symptom
+  const doctor = nextSteps({ profile, check, diary }).some((x) => x.level === 'doctor' || x.level === 'act')
   const rec = recommendedEvery(doctor, assess(diary).flag)
   const nextIso = nextCheckin(checkins)
   const nextIn = daysBetween(today(), nextIso.slice(0, 10))
@@ -252,8 +251,7 @@ function Summary() {
   const pathway = useStore((s) => s.pathway)
   const profile = useStore((s) => s.profile)
   const check = useStore((s) => s.check)
-  const screening = useStore((s) => s.screening)
-  const steps = nextSteps({ profile, check, screening, diary }).filter((x) => x.applies && x.level !== 'unknown')
+  const steps = nextSteps({ profile, check, diary }).filter((x) => x.applies && x.level !== 'unknown')
   const now = today()
   const first = firstSeen(diary)
   const { flag, reasons } = assess(diary)

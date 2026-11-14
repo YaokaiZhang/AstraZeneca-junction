@@ -27,7 +27,6 @@ export function seedDemo() {
     pathway: { cancer: 'lung', dates: { gp: ago(28), referral: ago(21) } },
     barriers: [],
     checkins: { enabled: true, everyDays: 3, lastAt: at(16) },
-    screening: { bowel: 'kit' },
   })
   const m = (from: Msg['from'], d: number, x: Partial<Msg>): Msg => ({ id: uid(), from, at: at(d), ...x })
   useChat.getState().set({
@@ -60,7 +59,7 @@ export function seedDemo() {
 export function erasePatient() {
   useStore.getState().set({
     profile: {}, diary: [], risk: null, check: null, pathway: { cancer: 'lung', dates: {} }, barriers: [],
-    checkins: { enabled: false, everyDays: 7 }, screening: {}, sharing: { hospital: false, stats: false },
+    checkins: { enabled: false, everyDays: 7 }, sharing: { hospital: false, stats: false },
   })
   useChat.getState().set({ msgs: [helloMsg()], pending: null, asked: [], smoke: {} })
 }

@@ -1,6 +1,6 @@
 // Pure logic for the patient page: keyword symptom extraction (fi/sv/en),
 // date parsing, smoking parsing, the two-week flag rule, PLCOm2012, the bowel/breast/cervical
-// Estimate, screening ages and the "next step" each person sees (never a score).
+// Estimate and the "next step" each person sees (never a score).
 import { DAY, daysBetween, today } from '../../data/pathway'
 import type { CheckInputs, DiaryEntry, Estimates, RiskInputs, State } from '../../lib/store'
 
@@ -174,7 +174,7 @@ export function plco(i: RiskInputs): number {
 }
 export const PLCO_HOW = 'logit = −4.532506 + 0.0778868·(age−62) − 0.0812744·(edu−4) − 0.0274194·(BMI−27) + 0.3553063·COPD + 0.4589971·prior cancer + 0.587185·family lung ca + 0.2597431·current − 1.822606·((cpd/10)⁻¹ − 0.4021542) + 0.0317321·(yrs smoked−27) − 0.0308572·(yrs quit−10) + race term; p = eˡ/(1+eˡ). Threshold ≥ 1.51 %.'
 
-// ---------- screening programmes ----------
+// ---------- screening programmes (risk thresholds + who they apply to) ----------
 export const PROGRAMMES = [
   { id: 'bowel' as const, from: 56, to: 74, sex: ['f', 'm', 'x'] },
   { id: 'breast' as const, from: 50, to: 69, sex: ['f', 'x'] },
@@ -236,15 +236,17 @@ export function estimates(i: EstimateInput): Estimates {
   return { bowel: estimate('bowel', i), breast: estimate('breast', i), cervical: estimate('cervical', i) }
 }
 /**
- * "High" = the person's Estimate is already at least the average 10-year risk of someone at the age the
- * national programme starts inviting (same sex). Only used before programme age, to suggest asking a doctor.
+ * "High" = the person's Estimate is at least as high as the lowest average risk of anyone Finland already
+ * screens (lowest 10-year risk across the programme's age range, same sex). Age is just one input to the risk.
  */
-export function estimateHigh(c: 'bowel' | 'breast', i: EstimateInput) {
+export function estimateHigh(c: Cancer3, i: EstimateInput) {
   const e = estimate(c, i)
-  const start = PROGRAMMES.find((p) => p.id === c)!.from
-  return e !== null && i.age < start && e >= baseline10y(c, i.sex, start)
+  const p = PROGRAMMES.find((x) => x.id === c)!
+  let bar = Infinity
+  for (let a = p.from; a <= p.to; a++) bar = Math.min(bar, baseline10y(c, i.sex, a))
+  return e !== null && e >= bar
 }
-export const ESTIMATE_HOW = 'Estimate, not a clinical score. 10-year chance = Finnish Cancer Registry incidence for your age and sex × relative risks (smoking, alcohol, BMI, family history) from published meta-analyses. Before programme age, "ask a doctor" is suggested when this reaches the average risk of people at the age invitations start.'
+export const ESTIMATE_HOW = 'Estimate, not a clinical score. 10-year chance = Finnish Cancer Registry incidence for your age and sex × relative risks (smoking, alcohol, BMI, family history) from published meta-analyses. Screening is suggested when this is at least as high as the average risk of people Finland already screens.'
 
 export const bmiOf = (heightCm: number, weightKg: number) => +(weightKg / Math.pow(heightCm / 100, 2)).toFixed(1)
 export const DEFAULT_CHECK: CheckInputs = {
@@ -267,8 +269,6 @@ export interface NextStep {
   say: string
   /** i18n key of the 2–3 word stamp */
   short: string
-  /** in the national programme's invitation group */
-  invited: boolean
   /** false = does not apply to this person (breast/cervical for men) */
   applies: boolean
 }
@@ -277,18 +277,18 @@ const BOWEL_SYM = ['blood-stool', 'bowel-change']
 export const CHECK_ORDER: CheckCancer[] = ['lung', 'bowel', 'breast', 'cervical']
 const RANK: Record<StepLevel, number> = { doctor: 0, act: 1, unknown: 2, done: 3, none: 4 }
 
-export function nextSteps(s: Pick<State, 'profile' | 'check' | 'screening' | 'diary'>, override?: CheckInputs): NextStep[] {
+export function nextSteps(s: Pick<State, 'profile' | 'check' | 'diary'>, override?: CheckInputs): NextStep[] {
   const { age, sex } = s.profile
   const c = override ?? s.check?.inputs ?? null
   const sym = new Set(assess(s.diary).reasons.map((r) => r.tag))
-  const mk = (id: CheckCancer, level: StepLevel, say: string, short: string, invited = false, applies = true): NextStep => ({ id, level, say, short, invited, applies })
+  const mk = (id: CheckCancer, level: StepLevel, say: string, short: string, applies = true): NextStep => ({ id, level, say, short, applies })
   const symptomStep = (id: CheckCancer) => mk(id, 'doctor', 'ck.sym', 'ck.s.doctor2w')
   const ei: EstimateInput | null = age && c ? { age, sex: sex ?? 'x', smoker: c.smoker, drinksPerWeek: c.drinksPerWeek, bmi: bmiOf(c.heightCm, c.weightKg), familyBowel: c.familyBowel, familyBreast: c.familyBreast } : null
 
   return CHECK_ORDER.map((id) => {
     const prog = PROGRAMMES.find((p) => p.id === id)
     const applies = !prog || !sex || prog.sex.includes(sex)
-    if (!applies) return mk(id, 'none', 'ck.notForYou', 'ck.s.none', false, false)
+    if (!applies) return mk(id, 'none', 'ck.notForYou', 'ck.s.none', false)
     if (id === 'lung' && LUNG_SYM.some((t) => sym.has(t))) return symptomStep(id)
     if (id === 'bowel' && BOWEL_SYM.some((t) => sym.has(t))) return symptomStep(id)
     if (!age) return mk(id, 'unknown', 'ck.needAge', 'ck.s.unknown')
@@ -301,16 +301,9 @@ export function nextSteps(s: Pick<State, 'profile' | 'check' | 'screening' | 'di
       return mk(id, 'none', c.smoker === 'current' ? 'ck.lung.lowSmoker' : 'ck.none', 'ck.s.none')
     }
 
-    const p = prog!
-    const invited = age >= p.from && age <= p.to
-    if (invited) {
-      const a = s.screening[id as Cancer3]
-      if (a === 'yes') return mk(id, 'done', `ck.${id}.done`, 'ck.s.done', true)
-      if (a === 'no') return mk(id, 'act', 'ck.newInvite', 'ck.s.ask', true)
-      return mk(id, 'act', `ck.${id}.due`, id === 'bowel' ? 'ck.s.kit' : 'ck.s.go', true)
-    }
-    if ((id === 'bowel' || id === 'breast') && ei && estimateHigh(id, ei)) return mk(id, 'doctor', 'ck.early', 'ck.s.askDoctor')
-    return mk(id, 'none', age < p.from ? `ck.${id}.later` : 'ck.none', 'ck.s.none')
+    if (!ei) return mk(id, 'unknown', 'ck.needAnswers', 'ck.s.unknown')
+    if (estimateHigh(id, ei)) return mk(id, 'act', 'ck.worth', 'ck.s.worth')
+    return mk(id, 'none', 'ck.none', 'ck.s.none')
   })
 }
 /** The most pressing step first. */

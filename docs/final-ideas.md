@@ -56,11 +56,6 @@ The symptom diary, pathway clock and hospital page work for any cancer.
 - **Example:** "Hi, two weeks ago you mentioned a cough. Is it still there? Has anything changed?"
 - **Limits:** the person must switch check-ins on and can switch them off. The app only uses what the person has told it, never registers.
 
-### 1.7 Screening reminder
-- **What it does:** from the person's age, the app says whether they are in a group invited to bowel, breast or cervical screening, and asks whether they took part.
-- **Example:** "People your age are invited to bowel screening. Did you get a test kit in the post? Have you sent it back?"
-- **How:** the invitation ages are public rules, so no risk model is needed.
-
 ---
 
 ## Page 2: Hospital

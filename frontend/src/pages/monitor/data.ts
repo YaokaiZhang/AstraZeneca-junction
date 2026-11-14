@@ -2,6 +2,8 @@
 // https://stats.cancerregistry.fi/joukkistilastot/suolisto.html
 // The CSVs are kept verbatim so they can be checked against the source line by line.
 // median_months_positive_to_colonoscopy_approx was read by eye from a chart (± 0.1 month).
+import DEMOGRAPHICS_CSV from '../../data/county_demographics_2025.csv?raw'
+import ROUNDS_CSV from '../../data/bowel_screening_2022_2023.csv?raw'
 
 const BY_COUNTY = `county,invited,participated,participation_pct,test_positive,positive_pct,colonoscopy_done,colonoscopy_of_positives_pct,no_colonoscopy_n,surgery_or_neoadjuvant,cancers_found,advanced_precursors,median_months_positive_to_colonoscopy_approx
 Etelä-Karjala,11131,8241,74.0,375,4.6,284,75.7,91,20,14,114,1.7
@@ -121,3 +123,83 @@ export const GROUPS: GroupRow[] = parse(BY_GROUP).map((r) => ({
 
 /** People who tested positive in the 2022 round, skipped colonoscopy and were later diagnosed with bowel cancer. */
 export const MISSED_CANCERS_2022 = 87
+
+// ----- county population mix, 2025 (Statistics Finland PxWeb vaerak/11rz and vkour/12bq, municipalities rolled up to counties) -----
+
+export interface Demographics {
+  id: string
+  name: string
+  /** residents aged 56–74, the screening target group from 2031 */
+  pop5674: number
+  /** % of residents aged 56–74 whose mother tongue is not Finnish, Swedish or Sami */
+  foreignLangPct: number
+  basicEduPct: number
+  upperSecPct: number
+  higherEduPct: number
+  /** kit return expected from the language mix alone, at national 2024 group rates */
+  expectedByLanguage: number
+  /** kit return expected from the education mix alone, at national 2024 group rates */
+  expectedByEducation: number
+  actual2024: number
+}
+
+const demoRows: Demographics[] = parse(DEMOGRAPHICS_CSV).map((r) => ({
+  id: slug(r.county),
+  name: r.county,
+  pop5674: num(r.pop_56_74),
+  foreignLangPct: num(r.foreign_lang_pct_56_74),
+  basicEduPct: num(r.basic_edu_pct_60_74),
+  upperSecPct: num(r.upper_sec_pct),
+  higherEduPct: num(r.higher_edu_pct),
+  expectedByLanguage: num(r.expected_part_by_language),
+  expectedByEducation: num(r.expected_part_by_education),
+  actual2024: num(r.actual_part_2024),
+}))
+export const DEMOGRAPHICS: Demographics[] = demoRows.filter((d) => d.id !== 'finland')
+export const DEMOGRAPHICS_FI: Demographics = demoRows.find((d) => d.id === 'finland')!
+export const demographicsById = (id: string) => (id === 'finland' ? DEMOGRAPHICS_FI : DEMOGRAPHICS.find((d) => d.id === id))
+
+// ----- earlier rounds, 2022 and 2023 (Cancer Registry) -----
+
+export interface RoundRow {
+  year: number
+  id: string
+  name: string
+  invited: number
+  participationPct: number
+  testPositive: number
+  colonoscopyDone: number
+  colonoscopyOfPositivesPct: number
+  noColonoscopy: number
+}
+
+export const ROUNDS: RoundRow[] = parse(ROUNDS_CSV).map((r) => ({
+  year: num(r.year),
+  id: slug(r.county),
+  name: r.county,
+  invited: num(r.invited),
+  participationPct: num(r.participation_pct),
+  testPositive: num(r.test_positive),
+  colonoscopyDone: num(r.colonoscopy_done),
+  colonoscopyOfPositivesPct: num(r.colonoscopy_of_positives_pct),
+  noColonoscopy: num(r.no_colonoscopy_n),
+}))
+
+export interface YearPoint { year: number; participationPct: number; colonoscopyOfPositivesPct: number; noColonoscopy: number }
+
+/** 2022, 2023 and 2024 for one county (or 'finland'). */
+export function trend(id: string): YearPoint[] {
+  const now = id === 'finland' ? SCREENING_FI : screeningById(id)
+  const past = ROUNDS.filter((x) => x.id === id).sort((a, b) => a.year - b.year)
+  return [
+    ...past.map(({ year, participationPct, colonoscopyOfPositivesPct, noColonoscopy }) => ({ year, participationPct, colonoscopyOfPositivesPct, noColonoscopy })),
+    ...(now ? [{ year: 2024, participationPct: now.participationPct, colonoscopyOfPositivesPct: now.colonoscopyOfPositivesPct, noColonoscopy: now.noColonoscopy }] : []),
+  ]
+}
+
+/** Place of a county among all counties in one year, 1 = highest value. */
+export function rankIn(year: number, id: string, key: 'participationPct' | 'colonoscopyOfPositivesPct') {
+  const all = year === 2024 ? SCREENING : ROUNDS.filter((x) => x.year === year && x.id !== 'finland')
+  const sorted = [...all].sort((a, b) => b[key] - a[key])
+  return { rank: sorted.findIndex((x) => x.id === id) + 1, of: sorted.length }
+}

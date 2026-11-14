@@ -116,6 +116,26 @@ export const SOURCES: Record<string, Source> = {
     note: 'Annual screening statistics by wellbeing services county and by group (group data national only). Participation = valid kits returned ÷ invited. "No colonoscopy" may partly be private colonoscopies not reported to the register. Median months from positive test to colonoscopy read by eye from a chart (± 0.1 month).',
     years: '2024 round · published 20 May 2026', retrieved: PULLED,
   },
+  statfinLang: {
+    id: 'statfinLang', name: 'Statistics Finland – population by age and language (vaerak/11rz)', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/',
+    note: 'Residents by single year of age and mother tongue, by municipality, rolled up by us to wellbeing services counties. Used: residents aged 56–74 and the share of them whose mother tongue is not Finnish, Swedish or Sami. Open data, CC BY 4.0.',
+    years: '2025', retrieved: PULLED,
+  },
+  statfinEdu: {
+    id: 'statfinEdu', name: 'Statistics Finland – education by age (vkour/12bq)', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vkour/statfin_vkour_pxt_12bq.px/',
+    note: 'Highest completed education by age, by municipality, rolled up by us to wellbeing services counties. Used: the basic, upper secondary and higher education shares at screening age. Open data, CC BY 4.0.',
+    years: '2025', retrieved: PULLED,
+  },
+  bowelExpansion: {
+    id: 'bowelExpansion', name: 'Finnish Cancer Registry – bowel cancer screening programme', url: 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/',
+    note: 'The programme widens year by year until 2031, when everyone aged 56–74 is invited every two years (even ages in each round).',
+    years: 'target group from 2031', retrieved: PULLED,
+  },
+  bowelScreeningRounds: {
+    id: 'bowelScreeningRounds', name: 'Finnish Cancer Registry – bowel cancer screening, 2022 and 2023 rounds', url: 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html',
+    note: 'The same annual county tables as the 2024 round. Nationally, colonoscopy after a positive test was 78.8% (2022), 78.6% (2023) and 72.7% (2024); the 2024 drop is probably partly reports still to come in.',
+    years: '2022 and 2023 rounds', retrieved: PULLED,
+  },
   navMeta: {
     id: 'navMeta', name: 'Interventions to raise colonoscopy after a positive stool test – meta-analysis (JAMA Intern Med 2026)', url: 'https://pubmed.ncbi.nlm.nih.gov/42832233/',
     note: 'Risk ratios for completing colonoscopy: patient navigation 1.24, patient reminders 1.32, clinician reminders 1.36, automated referral 1.68. Mostly US settings. PMID 42832233.',

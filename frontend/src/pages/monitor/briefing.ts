@@ -1,5 +1,6 @@
 // The one-page plan's briefing. Facts are built here from the same calculations the page shows; the AI (server/llm.ts)
-// only turns them into sentences, and its text is used only if every number in it can be found in the facts.
+// only turns them into sentences, citing evidence passages the server retrieved from the curated knowledge files;
+// its text is used only if the server says it is grounded and every number and citation in it checks out.
 // With no key, a failed call or an unmatched number, the template below is used instead.
 import { SCREENING_FI, type ScreeningRow } from './data'
 import { DETECTION_FIXES, EMPTY_PLAN, evaluate, flags, in2031, n1, type Plan, type Result, type Step } from './model'
@@ -44,6 +45,15 @@ function actionWords(plan: Plan, res: Result) {
   return parts.join('; and ')
 }
 
+/** The ids of the same actions as actionWords(), for the server's evidence lookup (keys of REFERRAL_WORDS / DETECTION_WORDS, plus 'catch-up'). */
+function actionIds(plan: Plan, res: Result) {
+  const ids: string[] = []
+  if (res.referral.fix) ids.push(res.referral.fix.id)
+  if (res.detection.pts > 0) ids.push(plan.detectionFix && DETECTION_WORDS[plan.detectionFix] ? plan.detectionFix : 'reminder')
+  if (plan.catchUp && res.queue.catchUp >= 0.5) ids.push('catch-up')
+  return ids.join(',')
+}
+
 /** Every number the briefing may use, already rounded the way the page shows it. */
 export function buildFacts(r: ScreeningRow, plan: Plan, res: Result): Facts {
   const f = flags(r)
@@ -63,7 +73,9 @@ export function buildFacts(r: ScreeningRow, plan: Plan, res: Result): Facts {
     positive_tests_without_colonoscopy: r.noColonoscopy,
     wait_months: r.medianMonths,
     wait_finland_months: SCREENING_FI.medianMonths,
+    pathway_step: behind.length ? weakestStep(r) : 'none',
     action: actionWords(p.plan, p.res) || 'no change',
+    action_ids: actionIds(p.plan, p.res),
     action_is: !p.recommended ? 'the plan chosen on the monitor' : behind.length ? 'the recommended first step' : 'a step to do even better',
     action_about_extra_colonoscopies_per_year: aboutNum(p.res.total.colonoscopies),
     action_about_cancers_found_earlier: aboutNum(p.res.total.cancers),
@@ -82,6 +94,32 @@ export function buildFacts(r: ScreeningRow, plan: Plan, res: Result): Facts {
     facts.target_wait_months = Math.round(p.plan.targetMonths * 10) / 10
   }
   return facts
+}
+
+/** The four labels of a grounded AI briefing, in order. Each line of the text is "Label: one short sentence. [n]" */
+export const BRIEFING_LABELS = ['Problem', 'Do this', 'Result', 'Capacity'] as const
+
+/** Citation markers like "[1]" that the AI puts at line ends; they point into the evidence list. */
+const CITE = /\[(\d{1,2})\]/g
+
+/** Remove citation markers, so they are not read as numbers or shown inline. */
+export function stripCites(text: string): string {
+  return text.replace(/[ \t]*\[\d{1,2}\]/g, '')
+}
+
+export interface BriefingLine { label: string; text: string; cites: number[] }
+
+/** Split a briefing into its four labelled lines; null if it is not in that shape. Citation markers are
+ *  taken out of the text and returned per line in `cites`. */
+export function briefingLines(text: string): BriefingLine[] | null {
+  const lines = text.split(/\n+/).map((l) => l.trim()).filter(Boolean)
+  if (lines.length !== BRIEFING_LABELS.length) return null
+  const out = lines.map((l, i) => {
+    const cites = [...new Set([...l.matchAll(CITE)].map((m) => +m[1]))]
+    const m = stripCites(l).replace(/^\*+|\*+(?=:)/g, '').match(/^([^:]{2,12}):\s*(.+)$/)
+    return m && m[1].trim().toLowerCase() === BRIEFING_LABELS[i].toLowerCase() ? { label: BRIEFING_LABELS[i], text: m[2].replace(/\*+/g, '').trim(), cites } : null
+  })
+  return out.every(Boolean) ? (out as BriefingLine[]) : null
 }
 
 /** The briefing written from the facts by a fixed template. Used when the AI is off, fails or adds a number. */
@@ -114,7 +152,7 @@ export function numbersMatch(text: string, facts: Facts): boolean {
     if (typeof v === 'number') allowed.push(v)
     else for (const m of v.match(/\d+(?:\.\d+)?/g) ?? []) allowed.push(+m)
   }
-  const found = text.replace(/(\d),(?=\d{3}\b)/g, '$1').match(/\d+(?:\.\d+)?/g) ?? []
+  const found = stripCites(text).replace(/(\d),(?=\d{3}\b)/g, '$1').match(/\d+(?:\.\d+)?/g) ?? []
   return found.every((m) => {
     const n = +m
     return allowed.some((v) => Math.abs(n - v) <= Math.max(0.5, Math.abs(v) * 0.05))

@@ -1,0 +1,11 @@
+{
+  "corpusVersion": "fixture-1",
+  "_note": "Synthetic test fixture for server/rag tests only. The passages are made-up test text, not quotes from real documents.",
+  "sources": [
+    { "id": "fx-fi-guidance", "title": "Fixture: Finnish screening guidance", "publisher": "Fixture publisher (Finland)", "sourceType": "official_guidance", "setting": "finland", "country": "Finland", "url": "https://example.org/fx-fi-guidance", "publicationDate": "2024", "dataPeriod": "2024 screening round", "retrievedAt": "2026-11-14", "language": "fi", "version": "1", "reviewStatus": "approved", "reviewedBy": "test", "reuseNotes": "synthetic" },
+    { "id": "fx-review-followup", "title": "Fixture: review of follow-up interventions", "publisher": "Fixture journal", "sourceType": "systematic_review", "setting": "international", "country": "USA", "url": "https://example.org/fx-review-followup", "publicationDate": "2019", "retrievedAt": "2026-11-14", "language": "en", "version": "1", "reviewStatus": "approved", "reviewedBy": "test", "reuseNotes": "synthetic" },
+    { "id": "fx-study-outreach", "title": "Fixture: trial of mailed reminders", "publisher": "Fixture journal", "sourceType": "primary_study", "setting": "international", "country": "mixed", "url": "https://example.org/fx-study-outreach", "publicationDate": "2021", "retrievedAt": "2026-11-14", "language": "en", "version": "1", "reviewStatus": "approved", "reviewedBy": "test", "reuseNotes": "synthetic" },
+    { "id": "fx-pending", "title": "Fixture: unreviewed source", "publisher": "Fixture", "sourceType": "official_policy", "setting": "finland", "country": "Finland", "url": "https://example.org/fx-pending", "publicationDate": "2025", "retrievedAt": "2026-11-14", "language": "en", "version": "1", "reviewStatus": "pending", "reviewedBy": "", "reuseNotes": "synthetic" },
+    { "id": "fx-rejected", "title": "Fixture: rejected source", "publisher": "Fixture", "sourceType": "official_policy", "setting": "finland", "country": "Finland", "url": "https://example.org/fx-rejected", "publicationDate": "2025", "retrievedAt": "2026-11-14", "language": "en", "version": "1", "reviewStatus": "rejected", "reviewedBy": "test", "reuseNotes": "synthetic" }
+  ]
+}

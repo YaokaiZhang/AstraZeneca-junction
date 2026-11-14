@@ -14,9 +14,38 @@ import { MixGap } from './MixGap'
 import { Fixes } from './Fixes'
 import { Bottleneck } from './Bottleneck'
 import { ActionSheet, type Briefing } from './ActionSheet'
-import { buildFacts, numbersMatch, templateBriefing } from './briefing'
+import { briefingLines, buildFacts, numbersMatch, stripCites, templateBriefing, type Facts } from './briefing'
+import type { BriefingResponse, EvidenceRef } from './evidence'
 import { LeakMap, Ranking } from './Compare'
 import { SHOW_FULL_STORY } from '../../config'
+
+function briefingErrorNote(status: number, error: unknown): string {
+  const e = String(error ?? '')
+  if (e === 'ai_off') return 'AI is off on this server.'
+  if (e === 'key_format') return 'The server’s LLM_KEY is not an Anthropic API key (it should start with sk-ant-).'
+  if (e.includes('401')) return 'The server’s LLM_KEY was not accepted by Anthropic.'
+  if (e === 'insufficient_evidence') return 'No strong enough evidence found; showing our calculated plan.'
+  if (e === 'invalid_output') return 'AI text not used: it did not pass our checks.'
+  return `The AI could not be reached (${e || status}).`
+}
+
+/** The AI briefing if the /api/briefing response passes every check, else null: the server says it is grounded,
+ *  it has the four labelled lines, every number matches the facts and every [n] points at a returned source. */
+function groundedBriefing(body: Partial<BriefingResponse>, facts: Facts): Briefing | null {
+  if (body.status !== 'grounded' || typeof body.text !== 'string' || !Array.isArray(body.evidence) || !body.evidence.length) return null
+  const evidence: EvidenceRef[] = body.evidence
+  const lines = briefingLines(body.text)
+  if (!lines || !numbersMatch(stripCites(body.text), facts)) return null
+  if (!lines.every((l) => l.cites.every((n) => evidence.some((e) => e.n === n)))) return null
+  return {
+    text: body.text,
+    source: 'ai',
+    lines,
+    evidence,
+    evidenceLevel: body.evidenceLevel === 'evidence_backed' ? 'evidence_backed' : 'limited_evidence',
+    limitations: (body.limitations ?? []).filter((x) => typeof x === 'string' && x.trim()).slice(0, 3),
+  }
+}
 
 const OPTIONS = SCREENING.map((r) => ({ id: r.id, name: r.name })).sort((a, b) => a.name.localeCompare(b.name, 'fi'))
 
@@ -65,10 +94,11 @@ export default function MonitorPage() {
   const select = (id: string) => setQ((p) => { const n = new URLSearchParams(p); n.set('c', id); return n }, { replace: true })
   const touched = JSON.stringify(plan) !== JSON.stringify(EMPTY_PLAN)
 
-  // the briefing on the one-page plan: template by default; AI text only if every number in it matches the facts
+  // the briefing on the one-page plan: template by default; AI text only if the server grounded it in cited
+  // evidence and every number and citation in it checks out
   const facts = useMemo(() => buildFacts(r, plan, res), [r, plan, res])
   const factsKey = JSON.stringify(facts)
-  const [ai, setAi] = useState<{ key: string; text: string } | null>(null)
+  const [ai, setAi] = useState<{ key: string; briefing: Briefing } | null>(null)
   const [aiNote, setAiNote] = useState<{ key: string; note: string } | null>(null)
   const [aiBusy, setAiBusy] = useState(false)
   const [aiOn, setAiOn] = useState<boolean | null>(null)
@@ -76,7 +106,7 @@ export default function MonitorPage() {
     fetch('/api/health').then((x) => x.json()).then((h) => setAiOn(!!h.ai)).catch(() => setAiOn(false))
   }, [])
   const briefing: Briefing = ai?.key === factsKey
-    ? { text: ai.text, source: 'ai' }
+    ? ai.briefing
     : { text: templateBriefing(facts), source: 'template', note: aiNote?.key === factsKey ? aiNote.note : undefined }
   const writeBriefing = async () => {
     const key = factsKey
@@ -84,8 +114,13 @@ export default function MonitorPage() {
     try {
       const resp = await fetch('/api/briefing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ facts }) })
       const body = await resp.json().catch(() => ({}))
-      if (resp.ok && typeof body.text === 'string' && numbersMatch(body.text, facts)) { setAi({ key, text: body.text }); setAiNote(null) }
-      else setAiNote({ key, note: resp.ok ? 'The AI text used a number we could not match, so it was not used.' : body.error === 'ai_off' ? 'AI is off on this server.' : body.error === 'key_format' ? 'The server’s LLM_KEY is not an Anthropic API key (it should start with sk-ant-).' : String(body.error ?? '').includes('401') ? 'The server’s LLM_KEY was not accepted by Anthropic.' : `The AI could not be reached (${String(body.error ?? resp.status)}).` })
+      const b = resp.ok ? groundedBriefing(body, facts) : null
+      if (b) { setAi({ key, briefing: b }); setAiNote(null) }
+      else {
+        setAiNote({ key, note: !resp.ok ? briefingErrorNote(resp.status, body.error)
+          : body.status === 'template_fallback' && body.reason ? briefingErrorNote(resp.status, body.reason)
+          : 'AI text not used: it did not pass our checks.' })
+      }
     } catch {
       setAiNote({ key, note: 'The AI could not be reached.' })
     } finally {
@@ -226,7 +261,7 @@ const OURS: [string, string][] = [
   ['The 2031 estimate', 'Everyone aged 56–74 is invited every two years, so invites and colonoscopies grow in proportion, at today’s rates.'],
   ['What a fix does here', 'The effect measured in other programmes, applied to this county’s 2024 numbers.'],
   ['Expected vs actual kit return', 'What the county would reach if each language and education group sent kits back at the national rate.'],
-  ['The briefing on the one-page plan', 'The briefing text is written by AI from our calculated numbers; it adds no numbers of its own. Any number it writes is checked against ours, and if one doesn’t match, a fixed template is used instead.'],
+  ['The briefing on the one-page plan', 'The briefing text is written by AI from our calculated numbers and a few cited passages from reviewed sources (the Cancer Registry statistics, the cancer strategy and roadmap, and the intervention reviews); it adds no numbers of its own. Every number and citation it writes is checked, and if one doesn’t match, a fixed template is used instead.'],
 ]
 
 /** Where the numbers come from, in plain words, plus what we calculated ourselves. Always visible at the bottom. */

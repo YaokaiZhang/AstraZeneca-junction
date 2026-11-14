@@ -22,7 +22,7 @@ export default function Layout() {
             <span className="lg:hidden font-serif text-2xl italic">Ajoissa</span>
           </NavLink>
           <div className="hidden lg:block">
-            <h1 className="text-6xl font-light leading-[0.9]">Ajo<br /><span className="ml-8 italic">issa</span></h1>
+            <h1 className="text-6xl font-light leading-[0.9] whitespace-nowrap">Ajo<span className="italic">issa</span></h1>
           </div>
         </div>
 

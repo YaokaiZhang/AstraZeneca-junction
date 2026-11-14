@@ -43,8 +43,7 @@ function WaitChart({ res, plan, today }: { res: Result; plan: Plan; today: numbe
 }
 
 /** 2031: the target group widens to everyone aged 56–74. Demand at today's rates, plus the chosen fixes scaled the same way. */
-function Year2031({ r, res }: { r: ScreeningRow; res: Result }) {
-  const [on, setOn] = useState(false)
+function Year2031({ r, res, on, setOn }: { r: ScreeningRow; res: Result; on: boolean; setOn: (v: boolean) => void }) {
   const y = in2031(r, res)
   const fi = in2031(SCREENING_FI)
   const pct = (y.growth - 1) * 100
@@ -101,6 +100,7 @@ function Year2031({ r, res }: { r: ScreeningRow; res: Result }) {
 }
 
 export function Bottleneck({ r, plan, setPlan, res }: { r: ScreeningRow; plan: Plan; setPlan: (p: Plan) => void; res: Result }) {
+  const [show2031, setShow2031] = useState(false)
   const q = res.queue
   const need = q.extraPerWeek
   const warn = q.overCapacity
@@ -117,9 +117,11 @@ export function Bottleneck({ r, plan, setPlan, res }: { r: ScreeningRow; plan: P
     <>
     <div className="grid lg:grid-cols-[minmax(0,400px)_1fr] gap-6 items-stretch">
       <Card tone={warn ? 'terra' : quiet ? 'paper' : 'mustard'} className="p-6 sm:p-7 flex flex-col">
-        <Label className="!opacity-80 flex items-center gap-2">{warn ? 'Bottleneck ahead' : quiet ? 'No extra demand yet' : 'Capacity added'} <SourceBadge id="ourModel" kind="estimate" demo={false} how={how} /></Label>
+        <Label className="!opacity-80 flex items-center gap-2">{warn ? 'Bottleneck ahead' : quiet ? (show2031 ? 'No fix chosen yet' : 'No extra demand yet') : 'Capacity added'} <SourceBadge id="ourModel" kind="estimate" demo={false} how={how} /></Label>
         {quiet ? (
-          <p className="font-serif text-3xl leading-tight mt-3">Turn on a fix above to see what it does to colonoscopy demand.</p>
+          show2031
+            ? <p className="font-serif text-3xl leading-tight mt-3">2031 alone needs <span className="italic">{signed(in2031(r).extraWeek, n1)}</span> colonoscopies a week. Turn on a fix to see what it adds.</p>
+            : <p className="font-serif text-3xl leading-tight mt-3">Turn on a fix above to see what it does to colonoscopy demand.</p>
         ) : (
           <>
             <p className="font-serif text-4xl sm:text-5xl leading-[1.02] mt-3">
@@ -162,7 +164,7 @@ export function Bottleneck({ r, plan, setPlan, res }: { r: ScreeningRow; plan: P
         <p className="font-sans text-[13px] opacity-60 mt-2">Estimate: queue grows by (demand − capacity) each week; wait ≈ queue ÷ capacity. Dotted line = today&apos;s wait.</p>
       </Card>
     </div>
-    <Year2031 r={r} res={res} />
+    <Year2031 r={r} res={res} on={show2031} setOn={setShow2031} />
     </>
   )
 }

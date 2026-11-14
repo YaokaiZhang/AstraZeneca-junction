@@ -31,7 +31,7 @@ function takeaway(r: ScreeningRow): { kind: 'service' | 'language' | 'education'
     return {
       kind: 'service',
       text: 'The population mix doesn’t explain this gap.',
-      detail: 'Even with its language and education mix, more people should be returning the kit. The cause is more likely in how the service itself works, for example private or occupational healthcare use.',
+      detail: 'Even with its language and education mix, more people should be returning the kit. The cause may lie in how the service itself works, for example private or occupational healthcare use.',
     }
   }
   const gap = fi - actual

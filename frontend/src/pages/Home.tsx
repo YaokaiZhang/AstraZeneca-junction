@@ -103,7 +103,7 @@ export default function Home() {
           <div className="relative z-10 flex flex-col justify-center px-5 lg:pl-16 xl:pl-24 pt-20 lg:pt-24 pb-20 lg:pb-20"
             style={{ transform: `translateY(${scroll * -60}px)`, opacity: 1 - scroll * 1.2 }}>
             <h1 className="font-serif font-light leading-[0.9] text-[min(14vw,11svh)] lg:text-[min(6vw,12svh)] tracking-tight">
-              <span className="block hero-in" style={{ animationDelay: '.1s' }}>Every</span>
+              <span className="block hero-in" style={{ animationDelay: '.1s' }}>{SHOW_FULL_STORY ? 'Every' : 'Every bowel'}</span>
               <span className="block hero-in pl-[0.6em]" style={{ animationDelay: '.2s' }}>cancer,</span>
               <span className="block hero-in" style={{ animationDelay: '.3s' }}>found <RotatingWord /></span>
             </h1>

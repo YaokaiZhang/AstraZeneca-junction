@@ -63,7 +63,7 @@ function Tile({ step, r }: { step: Step; r: ScreeningRow }) {
       <div className="flex items-center justify-between gap-3">
         <p className="font-serif text-2xl leading-tight">{TILES[step].title}</p>
         <span className={cx('font-type text-[13px] uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0',
-          behind ? 'bg-terra text-paper' : 'bg-black/[.06] opacity-80')}>{behind ? 'Falling behind' : 'On track'}</span>
+          behind ? 'bg-terra text-paper' : 'bg-[#E2EDE6] text-[#2F5A44]')}>{behind ? 'Falling behind' : 'On track'}</span>
       </div>
       <p className={cx('mt-5 font-serif text-5xl sm:text-6xl leading-none', behind && 'text-terra')}>{big}</p>
       <p className="mt-2 font-sans text-[15px] opacity-65">vs {vs} in Finland</p>

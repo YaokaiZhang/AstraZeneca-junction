@@ -6,7 +6,8 @@ import { Seg } from '../county/bits'
 import { SCREENING, screeningById } from './data'
 import { STEPS, flags, losses, n0, n1, weakCount, type Step, STEP_META } from './model'
 
-const LEAK_FILL = ['#D1D1C9', '#FFC233', '#E0875F', '#C65D3B']
+/** On track (muted sage, distinct from terra and orange under deuteranopia too), then 1, 2, 3 steps behind. */
+const LEAK_FILL = ['#7FA88F', '#FFC233', '#E0875F', '#C65D3B']
 const PLAIN: Record<Step, string> = { detection: 'kits', referral: 'follow-up', capacity: 'wait' }
 
 /**

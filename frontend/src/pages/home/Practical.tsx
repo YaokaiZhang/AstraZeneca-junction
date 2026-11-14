@@ -1,4 +1,4 @@
-// Pitch sections that show the tool is practical: lung risk in a real visit, and how it plugs in.
+// Pitch sections that show the tool is practical: lung risk in a real visit.
 import { Card, Label, SourceBadge } from '../../components/ui'
 import { H2, Lede, PAGE } from './Pitch'
 import { Reveal, WordsUp } from './reveal'
@@ -52,52 +52,6 @@ export function RiskInPractice() {
           </Reveal>
         </div>
       </div>
-    </section>
-  )
-}
-
-/* ───────────── how it plugs in ───────────── */
-const PARTS: { part: string; needs: string; from: string; setup: string; badge: React.ReactNode }[] = [
-  { part: 'Off-track list', needs: 'Three dates per patient', from: 'Hospital record: referral, diagnosis, first treatment', setup: 'One nightly report', badge: <SourceBadge id="fhir" kind="direct" demo={false} /> },
-  { part: 'Lung risk check', needs: 'Ten answers', from: 'Five in the record, five asked', setup: 'Runs in the browser', badge: <SourceBadge id="plcoValidation" kind="direct" demo={false} /> },
-  { part: 'Missing-stage model', needs: 'Stage counts by county', from: 'Cancer Registry open statistics', setup: 'Refit once a year', badge: <SourceBadge id="cancerRegistry" kind="direct" demo={false} /> },
-  { part: 'County radar', needs: 'Turnout, risk factors, waiting lists', from: 'THL Sotkanet and Statistics Finland open APIs', setup: 'Pulled by a script', badge: <SourceBadge id="sotkanetScreening" kind="direct" demo={false} /> },
-]
-const PILOT = [['Where', 'One county'], ['What', 'Bowel cancer pathway'], ['How long', '3 months'], ['Success', 'Share treated within 6 weeks, finally counted']]
-
-export function PlugsIn() {
-  return (
-    <section className={PAGE} aria-label="How it plugs in">
-      <h2 className={H2}>
-        <WordsUp text="No new system." /><br /><WordsUp text="Just data that exists." className="italic text-terra" delay={180} />
-      </h2>
-      <Lede className="mt-6 lg:mt-[3svh]">Every part reads something Finland already records. Nothing needs new hardware or a new registry.</Lede>
-      <Reveal fx="up" delay={250} className="mt-8 lg:mt-[4svh]">
-        <div className="hidden md:grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)] gap-6 pb-3 border-b border-ink font-type text-xs uppercase tracking-widest opacity-60">
-          <span>Part</span><span>Needs</span><span>Already in</span><span>To switch on</span>
-        </div>
-        <ul>
-          {PARTS.map((p) => (
-            <li key={p.part} className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)] gap-x-6 gap-y-1 py-4 lg:py-[1.6svh] border-b border-ink/15 items-baseline">
-              <span className="font-serif text-2xl lg:text-3xl leading-tight">{p.part}</span>
-              <span className="font-sans text-base opacity-80">{p.needs}</span>
-              <span className="font-sans text-base opacity-80 flex items-baseline gap-2">{p.from} {p.badge}</span>
-              <span className="font-type text-sm uppercase tracking-wider text-moss">✓ {p.setup}</span>
-            </li>
-          ))}
-        </ul>
-      </Reveal>
-      <Reveal fx="up" delay={400} className="mt-8 lg:mt-[4svh]">
-        <Card tone="ink" className="p-5 lg:py-[2svh] lg:px-6 grid sm:grid-cols-[auto_repeat(4,minmax(0,1fr))] gap-4 lg:gap-8 items-center">
-          <span className="font-serif italic text-3xl text-mustard leading-none">First pilot</span>
-          {PILOT.map(([a, b]) => (
-            <div key={a}>
-              <p className="font-type text-xs uppercase tracking-widest opacity-60">{a}</p>
-              <p className="mt-1 font-serif text-xl leading-tight">{b}</p>
-            </div>
-          ))}
-        </Card>
-      </Reveal>
     </section>
   )
 }

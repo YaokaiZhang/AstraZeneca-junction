@@ -1,8 +1,8 @@
-import { PlugsIn, RiskInPractice } from './home/Practical'
+import { RiskInPractice } from './home/Practical'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, TextRing } from '../components/ui'
-import { Actions, CheckIns, Clock, CostOfLate, Privacy, ThreeDates, TooLate, Transparency, TryActions, Views, H2 } from './home/Pitch'
+import { Actions, CheckIns, Clock, CostOfLate, ThreeDates, TooLate, Transparency, TryActions, Views, H2 } from './home/Pitch'
 import { Tilt, WordsUp } from './home/reveal'
 import { ChapterRail, Ecg, Impact, Transition } from './home/Story'
 import { Radar } from './home/Radar'
@@ -172,14 +172,12 @@ export default function Home() {
       <Views />
       <CheckIns />
       <RiskInPractice />
-      <Privacy />
 
       {/* 03 · what to do (actionability) */}
       <Transition chapter="ch-do" text="Every gap it finds comes with a step to take on Monday." hot={4} />
       <ThreeDates />
       <Actions />
       <TryActions />
-      <PlugsIn />
 
       {/* 04 · the impact */}
       <Transition chapter="ch-impact" text="What happens if every county catches up with the best?" hot={5} />

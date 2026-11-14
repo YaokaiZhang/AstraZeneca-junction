@@ -11,7 +11,7 @@ const SOURCES = [
   ['Kansallinen syöpästrategia 2026–2035 (National Cancer Strategy)', 'https://files.hackjunction.app/resources/Kansallinen_syopastrategia_2026_2035_FINAL.pdf'],
   ['Toimeenpanon tiekartta 2026–2031 (implementation roadmap)', 'https://files.hackjunction.app/resources/Kansallinen_syopastrategia_toimeenpanon_tiekartta_2026_2031.pdf'],
   ['Finnish Cancer Registry, bowel cancer screening programme: everyone aged 56–74 invited from 2031', 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/'],
-  ['Statistics Finland, population by age and language (vaerak/11rz), 2025, rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/'],
+  ['Statistics Finland, population by age and language (vaerak/11rz), 2025, rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/11rz.px/'],
 ]
 
 export interface Briefing {

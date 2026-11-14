@@ -129,12 +129,12 @@ export const SOURCES: Record<string, Source> = {
     years: '2024 round · published 20 May 2026', retrieved: PULLED,
   },
   statfinLang: {
-    id: 'statfinLang', name: 'Statistics Finland – population by age and language (vaerak/11rz)', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/',
+    id: 'statfinLang', name: 'Statistics Finland – population by age and language (vaerak/11rz)', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/11rz.px/',
     note: 'Residents by single year of age and mother tongue, by municipality, rolled up by us to wellbeing services counties. Used: residents aged 56–74 and the share of them whose mother tongue is not Finnish, Swedish or Sami. Open data, CC BY 4.0.',
     years: '2025', retrieved: PULLED,
   },
   statfinEdu: {
-    id: 'statfinEdu', name: 'Statistics Finland – education by age (vkour/12bq)', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vkour/statfin_vkour_pxt_12bq.px/',
+    id: 'statfinEdu', name: 'Statistics Finland – education by age (vkour/12bq)', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vkour/12bq.px/',
     note: 'Highest completed education by age, by municipality, rolled up by us to wellbeing services counties. Used: the basic, upper secondary and higher education shares at screening age. Open data, CC BY 4.0.',
     years: '2025', retrieved: PULLED,
   },

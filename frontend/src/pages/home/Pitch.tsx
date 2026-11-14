@@ -400,10 +400,22 @@ const VIEWS = [
 ]
 
 export function Views() {
-  const [i, setI] = useState(0)
+  // desktop: the section is pinned for three screens of scroll and each screen shows the next view
+  const [ref, p] = useScrollProgress<HTMLElement>()
+  const [tap, setTap] = useState(0)
+  const pinned = typeof window !== 'undefined' && window.innerWidth >= 1024
+  const i = pinned ? Math.min(VIEWS.length - 1, Math.floor(p * VIEWS.length)) : tap
   const v = VIEWS[i]
+  const go = (j: number) => {
+    setTap(j)
+    const el = ref.current
+    if (!pinned || !el) return
+    const top = el.getBoundingClientRect().top + scrollY
+    scrollTo({ top: top + ((j + 0.5) / VIEWS.length) * (el.offsetHeight - innerHeight), behavior: 'smooth' })
+  }
   return (
-    <section className={PAGE} aria-label="Three views">
+    <section ref={ref} className="relative lg:h-[300svh]" aria-label="Three views">
+      <div className={PAGE + ' lg:sticky lg:top-0 lg:h-[100svh] lg:min-h-0'}>
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
         <div className="min-w-0">
           <h2 className={H2}>
@@ -411,7 +423,7 @@ export function Views() {
           </h2>
           <div className="mt-8 lg:mt-[5svh] flex flex-wrap gap-2" role="tablist" aria-label="Views">
             {VIEWS.map((x, j) => (
-              <button key={x.k} type="button" role="tab" aria-selected={j === i} onClick={() => setI(j)}
+              <button key={x.k} type="button" role="tab" aria-selected={j === i} onClick={() => go(j)}
                 className={cx('font-type text-xs uppercase tracking-widest rounded-full px-4 py-2 border transition-colors', j === i ? 'bg-ink text-paper border-ink' : 'border-ink/30 hover:border-ink')}>
                 <span className="opacity-60 mr-2">{x.k}</span>{x.who}
               </button>
@@ -430,6 +442,11 @@ export function Views() {
         <div key={v.k} className="flex justify-center overflow-visible rise lg:min-h-[608px]">
           <Tilt max={10} className="max-w-full overflow-x-auto lg:overflow-visible py-6 px-2 self-center"><div className="float-y">{v.mock}</div></Tilt>
         </div>
+      </div>
+      {/* progress through the three views */}
+      <div className="hidden lg:flex absolute bottom-8 left-1/2 -translate-x-1/2 gap-2" aria-hidden>
+        {VIEWS.map((x, j) => <span key={x.k} className={cx('h-1 rounded-full transition-all duration-500', j === i ? 'w-10 bg-ink' : 'w-4 bg-ink/20')} />)}
+      </div>
       </div>
     </section>
   )
@@ -530,7 +547,7 @@ const CI_ROWS = [
 
 /** Scroll-scrubbed: the days tick by after a cough is logged; the app reaches out on schedule, the reply lands in the diary. */
 /** Plays itself while on screen: 21 days tick by in ~7 s, it holds on the result, then starts again. */
-const CI_PLAY_MS = 7000, CI_HOLD_MS = 3000
+const CI_PLAY_MS = 4800, CI_HOLD_MS = 1800
 function useLoopDay(on: boolean) {
   const [day, setDay] = useState(0)
   useEffect(() => {
@@ -575,14 +592,14 @@ export function CheckIns() {
                   <div className={cx('font-type text-sm uppercase tracking-widest mb-3', r.hot && 'text-terra')}>{r.who}</div>
                   <div className="relative flex justify-between items-center">
                     <div className="absolute inset-x-0 top-1/2 h-px bg-ink/15" />
-                    <div className="absolute left-0 top-1/2 h-px bg-ink" style={{ width: `${(day / CI_DAYS) * 100}%` }} />
+                    <div className="absolute inset-x-0 top-1/2 h-px bg-ink origin-left will-change-transform" style={{ transform: `scaleX(${day / CI_DAYS})` }} />
                     {Array.from({ length: CI_DAYS + 1 }, (_, d) => {
                       const due = d > 0 && d % r.every === 0
                       const past = day >= d
                       return due
-                        ? <span key={d} className={cx('relative w-5 h-5 rounded-full border-2 transition-all duration-300',
+                        ? <span key={d} className={cx('relative w-5 h-5 rounded-full border-2 transition-[transform,background-color,border-color] duration-500 ease-[cubic-bezier(.2,.7,.2,1)]',
                             past ? (r.hot ? 'bg-terra border-terra scale-110' : 'bg-ink border-ink scale-110') : 'bg-paper border-ink/30')} />
-                        : <span key={d} className={cx('relative w-1 h-1 rounded-full', past ? 'bg-ink' : 'bg-ink/20')} />
+                        : <span key={d} className={cx('relative w-1 h-1 rounded-full transition-colors duration-300', past ? 'bg-ink' : 'bg-ink/20')} />
                     })}
                   </div>
                 </div>
@@ -604,14 +621,14 @@ export function CheckIns() {
               <div className="absolute top-5 left-1/2 -translate-x-1/2 w-20 h-5 rounded-full bg-ink z-10" />
               <div className="relative h-full w-full rounded-[2.2rem] bg-paper paper-texture p-5 pt-12 flex flex-col gap-3">
                 <div className="text-center font-serif text-5xl lining-nums tabular-nums opacity-80">9:41</div>
-                <div className={cx('transition-all duration-500 rounded-2xl bg-ink text-paper p-4 shadow-lg', ping ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4')}>
+                <div className={cx('transition-[opacity,transform] duration-700 ease-[cubic-bezier(.2,.7,.2,1)] rounded-2xl bg-ink text-paper p-4 shadow-lg', ping ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4')}>
                   <div className="font-type text-sm uppercase tracking-widest text-mustard">Ajoissa</div>
                   <p key={two ? 2 : 1} className="mt-1 font-sans text-[15px] leading-snug">{two ? 'Hi, two weeks ago you mentioned a cough. Is it still there? Has anything changed?' : 'Hi, last week you mentioned a cough. How is it now?'}</p>
                 </div>
-                <div className={cx('self-end max-w-[85%] transition-all duration-500 rounded-2xl rounded-br-sm bg-mustard px-4 py-2.5 font-sans text-[15px] leading-snug', reply ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4')}>
+                <div className={cx('self-end max-w-[85%] transition-[opacity,transform] duration-700 ease-[cubic-bezier(.2,.7,.2,1)] rounded-2xl rounded-br-sm bg-mustard px-4 py-2.5 font-sans text-[15px] leading-snug', reply ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4')}>
                   Still there. Worse at night.
                 </div>
-                <div className={cx('mt-auto border-t border-ink/15 pt-3 transition-opacity duration-500', saved ? 'opacity-100' : 'opacity-0')}>
+                <div className={cx('mt-auto border-t border-ink/15 pt-3 transition-[opacity,transform] duration-700 ease-[cubic-bezier(.2,.7,.2,1)]', saved ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3')}>
                   <div className="label">Diary · day 16</div>
                   <p className="mt-1 font-serif text-xl leading-tight">Cough, worse at night</p>
                   <div className="mt-3 inline-block font-type text-sm uppercase tracking-widest text-terra border border-terra rounded-full px-3 py-1">→ See a doctor</div>

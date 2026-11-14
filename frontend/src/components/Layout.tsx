@@ -6,6 +6,7 @@ const NAV = [
   { to: '/patient', label: 'Patient', sub: 'Notice · track · ask' },
   { to: '/hospital', label: 'Hospital', sub: 'Who is falling behind' },
   { to: '/county', label: 'County', sub: 'Where people are lost' },
+  { to: '/monitor', label: 'Screening', sub: 'Chain · fixes · capacity' },
 ]
 
 export default function Layout() {
@@ -26,7 +27,7 @@ export default function Layout() {
           </div>
         </div>
 
-        <nav className="flex lg:flex-col gap-3 sm:gap-4 lg:gap-5 lg:mt-auto items-center lg:items-start">
+        <nav className="flex flex-wrap justify-end lg:flex-nowrap lg:justify-start lg:flex-col gap-x-3 gap-y-1 sm:gap-4 lg:gap-5 lg:mt-auto items-center lg:items-start">
           {NAV.map((n) => {
             const active = pathname.startsWith(n.to)
             return (

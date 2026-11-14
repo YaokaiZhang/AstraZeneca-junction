@@ -111,6 +111,19 @@ export const SOURCES: Record<string, Source> = {
     years: 'diagnosed 2006–2015', retrieved: PULLED,
     links: [{ label: 'Article (PMC)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8976396/' }],
   },
+  bowelScreening2024: {
+    id: 'bowelScreening2024', name: 'Finnish Cancer Registry – bowel cancer screening, 2024 round', url: 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html',
+    note: 'Annual screening statistics by wellbeing services county and by group (group data national only). Participation = valid kits returned ÷ invited. "No colonoscopy" may partly be private colonoscopies not reported to the register. Median months from positive test to colonoscopy read by eye from a chart (± 0.1 month).',
+    years: '2024 round · published 20 May 2026', retrieved: PULLED,
+  },
+  navMeta: {
+    id: 'navMeta', name: 'Interventions to raise colonoscopy after a positive stool test – meta-analysis (JAMA Intern Med 2026)', url: 'https://pubmed.ncbi.nlm.nih.gov/42832233/',
+    note: 'Risk ratios for completing colonoscopy: patient navigation 1.24, patient reminders 1.32, clinician reminders 1.36, automated referral 1.68. Mostly US settings. PMID 42832233.',
+  },
+  dougherty: {
+    id: 'dougherty', name: 'Dougherty et al. Interventions to raise colorectal screening uptake (JAMA Intern Med 2018)', url: 'https://pubmed.ncbi.nlm.nih.gov/30326005/',
+    note: 'Systematic review and meta-analysis: patient reminders RR 1.20 (about +3 points); patient navigation RR 2.01 from low US baselines; clinician reminders about +13 points (US). PMID 30326005.',
+  },
   ourModel: { id: 'ourModel', name: 'Our calculation', note: 'Method shown below. Inputs are the published sources named in it.' },
   waitGap: { id: 'waitGap', name: 'No public source', note: 'Finland publishes no referral-to-treatment waiting times for cancer.' },
   mentor: { id: 'mentor', name: 'AstraZeneca mentor interview' },

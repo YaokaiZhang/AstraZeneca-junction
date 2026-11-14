@@ -1,0 +1,106 @@
+// Section 1: the chain and where it leaks. Three steps against the national figure; people lost at each.
+import type { ReactNode } from 'react'
+import { Card, Label, SourceBadge, cx } from '../../components/ui'
+import { SCREENING_FI, type ScreeningRow } from './data'
+import { STEP_META, THRESHOLDS, flags, losses, n0, n1, type Step } from './model'
+
+const SRC = <SourceBadge id="bowelScreening2024" kind="direct" demo={false} />
+
+
+/** The one-sentence diagnosis at the top of the page. Built from the numbers only. */
+export function headline(r: ScreeningRow): ReactNode {
+  const f = flags(r)
+  const l = losses(r)
+  const parts: ReactNode[] = []
+  if (f.referral) parts.push(<><span className="italic text-terra">{n0(r.noColonoscopy)} people</span> tested positive and never had a colonoscopy.</>)
+  if (f.capacity) parts.push(<>{f.referral ? 'Those who did waited' : 'People who test positive wait'} <span className="italic text-terra">{n1(r.medianMonths)} months</span>, against {n1(SCREENING_FI.medianMonths)} nationally.</>)
+  if (f.detection) parts.push(<><span className="italic text-terra">{n0(l.detection.lost)}</span> of {n0(r.invited)} invited never sent the kit back.</>)
+  if (!parts.length) {
+    // nothing flagged: name the step furthest from the national figure
+    const gaps = [
+      { s: 'detection', g: (SCREENING_FI.participationPct - r.participationPct) / SCREENING_FI.participationPct },
+      { s: 'referral', g: (SCREENING_FI.colonoscopyOfPositivesPct - r.colonoscopyOfPositivesPct) / SCREENING_FI.colonoscopyOfPositivesPct },
+      { s: 'capacity', g: (r.medianMonths - SCREENING_FI.medianMonths) / SCREENING_FI.medianMonths },
+    ].sort((a, b) => b.g - a.g)[0]
+    return <>No step is below the line in {r.name}. {gaps.g > 0
+      ? <>Closest to it: <span className="italic">{STEP_META[gaps.s as Step].short.toLowerCase()}</span>, still {n0(gaps.s === 'detection' ? l.detection.lost : gaps.s === 'referral' ? r.noColonoscopy : l.capacity.lost)} people.</>
+      : <>Every step is at or better than the national figure.</>}</>
+  }
+  return <>{parts.map((p, i) => <span key={i}>{p} </span>)}</>
+}
+
+function Bar({ v, fi, line, max, invert }: { v: number; fi: number; line: number; max: number; invert?: boolean }) {
+  const pc = (x: number) => `${Math.min(100, (x / max) * 100)}%`
+  return (
+    <div className="relative h-2 rounded-full bg-black/10 mt-4 mb-6">
+      <div className="absolute inset-y-0 left-0 rounded-full bg-current opacity-90" style={{ width: pc(v) }} />
+      <div className="absolute -top-1.5 -bottom-1.5 w-px bg-current opacity-60" style={{ left: pc(fi) }} />
+      <span className="absolute top-3 -translate-x-1/2 font-type text-[13px] uppercase tracking-wider opacity-70 whitespace-nowrap" style={{ left: pc(fi) }}>FI</span>
+      <div className="absolute -top-1 -bottom-1 w-0 border-l border-dashed border-current opacity-50" style={{ left: pc(line) }} title={invert ? 'flag above this' : 'flag below this'} />
+    </div>
+  )
+}
+
+function StepCard({ step, r }: { step: Step; r: ScreeningRow }) {
+  const weak = flags(r)[step]
+  const l = losses(r)[step]
+  const m = STEP_META[step]
+  const fi = SCREENING_FI
+  const val = step === 'detection' ? r.participationPct : step === 'referral' ? r.colonoscopyOfPositivesPct : r.medianMonths
+  const nat = step === 'detection' ? fi.participationPct : step === 'referral' ? fi.colonoscopyOfPositivesPct : fi.medianMonths
+  const unit = step === 'capacity' ? 'months' : '%'
+  const lostText = step === 'detection' ? 'invited never returned the kit'
+    : step === 'referral' ? 'positives never had a colonoscopy'
+    : 'people waiting at any time (est.)'
+  const vsText = step === 'capacity' ? `more than a ${n1(fi.medianMonths)}-month wait would hold` : 'more than at the national rate'
+  return (
+    <Card tone={weak ? 'terra' : 'paper'} className="p-5 sm:p-6 flex flex-col min-w-0">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <Label className="!opacity-70">{m.n} · {m.who}</Label>
+          <p className="font-serif text-2xl leading-tight mt-1">{m.title}</p>
+        </div>
+        <span className={cx('font-type text-[13px] uppercase tracking-widest px-2 py-1 rounded-full border shrink-0', weak ? 'border-paper/60' : 'border-black/20 opacity-70')}>
+          {weak ? 'Leaks' : 'Holds'}
+        </span>
+      </div>
+      <p className="mt-4 font-serif text-6xl leading-none flex items-baseline gap-2">
+        {n1(val)}<span className="font-type text-sm opacity-70">{unit}</span>{SRC}
+      </p>
+      <p className="font-type text-sm uppercase tracking-wider opacity-75 mt-1">Finland {n1(nat)}{unit === '%' ? '%' : ' mo'}</p>
+      <Bar v={val} fi={nat} line={THRESHOLDS[step]} max={step === 'capacity' ? 4.5 : 100} invert={step === 'capacity'} />
+      <div className={cx('mt-auto pt-3 border-t', weak ? 'border-paper/30' : 'border-black/10')}>
+        <p className="font-serif text-3xl leading-none">{n0(l.lost)}</p>
+        <p className="font-sans text-[15px] leading-snug opacity-85 mt-1">{lostText}</p>
+        {l.vsNational >= 0.5 && <p className="font-type text-sm uppercase tracking-wider mt-2 opacity-90">{n0(l.vsNational)} {vsText}</p>}
+      </div>
+    </Card>
+  )
+}
+
+export function Chain({ r }: { r: ScreeningRow }) {
+  return (
+    <div>
+      <div className="grid md:grid-cols-3 gap-4 lg:gap-5 relative">
+        {(['detection', 'referral', 'capacity'] as Step[]).map((s) => <StepCard key={s} step={s} r={r} />)}
+      </div>
+      {/* the funnel, as counts */}
+      <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-2 font-type text-sm uppercase tracking-wider">
+        {[
+          [r.invited, 'invited'], [r.participated, 'returned kit'], [r.testPositive, 'tested positive'],
+          [r.colonoscopyDone, 'colonoscopy'], [r.cancers, 'cancers found'], [r.precursors, 'precursors found'],
+        ].map(([v, t], i) => (
+          <span key={t} className="flex items-baseline gap-2">
+            {i > 0 && <span className="opacity-40">{i === 5 ? '+' : '→'}</span>}
+            <span className="font-serif text-2xl normal-case tracking-normal">{n0(v as number)}</span>
+            <span className="opacity-70">{t}</span>
+          </span>
+        ))}
+        <span className="ml-1">{SRC}</span>
+      </div>
+      <p className="mt-2 font-sans text-[15px] opacity-70">
+        Red when kit return &lt; {THRESHOLDS.detection}%, colonoscopy after a positive test &lt; {THRESHOLDS.referral}%, or median wait &gt; {THRESHOLDS.capacity} months. Dashed tick = that line.
+      </p>
+    </div>
+  )
+}

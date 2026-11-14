@@ -10,7 +10,9 @@ npm install
 npm run dev
 ```
 
-Open the printed URL. Three pages: `#/patient`, `#/hospital`, `#/county`.
+Open the printed URL. Four pages: `#/patient`, `#/hospital`, `#/county`, `#/monitor`.
+
+`#/monitor` is the **Screening Chain Monitor**: bowel cancer screening (Cancer Registry, 2024 round) for every county, step by step: kit returned → colonoscopy after a positive test → wait for colonoscopy. Pick a county, see where it leaks and who is missed, apply proven fixes (effects from two meta-analyses), see what they do to colonoscopy demand (Little's law), and print a one-page action sheet. Data and formulas: `src/pages/monitor/data.ts` and `model.ts`. Opens on Helsinki; `#/monitor?c=pohjois-savo` opens another county.
 
 Everything runs in the browser (localStorage key `ajoissa-v1`). County figures are real published data: Finnish Cancer Registry cases, deaths and stage, Statistics Finland population and income, THL Sotkanet screening turnout, risk factors and waiting lists. Hospital patients and the moving map on the home page are simulated. Every number carries a source badge that says which. "Reset demo" in the sidebar clears everything.
 

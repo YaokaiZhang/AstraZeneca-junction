@@ -30,49 +30,48 @@ export const SOURCES: Record<string, Source> = {
   },
   cancerRegistryScreening: {
     id: 'cancerRegistryScreening', name: 'Finnish Cancer Registry – screening statistics', url: 'https://cancerregistry.fi/statistics/screening-statistics/',
-    note: 'Screening positivity and detection rates by programme.',
-  },
-  statfinDeaths: {
-    id: 'statfinDeaths', name: 'Statistics Finland – causes of death', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__ksyyt/',
-    note: 'Cancer deaths by wellbeing services county, 1969–2025 (table 13u5).',
+    note: 'Screening positivity and detection rates by programme (CC BY 4.0). Checked, not used for figures.',
+    years: 'yearly programme reports', retrieved: PULLED,
   },
   statfinPop: {
     id: 'statfinPop', name: 'Statistics Finland – population structure', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/',
-    note: 'Key figures by municipality (table 11ra): residents, share 65+, Swedish and foreign-language speakers.',
+    note: 'Key figures by municipality (table 11ra): residents, share 65+, Swedish and foreign-language speakers. Open data, CC BY 4.0.',
     years: '2024', retrieved: PULLED,
   },
   statfinProjection: {
     id: 'statfinProjection', name: 'Statistics Finland – population projection 2024', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaenn/',
-    note: 'Population by age and area (table 14wx). County = sum of its municipalities. A projection, not a count: it assumes today’s birth, death and migration trends continue.',
+    note: 'Population by age and area (table 14wx). County = sum of its municipalities. A projection, not a count: it assumes today’s birth, death and migration trends continue. Open data, CC BY 4.0.',
     years: '2025 and 2035', retrieved: PULLED,
   },
   statfinIncome: {
     id: 'statfinIncome', name: 'Statistics Finland – income distribution', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tjt/',
-    note: 'Median disposable income per consumption unit by municipality (table 14ww).',
+    note: 'Median disposable income per consumption unit by municipality (table 14ww). Open data, CC BY 4.0.',
     years: '2024', retrieved: PULLED,
   },
   sotkanetScreening: {
     id: 'sotkanetScreening', name: 'THL Sotkanet – screening turnout', url: SOTKANET('6103'),
-    note: 'Share of invited who attended: bowel 6103, breast 3621, cervical 3620. By municipality and county. The Strategy’s target is 80% in every county.',
+    note: 'Share of invited who attended: bowel 6103, breast 3621, cervical 3620. By municipality and county. The Strategy’s target is 80% in every county. Open data, CC BY 4.0; pulled once from the open API.',
     years: '2024', retrieved: PULLED, links: ind('6103', '3621', '3620'),
   },
   sotkanetRisk: {
     id: 'sotkanetRisk', name: 'THL Sotkanet – risk factors', url: SOTKANET('4404'),
-    note: 'Adults 20+, survey-based: daily smokers 4404, drinks too much (AUDIT-C) 4411, obesity BMI ≥ 30 4459, too little exercise 5527.',
+    note: 'Adults 20+, survey-based: daily smokers 4404, drinks too much (AUDIT-C) 4411, obesity BMI ≥ 30 4459, too little exercise 5527. Open data, CC BY 4.0; pulled once from the open API.',
     years: '2024', retrieved: PULLED, links: ind('4404', '4411', '4459', '5527'),
   },
   sotkanetQueue: {
     id: 'sotkanetQueue', name: 'THL Sotkanet – specialist waiting lists', url: SOTKANET('3336'),
-    note: 'Indicator 3336: patients who waited over 6 months for specialist care during the year, per 10 000 residents. All specialties, not cancer only. No full series for HUS-area counties and Helsinki.',
+    note: 'Indicator 3336: patients who waited over 6 months for specialist care during the year, per 10 000 residents. All specialties, not cancer only. No full series for HUS-area counties and Helsinki. Open data, CC BY 4.0.',
     years: '2022–2025', retrieved: PULLED,
   },
   thlSampo: {
     id: 'thlSampo', name: 'THL Sampo – specialist care waiting times', url: 'https://sampo.thl.fi/pivot/prod/fi/thl/hilmo/',
-    note: 'Waiting-time cubes for specialist care; not split by cancer.',
+    note: 'Waiting-time cubes for specialist care; not split by cancer. Checked, not used for figures.',
+    years: 'specialist care, all specialties', retrieved: PULLED,
   },
   nordcan: {
     id: 'nordcan', name: 'NORDCAN (IARC)', url: 'https://nordcan.iarc.fr/en',
-    note: 'Official 5-year relative survival for Finland and the other Nordic countries; not by county. The Strategy’s survival targets start from the 2023 NORDCAN level.',
+    note: 'Official 5-year relative survival for Finland and the other Nordic countries; not by county. The Strategy’s survival targets start from the 2023 NORDCAN level. Used under the IARC / NORDCAN terms of use (cite NORDCAN, no redistribution of the database).',
+    years: '2023 survival level', retrieved: PULLED,
   },
   plco: {
     id: 'plco', name: 'PLCOm2012 (Tammemägi et al., NEJM 2013)', url: 'https://doi.org/10.1056/NEJMoa1211776',
@@ -87,12 +86,14 @@ export const SOURCES: Record<string, Source> = {
   },
   strategy: {
     id: 'strategy', name: 'National Cancer Strategy 2026–2035', url: 'https://stm.fi/en/national-cancer-strategy',
-    note: '“Slightly under 38,000” new cancers and 13,300 cancer deaths a year. Targets by 2035: 80% screening turnout in every county, 70% of cancers found at stage I–II, 5-year survival +14 pts lung, +6 pancreas, +14 liver (Nordic level).',
-    links: [{ label: 'Ministry page', url: 'https://stm.fi/en/national-cancer-strategy' }, { label: 'English summary (PDF)', url: 'https://www.iccp-portal.org/sites/default/files/2026-02/National_Cancer_Strategy_2026-2035_Finland.pdf' }],
+    note: '“Slightly under 38,000” new cancers and 13,300 cancer deaths a year. Targets by 2035: 80% screening turnout in every county, 70% of cancers found at stage I–II, 5-year survival +14 percentage points lung, +6 pancreas, +14 liver (Nordic level). The English PDF is hosted on the ICCP portal, a mirror of the Ministry’s publication.',
+    years: '2026–2035 (published 2026)', retrieved: PULLED,
+    links: [{ label: 'Ministry page', url: 'https://stm.fi/en/national-cancer-strategy' }, { label: 'English summary (PDF, ICCP mirror)', url: 'https://www.iccp-portal.org/sites/default/files/2026-02/National_Cancer_Strategy_2026-2035_Finland.pdf' }],
   },
   screeningRules: {
     id: 'screeningRules', name: 'National screening programme ages', url: 'https://cancerregistry.fi/screening/',
     note: 'Breast 50–69 every 2 years; cervical 30–65 every 5 years. Bowel: target group 56–74 every 2 years, reached in 2031; it currently invites ages 60–70 and widens year by year.',
+    years: 'rules in force 2026', retrieved: PULLED,
   },
   ourModel: { id: 'ourModel', name: 'Our calculation', note: 'Method shown below. Inputs are the published sources named in it.' },
   waitGap: { id: 'waitGap', name: 'No public source', note: 'Finland publishes no referral-to-treatment waiting times for cancer.' },

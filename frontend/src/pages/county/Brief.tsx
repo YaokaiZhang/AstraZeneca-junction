@@ -49,6 +49,8 @@ const natGrowth = COUNTIES.reduce((s, c) => { const p = projection(c, 'all'); re
 export function buildBrief(c: County, k: RadarCancerId): BriefData {
   const natLate = national('lung', 'late')
   const lungLate = c.cancers.lung.lateShare
+  // like the radar: when the interval is wide or most stages are unknown, the spread share counts half
+  const lungLateW = metricValue(c, 'lung', 'late').wide ? 0.5 : 1
   const rad = radarFor(c, k)
   const lungRad = radarFor(c, 'lung')
   const weak = stepInfo(rad.weakest)
@@ -70,12 +72,12 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
 
   const actions: Action[] = [
     {
-      id: 'lung', score: (lungLate - natLate) / 0.03 + (c.smoking - NAT.smoking) / 1.5,
+      id: 'lung', score: ((lungLate - natLate) / 0.03) * lungLateW + (c.smoking - NAT.smoking) / 1.5,
       title: 'Lung CT screening pilot',
-      detail: `${fmt(lungRad.highRisk)} high-risk people ${RISK.lung.ages} · start with the self-check, then CT`,
-      why: `Late stage ${pct(lungLate)} vs FI ${pct(natLate)} · smoking ${c.smoking}% vs ${fmt(NAT.smoking, 1)}%`,
+      detail: `${fmt(lungRad.highRisk)} people ${RISK.lung.ages} at higher risk (rough) · self-check first, then CT`,
+      why: `Spread at diagnosis ${pct(lungLate)} vs FI ${pct(natLate)} · smoking ${c.smoking}% vs ${fmt(NAT.smoking, 1)}%`,
       gap: `Lung cancer found late: ${pct(lungLate)}`, stamp: 'Late lung', stages: ['Screening', 'Visit'],
-      badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how="Rule: spread share (non-localized, of known stage) above national + smoking above national. High-risk count from the detection radar (population 50–74 × smoking prevalence)." />,
+      badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how={`Rule: spread at diagnosis (non-localized share of cases with known stage) above national + smoking above national. Counts half when stage is unknown for most cases (here ${pct(c.cancers.lung.unknownStage)}) or the range is wide. People at higher risk: our rough heuristic from the detection radar (population 50–74 × smoking prevalence).`} />,
     },
     {
       id: 'remind', score: (natTurnout - turnout) / 2 + helpTowns.length * 0.8,
@@ -87,10 +89,10 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
     },
     {
       id: 'risk', score: rad.steps.risk.z! * 1.2,
-      title: 'Find the high-risk people',
-      detail: `${fmt(rad.highRisk)} ${RISK[k].who} at high risk for ${cancerLabel(k).toLowerCase()} · self-check in the app, then a doctor visit`,
-      why: `${pct(rad.steps.risk.v!)} of ${RISK[k].who} at risk vs FI ${pct(rad.steps.risk.nat!)}`,
-      gap: `Many at high risk: ${fmt(rad.highRisk)}`, stamp: 'Many at risk', stages: ['Screening', 'Visit'],
+      title: 'Reach people at higher risk',
+      detail: `${fmt(rad.highRisk)} ${RISK[k].who} at higher risk of ${cancerLabel(k).toLowerCase()} cancer (rough) · self-check in the app, then a doctor visit`,
+      why: `${pct(rad.steps.risk.v!)} of ${RISK[k].who} at higher risk vs FI ${pct(rad.steps.risk.nat!)}`,
+      gap: `Many at higher risk: ${fmt(rad.highRisk)}`, stamp: 'Many at risk', stages: ['Screening', 'Visit'],
       badge: stepBadge('risk', k, rad),
     },
     {
@@ -105,10 +107,10 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
     {
       id: 'fast', score: plFat / 0.04,
       title: 'Fast-track for vague symptoms',
-      detail: 'Direct CT referral from health centres for weight loss + new diabetes / jaundice',
-      why: `Pancreas + liver deaths÷cases ${plFat >= 0 ? '+' : '−'}${fmt(Math.abs(plFat) * 100, 0)} pts vs FI`,
-      gap: 'Pancreas & liver found too late', stamp: 'Fatal late', stages: ['Visit', 'Referral'],
-      badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how="Rule: Cancer Registry deaths ÷ cases 2020–24 above national for pancreas and liver." />,
+      detail: 'Health centres can order a CT scan straight away for weight loss with new diabetes, or jaundice',
+      why: `Pancreas and liver: ${plFat >= 0 ? '+' : '−'}${fmt(Math.abs(plFat) * 100, 0)} deaths per 100 cases vs FI`,
+      gap: 'More deaths per case than Finland', stamp: 'High fatality', stages: ['Visit', 'Referral'],
+      badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how="Rule: Cancer Registry deaths ÷ new cases 2020–24, pancreas and liver averaged, above the national figure. A stand-in for survival, not a measure of stage." />,
     },
     {
       id: 'dates', score: 1.2,
@@ -136,9 +138,9 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
       badge: stepBadge(rad.weakest, k, rad),
     },
     stats: [
-      { label: `High risk · ${cancerLabel(k)}`, value: fmt(rad.highRisk), badge: stepBadge('risk', k, rad) },
+      { label: `At higher risk · ${cancerLabel(k)}`, value: fmt(rad.highRisk), badge: stepBadge('risk', k, rad) },
       { label: 'Residents', value: fmt(c.population), badge: <SourceBadge id="statfinProjection" kind="direct" demo={false} how="Residents in 2025, population projection 2024 (table 14wx)" /> },
-      { label: 'Lung spread', value: pct(lungLate), badge: <SourceBadge id="cancerRegistry" kind="direct" demo={false} how={`Non-localized share of lung cases with known stage, 2021–25 (preliminary). Stage unknown for ${pct(c.cancers.lung.unknownStage)}.`} /> },
+      { label: 'Lung: spread at diagnosis', value: pct(lungLate), badge: <SourceBadge id="cancerRegistry" kind="direct" demo={false} how={`Non-localized share of lung cases with known stage, 2021–25 (preliminary). Stage unknown for ${pct(c.cancers.lung.unknownStage)}.`} /> },
       { label: 'Lung deaths / case', value: fmt(metricValue(c, 'lung', 'fatality').v, 2), badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how="Cancer Registry deaths ÷ new cases, 2020–24" /> },
       { label: 'Bowel turnout', value: `${c.bowelTurnout}%`, badge: <SourceBadge id="sotkanetScreening" kind="direct" demo={false} how="2024, share of invited who attended (Sotkanet 6103)" /> },
       { label: 'Cases 2035', value: `${growth >= 0 ? '+' : '−'}${pct(Math.abs(growth))}`, badge: <SourceBadge id="ourModel" kind="estimate" demo={false} how="Cancer Registry cases 2020–24 × the change in people under and over 75 to 2035 (Statistics Finland 14wx), all four cancers." /> },
@@ -158,14 +160,12 @@ export function Brief({ brief, county, print }: { brief: BriefData; county: Coun
       </div>
 
       <div className="mt-6">
-        <div className="grid grid-cols-7 gap-1">
+        <ol className="flex flex-wrap gap-1.5" aria-label="Where on the care pathway">
           {STRIP.map((s) => (
-            <div key={s} className="min-w-0">
-              <div className={cx('h-2 rounded-full', hot.has(s) ? 'bg-terra' : 'bg-black/10')} />
-              <p className={cx('font-type text-sm uppercase tracking-wide mt-1 truncate', hot.has(s) ? '' : 'opacity-70')}>{s}</p>
-            </div>
+            <li key={s} className={cx('font-type text-xs uppercase tracking-wide rounded-full px-2.5 py-1',
+              hot.has(s) ? 'bg-terra text-paper' : 'bg-black/[.06] opacity-70')}>{s}</li>
           ))}
-        </div>
+        </ol>
       </div>
 
       <div className="tear mt-6 pt-5">

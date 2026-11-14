@@ -19,8 +19,8 @@ export function stepBadge(s: StepId, k: RadarCancerId, row?: RadarRow) {
   const pooled = POOL_YEARS[k] > 1 ? ` Counts pooled over ${POOL_YEARS[k]} years.` : ''
   const R = RISK[k]
   if (s === 'risk') return (
-    <SourceBadge id="sotkanetRisk" kind="estimate" demo={false}
-      how={<>high-risk people = residents 2025 (Statistics Finland 14wx) × share who are {R.who} × prevalence of {R.factor} (THL Sotkanet 2024). The county prevalence is applied to the age band as is. Age-band shares and multipliers in the recipe are our rough assumptions, not published figures.{row ? <><br /><br />{fmt(row.bandPop)} × {pct(row.steps.risk.v!, 1)} = {fmt(row.highRisk)}</> : null}</>} />
+    <SourceBadge id="ourModel" kind="estimate" demo={false}
+      how={<>Our own rough heuristic, not validated. People at higher risk = residents 2025 (Statistics Finland 14wx) × share who are {R.who} × prevalence of {R.factor} (THL Sotkanet 2024, adults 20+). The county prevalence is applied to the age band as is; the age-band shares and multipliers are our assumptions, not published figures.{row ? <><br /><br />{fmt(row.bandPop)} × {pct(row.steps.risk.v!, 1)} = {fmt(row.highRisk)}</> : null}</>} />
   )
   if (s === 'screen') {
     const p = PROGRAMMES.find((x) => x.id === row?.programme || x.id === k)
@@ -33,7 +33,7 @@ export function stepBadge(s: StepId, k: RadarCancerId, row?: RadarRow) {
     const range = st && st.lo != null && f ? ` 95% range ${formatStep(s, st.lo)}–${formatStep(s, st.hi!)} (Wilson interval on ${fmt(f.stageKnown)} cases with known stage).` : ''
     const unk = f ? ` Stage unknown for ${pct(f.unknownStage)} here${f.unknownStage > UNKNOWN_MAX ? ', so this step counts half' : ''}.` : ''
     const hidden = f?.stageHidden ? ' A count of 1–4 is hidden by the Registry and taken as 2.5.' : ''
-    return <SourceBadge id="cancerRegistry" kind="direct" demo={false} how={`Share that had spread beyond the organ at diagnosis (non-localized), of cases with known stage, 2021–25 preliminary statistics. Not the same as stage III–IV.${unk}${hidden} Extra late vs FI = cases × (county share − FI share).${range}`} />
+    return <SourceBadge id="cancerRegistry" kind="direct" demo={false} how={`Share that had spread beyond the organ at diagnosis (non-localized), of cases with known stage, 2021–25 preliminary statistics. Not the same as stage III–IV.${unk}${hidden} Extra late vs FI = yearly cases with known stage × (county share − FI share); cases with unknown stage are left out.${range}`} />
   }
   const range = st && st.lo != null && f ? ` 95% range ${formatStep(s, st.lo)}–${formatStep(s, st.hi!)} (Poisson interval on ${fmt(f.deaths * POOL_YEARS[k])} deaths).` : ''
   return <SourceBadge id="ourModel" kind="estimate" demo={false} how={`Cancer deaths ÷ new cases, Cancer Registry 2020–24. Survival stand-in: official survival exists only for 5 large regions.${pooled}${range}`} />
@@ -91,7 +91,7 @@ export function Radar({ countyId, radarCancer: k, setRadarCancer, openBrief, sel
                 <>
                   <span className="block text-mustard text-sm">Weakest: {stepInfo(r.weakest).n} · {stepInfo(r.weakest).label}</span>
                   {by !== 'weakest' && <span className="block">{stepInfo(by).label}: {formatStep(by, r.steps[by].v)}{rangeText(by, r.steps[by]) ? ` (${rangeText(by, r.steps[by])})` : ''}</span>}
-                  <span className="block">{fmt(r.highRisk)} high-risk</span>
+                  <span className="block">{fmt(r.highRisk)} at higher risk (rough)</span>
                   <span className="block">{fmt(figures(r.c, k).cases * POOL_YEARS[k])} cases {pooled ? '(5 yrs)' : '/ yr'}</span>
                 </>
               )
@@ -151,14 +151,14 @@ const tileLabel = (s: StepId, v: number | null) => (v == null ? '' : s === 'surv
 function lostLine(s: StepId, x: number | null): string | null {
   if (x == null || Math.round(x) < 1) return null
   const n = fmt(Math.round(x))
-  return s === 'risk' ? `+${n} people vs FI rate`
+  return s === 'risk' ? `+${n} people at higher risk vs FI rate`
     : s === 'screen' ? `+${n} missed vs FI rate`
     : s === 'late' ? `+${n} late a year vs FI rate`
     : `+${n} deaths a year vs FI rate`
 }
 
 const HEADLINE: Record<StepId, [string, string]> = {
-  risk: ['Too many', 'at high risk'],
+  risk: ['Many people', 'at higher risk'],
   screen: ['Too few', 'get screened'],
   late: ['Too many', 'found late'],
   survival: ['Too few', 'survive'],
@@ -226,7 +226,7 @@ function Funnel({ row, k }: { row: RadarRow; k: RadarCancerId }) {
   )
 }
 
-/** Town drill-down: the two steps that exist at town level (high-risk estimate and turnout). */
+/** Town drill-down: the two steps that exist at town level (people at higher risk and turnout). */
 const TOWN_ROWS = 10
 
 function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
@@ -261,7 +261,7 @@ function Towns({ row, k }: { row: RadarRow; k: RadarCancerId }) {
 
       <div className={cx('mt-3 grid gap-2 sm:gap-3 px-1 pb-2 border-b border-black/10 font-type text-sm uppercase tracking-wider opacity-70 items-center', cols)}>
         <span />
-        <span className="flex items-center gap-1 whitespace-nowrap">High risk {stepBadge('risk', k)}</span>
+        <span className="flex items-center gap-1 whitespace-nowrap">At risk {stepBadge('risk', k)}</span>
         {prog && (
           <>
             <span className="flex items-center gap-1 min-w-0"><span className="truncate">Turnout</span>{stepBadge('screen', k, row)}</span>

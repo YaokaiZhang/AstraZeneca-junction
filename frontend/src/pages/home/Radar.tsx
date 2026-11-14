@@ -2,6 +2,8 @@ import { useMemo, type ReactNode } from 'react'
 import { Card, EdgeText, Label, SourceBadge, Stamp, cx } from '../../components/ui'
 import { useScrollProgress } from './reveal'
 import { tr } from '../patient/i18n'
+import { FINLAND } from '../../data/counties'
+import { REAL_RANGE, fmt, rangeTowns, topExcess } from '../county/model'
 
 /* ───────────── detection radar (sticky, scroll-driven) ─────────────
    01 a person answers a few questions → 02 the sweep picks out high risk →
@@ -15,7 +17,7 @@ const PHASES: { a: string; b: string; lede: ReactNode }[] = [
   },
   {
     a: 'The radar', b: 'picks out risk.',
-    lede: <>Lung risk comes from PLCOm2012, a published model <SourceBadge id="plco" kind="direct" demo={false} />. Bowel, breast and cervical combine Cancer Registry rates with published risk ratios, labelled Estimate <SourceBadge id="ourModel" kind="estimate" demo={false} how={tr('en', 'how.estimate')} />.</>,
+    lede: <>Lung risk comes from a published lung-risk model <SourceBadge id="plco" kind="estimate" demo={false} how="PLCOm2012 (Tammemägi et al. 2013), applied to the answers the person typed in. Built on US trial data; not validated in Finland." />. Bowel, breast and cervical combine Cancer Registry rates with published risk ratios <SourceBadge id="ourModel" kind="estimate" demo={false} how={tr('en', 'how.estimate')} />.</>,
   },
   {
     a: 'A next step.', b: 'Never a score.',
@@ -27,7 +29,7 @@ const PHASES: { a: string; b: string; lede: ReactNode }[] = [
   },
   {
     a: 'Same test,', b: 'very uneven turnout.',
-    lede: <>In 2024, the share of invited people who took part in screening varied widely from town to town. The radar shows each county where its turnout leaks <SourceBadge id="sotkanetScreening" kind="direct" demo={false} />.</>,
+    lede: <>In 2024, the share of invited people who took part varied widely from town to town.</>,
   },
 ]
 
@@ -70,13 +72,22 @@ const FUNNEL = [
   { k: 'Survival', v: 31, drop: '−7 deaths' },
 ]
 
-const TURNOUT = [
-  { k: 'Bowel', lo: 59.5, hi: 82.4, n: '292 towns' },
-  { k: 'Breast', lo: 68.1, hi: 92.5 },
-  { k: 'Cervical', lo: 45.7, hi: 92.3 },
-]
+const TURNOUT = (['bowel', 'breast', 'cervical'] as const).map((p) => ({
+  k: p[0].toUpperCase() + p.slice(1), lo: REAL_RANGE[p][0], hi: REAL_RANGE[p][1], towns: rangeTowns(p), n: p === 'bowel' ? '292 towns' : undefined,
+}))
 const AX = (v: number) => ((v - 40) / 60) * 100 // axis 40–100 %
-const fi = (v: number) => v.toFixed(1).replace('.', ',')
+const f1 = (v: number) => fmt(v, 1)
+
+/* second real finding: the county with the most cervical cancers above expected */
+const CERV = topExcess('cervical')
+const cervLine = CERV && (() => {
+  const t = CERV.c.cervicalTurnout, n = FINLAND.cervicalTurnout
+  return {
+    text: `${CERV.c.name}: ${fmt(CERV.v, 1)}× the expected cervical cancers`,
+    sub: t >= n ? 'even though its turnout is above average' : 'and its turnout is below average',
+    how: `Cancer Registry cases 2020–24 pooled ÷ cases expected at national age rates: ${fmt(CERV.v, 2)} (95% range ${fmt(CERV.lo, 2)}–${fmt(CERV.hi, 2)}, ${fmt(CERV.n)} cases). Cervical screening turnout 2024 ${f1(t)}% vs Finland ${f1(n)}% (Sotkanet 3620). Turnout alone does not explain it; follow-up of abnormal results and HPV are not in the open data.`,
+  }
+})()
 
 export function Radar() {
   const [ref, p] = useScrollProgress<HTMLElement>()
@@ -246,7 +257,7 @@ export function Radar() {
             <div className="w-full">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-type text-xs uppercase tracking-widest opacity-70">2024 turnout · lowest → highest town</span>
-                <SourceBadge id="sotkanetScreening" kind="direct" demo={false} />
+                <SourceBadge id="sotkanetScreening" kind="estimate" demo={false} how={`Lowest and highest town in 2024, ${TURNOUT.map((r) => `${r.k.toLowerCase()} ${r.towns.lo.name} ${f1(r.lo)}% – ${r.towns.hi.name} ${f1(r.hi)}%`).join('; ')}. The extremes are small towns. Gap = highest − lowest.`} />
               </div>
               <div className="mt-4 lg:mt-6 space-y-4 lg:space-y-9">
                 {TURNOUT.map((r, i) => {
@@ -255,7 +266,7 @@ export function Radar() {
                     <div key={r.k}>
                       <div className="flex items-baseline justify-between gap-2">
                         <span className={cx('font-serif text-2xl lg:text-3xl leading-none', wide && 'italic text-terra')}>{r.k}</span>
-                        <span className="font-type text-[13px] tabular-nums">{fi(r.lo)}–{fi(r.hi)} %</span>
+                        <span className="font-type text-[13px] tabular-nums">{f1(r.lo)}–{f1(r.hi)}%</span>
                       </div>
                       <div className="relative mt-2 lg:mt-3 h-6">
                         <div className="absolute inset-x-0 top-1/2 h-px bg-ink/20" />
@@ -267,7 +278,7 @@ export function Radar() {
                         ))}
                       </div>
                       <div className={cx('mt-1 font-type text-[11px] uppercase tracking-widest transition-opacity duration-500', wide ? 'text-terra' : 'opacity-50', phase === 4 ? '' : 'opacity-0')} style={{ transitionDelay: wide ? '1400ms' : '0ms' }}>
-                        {wide ? `${fi(r.hi - r.lo)} points apart` : r.n ?? '\u00a0'}
+                        {wide ? `${f1(r.hi - r.lo)} points apart` : r.n ?? '\u00a0'}
                       </div>
                     </div>
                   )
@@ -278,6 +289,12 @@ export function Radar() {
                   <span key={v} className="absolute -translate-x-1/2" style={{ left: `${AX(v)}%` }}>{v}%</span>
                 ))}
               </div>
+              {cervLine && (
+                <div className={cx('mt-6 lg:mt-10 border-t border-ink/15 pt-3 transition-opacity duration-700', phase === 4 ? 'opacity-100' : 'opacity-0')} style={{ transitionDelay: phase === 4 ? '1600ms' : '0ms' }}>
+                  <p className="font-serif text-xl lg:text-2xl leading-tight flex flex-wrap items-center gap-2">{cervLine.text} <SourceBadge id="cancerRegistry" kind="estimate" demo={false} how={cervLine.how} /></p>
+                  <p className="mt-1 font-type text-xs uppercase tracking-widest opacity-60">{cervLine.sub}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

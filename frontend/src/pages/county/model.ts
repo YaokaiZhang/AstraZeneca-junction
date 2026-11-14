@@ -1,5 +1,5 @@
 // County-page calculations. Pure functions over COUNTIES so every tab and the brief agree.
-import type { Programme } from './towns'
+import { TOWNS, type Programme } from './towns'
 import { CANCERS, COUNTIES, FINLAND, SCREEN_CANCERS, type CancerFigures, type CancerId, type County, type RadarCancerId } from '../../data/counties'
 
 export type Metric = 'ratio' | 'late' | 'fatality'
@@ -152,7 +152,7 @@ export function baseRecords(c: County) {
 // ---------- 3.1 detection radar: follow people along four steps ----------
 export type StepId = 'risk' | 'screen' | 'late' | 'survival'
 export const STEPS: { id: StepId; n: number; label: string; short: string; stamp: string; worse: string }[] = [
-  { id: 'risk', n: 1, label: 'At risk', short: 'Risk', stamp: 'Many at risk', worse: 'more high-risk people' },
+  { id: 'risk', n: 1, label: 'At risk', short: 'Risk', stamp: 'Many at risk', worse: 'more people at higher risk' },
   { id: 'screen', n: 2, label: 'Screened', short: 'Screen', stamp: 'Low turnout', worse: 'fewer take part' },
   { id: 'late', n: 3, label: 'Found late', short: 'Late', stamp: 'Found late', worse: 'more found after spread' },
   { id: 'survival', n: 4, label: 'Survival', short: 'Survival', stamp: 'Few survive', worse: 'more deaths per new case' },
@@ -163,12 +163,40 @@ export const stepInfo = (s: StepId) => STEPS.find((x) => x.id === s)!
 export const PROGRAMME_OF: Partial<Record<RadarCancerId, Programme>> = { bowel: 'bowel', breast: 'breast', cervical: 'cervical' }
 export const turnoutOf = (c: County, p: Programme) =>
   p === 'bowel' ? c.bowelTurnout : p === 'breast' ? c.breastTurnout : c.cervicalTurnout
-/** Real 2024 municipal turnout ranges (THL Sotkanet 6103, 3621, 3620), 292 towns. */
-export const REAL_RANGE: Record<Programme, [number, number]> = { bowel: [59.5, 82.4], breast: [68.1, 92.5], cervical: [45.7, 92.3] }
+/** Real 2024 municipal turnout ranges (THL Sotkanet 6103, 3621, 3620): lowest and highest of the 292 towns. */
+const townRange = (p: Programme): [number, number] => {
+  const v = TOWNS.map((t) => t.turnout[p])
+  return [Math.min(...v), Math.max(...v)]
+}
+export const REAL_RANGE: Record<Programme, [number, number]> = { bowel: townRange('bowel'), breast: townRange('breast'), cervical: townRange('cervical') }
+/** Lowest and highest town by turnout, for the badge. */
+export function rangeTowns(p: Programme) {
+  const s = [...TOWNS].sort((a, b) => a.turnout[p] - b.turnout[p])
+  return { lo: s[0], hi: s[s.length - 1] }
+}
+
+// ---------- headline findings, computed from the Registry so the home page never hardcodes them ----------
+export interface SpreadPoint { c: County; v: number; lo: number; hi: number; n: number; unknown: number }
+/** Highest and lowest county share found after spread, among counties where stage is known for at least half. */
+export function spreadContrast(k: RadarCancerId) {
+  const pts: SpreadPoint[] = COUNTIES.filter((c) => figures(c, k).unknownStage <= UNKNOWN_MAX).map((c) => {
+    const f = figures(c, k)
+    const [lo, hi] = wilson(f.lateShare, f.stageKnown)
+    return { c, v: f.lateShare, lo, hi, n: f.stageKnown, unknown: f.unknownStage }
+  }).sort((a, b) => b.v - a.v)
+  return { worst: pts[0], best: pts[pts.length - 1], nat: national(k, 'late'), counted: pts.length }
+}
+/** County with the most cases above expected (lower 95% bound above 1), pooled years. */
+export function topExcess(k: RadarCancerId) {
+  return COUNTIES.map((c) => ({ c, ...metricValue(c, k, 'ratio') }))
+    .filter((r) => r.lo > 1).sort((a, b) => b.v - a.v)[0] ?? null
+}
+/** Number of counties where stage is missing for most cases. */
+export const unknownMajority = (k: RadarCancerId) => COUNTIES.filter((c) => figures(c, k).unknownStage > UNKNOWN_MAX).length
 
 /**
- * Who counts as high risk, per cancer: an age band (share of residents), a sex share and a risk-factor
- * prevalence (% of that band). Rough recipes of our own; the badge shows the formula.
+ * Who counts as at higher risk, per cancer: an age band (share of residents), a sex share and a risk-factor
+ * prevalence (% of that band). Rough heuristics of our own, not validated; the badge shows the formula.
  */
 export const RISK: Record<RadarCancerId, { ages: string; who: string; band: (c: County) => number; sex: number; prev: (c: County) => number; factor: string }> = {
   lung: { ages: '50–74', who: 'people 50–74', band: (c) => c.share50to74, sex: 1, prev: (c) => c.smoking * 1.5, factor: 'smoking now or quit < 15 yrs (smoking % × 1.5)' },
@@ -186,7 +214,7 @@ export interface StepValue {
   nat: number | null
   /** standardised badness vs other counties (positive = worse than average) */
   z: number | null
-  /** people lost compared with the Finnish rate, per year (or per screening round) */
+  /** people lost compared with the Finnish rate, per year (or per screening round); found late: of yearly cases with known stage */
   excess: number | null
   wide: boolean
   /** 95% range for the steps built on small counts (found late, survival) */
@@ -204,6 +232,8 @@ export interface RadarRow {
   weakZ: number
 }
 
+/** Stage counts are 5-year totals (2021–25). */
+const STAGE_YEARS = 5
 const cache = new Map<RadarCancerId, RadarRow[]>()
 
 export function radar(k: RadarCancerId): RadarRow[] {
@@ -247,7 +277,7 @@ export function radar(k: RadarCancerId): RadarRow[] {
         ? { id: 'screen', v: b.turnout, nat: nat.screen, z: zScreen![i], excess: b.bandPop * (nat.screen! - b.turnout!), wide: false }
         : { id: 'screen', v: null, nat: null, z: null, excess: null, wide: false },
       // fade noisy small counts: they still show, but a wide interval halves their pull on "weakest"
-      late: { id: 'late', v: b.late.v, nat: nat.late, z: zLate[i] * (b.late.wide ? 0.5 : 1), excess: b.f.cases * (b.late.v - nat.late), wide: b.late.wide, lo: b.late.lo, hi: b.late.hi },
+      late: { id: 'late', v: b.late.v, nat: nat.late, z: zLate[i] * (b.late.wide ? 0.5 : 1), excess: (b.f.stageKnown / STAGE_YEARS) * (b.late.v - nat.late), wide: b.late.wide, lo: b.late.lo, hi: b.late.hi },
       survival: { id: 'survival', v: b.dc.v, nat: nat.survival, z: zDc[i] * (b.dc.wide ? 0.5 : 1), excess: b.f.cases * (b.dc.v - nat.survival), wide: b.dc.wide, lo: b.dc.lo, hi: b.dc.hi },
     }
     let weakest: StepId = 'risk', weakZ = -Infinity
@@ -278,7 +308,7 @@ export function excessText(s: StepId, x: number | null) {
   if (x == null) return ''
   const n = Math.round(Math.abs(x))
   if (n === 0) return 'same as FI rate'
-  const unit = s === 'risk' ? 'high-risk' : s === 'screen' ? 'missed' : s === 'late' ? 'late / yr' : 'deaths / yr'
+  const unit = s === 'risk' ? 'at higher risk' : s === 'screen' ? 'missed' : s === 'late' ? 'late / yr' : 'deaths / yr'
   return `${x > 0 ? '+' : '−'}${fmt(n)} ${unit} vs FI rate`
 }
 
@@ -286,7 +316,7 @@ export function excessText(s: StepId, x: number | null) {
 export function weakestSentence(r: RadarRow, k: RadarCancerId) {
   const s = r.steps[r.weakest]
   const lbl = cancerLabel(k)
-  if (r.weakest === 'risk') return `${lbl}: ${pct(s.v!)} of ${RISK[k].who} at high risk vs FI ${pct(s.nat!)}`
+  if (r.weakest === 'risk') return `${lbl}: ${pct(s.v!)} of ${RISK[k].who} at higher risk vs FI ${pct(s.nat!)}`
   if (r.weakest === 'screen') return `${lbl} screening turnout ${pct(s.v!, 1)} vs FI ${pct(s.nat!, 1)}`
   if (r.weakest === 'late') return `${lbl} found late: ${pct(s.v!)} had spread (of known stage) vs FI ${pct(s.nat!)}`
   return `${lbl}: ${fmt(s.v!, 2)} deaths per new case vs FI ${fmt(s.nat!, 2)}`

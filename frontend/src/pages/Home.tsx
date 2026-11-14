@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, SourceBadge, TextRing } from '../components/ui'
-import { Actions, CheckIns, Clock, Marquee, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
+import { Actions, CheckIns, Clock, Privacy, ThreeDates, TooLate, Transparency, Views } from './home/Pitch'
 import { WordsUp, useScrollProgress } from './home/reveal'
 import { Radar } from './home/Radar'
-import FinlandCanvas, { HOSPITALS, type Hover, type Tally } from './home/FinlandCanvas'
+import FinlandCanvas, { type Hover } from './home/FinlandCanvas'
+import { pct, spreadContrast } from './county/model'
+
+/** Hero stat: breast cancer found after spread, highest vs lowest county (Cancer Registry). */
+const BREAST = spreadContrast('breast')
 
 const CARDS = [
   { to: '/patient', tone: 'mustard' as const, a: 'For the', b: 'patient', k: '01', tilt: -2 },
@@ -48,7 +52,7 @@ function Bridge() {
   const line = Math.min(1, p / 0.25)
   const words = Math.max(0, (p - 0.2) / 0.6) * BRIDGE.length
   return (
-    <section ref={ref} className="relative h-[200svh]">
+    <section ref={ref} className="relative h-[140svh]">
       <div className="sticky top-0 h-[100svh] flex flex-col items-center justify-center px-5 overflow-hidden">
         <div className="w-px h-[18svh] bg-terra origin-top" style={{ transform: `scaleY(${line})` }} />
         <div className="mt-3 w-2 h-2 rounded-full bg-terra transition-opacity duration-300" style={{ opacity: line >= 1 ? 1 : 0 }} />
@@ -85,21 +89,18 @@ function Ecg() {
 
 export default function Home() {
   const [hover, setHover] = useState<Hover>(null)
-  const [tally, setTally] = useState<Tally>({ onTime: 0, late: 0 })
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [scroll, setScroll] = useState(0)
   const stage = useRef<HTMLDivElement>(null)
-  const cases = useCountUp(38000)
-  const gap = useCountUp(466, 1800, 900)
+  const { worst, best } = BREAST
+  const hi = useCountUp(Math.round(worst.v * 100))
+  const lo = useCountUp(Math.round(best.v * 100), 1800, 900)
 
   useEffect(() => {
     const on = () => setScroll(Math.min(1, scrollY / innerHeight))
     addEventListener('scroll', on, { passive: true })
     return () => removeEventListener('scroll', on)
   }, [])
-
-  const total = tally.onTime + tally.late
-  const latePct = total ? Math.round((tally.late / total) * 100) : 0
 
   return (
     <div className="relative overflow-x-clip">
@@ -130,15 +131,23 @@ export default function Home() {
               <span className="block hero-in" style={{ animationDelay: '.3s' }}>found <RotatingWord /></span>
             </h1>
 
-            <div className="mt-8 lg:mt-[5svh] flex flex-wrap gap-x-8 lg:gap-x-12 gap-y-6 hero-in" style={{ animationDelay: '.5s' }}>
-              <div>
-                <div className="font-serif text-4xl lg:text-6xl lining-nums tabular-nums leading-none"><span className="text-3xl align-top">≈ </span>{cases.toLocaleString('fi-FI')}</div>
-                <div className="mt-2 flex items-center gap-2"><Label>new cancers a year</Label><SourceBadge id="strategy" kind="direct" demo={false} how="“Slightly under 38,000” new cancers a year, all sites (National Cancer Strategy 2026–2035)." /></div>
+            <div className="mt-8 lg:mt-[5svh] hero-in" style={{ animationDelay: '.5s' }}>
+              <Label>Breast cancers found after spreading</Label>
+              <div className="mt-3 flex items-end gap-5 lg:gap-7">
+                <div>
+                  <div className="font-serif text-5xl lg:text-7xl leading-none lining-nums tabular-nums text-terra">{hi}<span className="text-3xl">%</span></div>
+                  <div className="mt-2 font-serif italic text-lg lg:text-xl">{worst.c.name}</div>
+                </div>
+                <span className="pb-9 lg:pb-10 font-serif italic text-2xl opacity-50">vs</span>
+                <div>
+                  <div className="font-serif text-5xl lg:text-7xl leading-none lining-nums tabular-nums">{lo}<span className="text-3xl">%</span></div>
+                  <div className="mt-2 font-serif italic text-lg lg:text-xl flex items-center gap-2">{best.c.name}
+                    <SourceBadge id="cancerRegistry" kind="direct" demo={false}
+                      how={`Non-localized share of breast cancers with known stage, 2021–25 preliminary statistics. ${worst.c.name} ${pct(worst.v)} (95% range ${pct(worst.lo)}–${pct(worst.hi)}; stage unknown for ${pct(worst.unknown)}, close to half). ${best.c.name} ${pct(best.v)} (${pct(best.lo)}–${pct(best.hi)}; unknown ${pct(best.unknown)}). Finland ${pct(BREAST.nat)}.`} />
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="font-serif text-4xl lg:text-6xl lining-nums tabular-nums leading-none">{(gap / 10).toFixed(1).replace('.', ',')}<span className="text-3xl"> pts</span></div>
-                <div className="mt-2 flex items-center gap-2"><Label>cervical screening turnout gap between towns</Label><SourceBadge id="sotkanetScreening" kind="direct" demo={false} /></div>
-              </div>
+              <p className="mt-5 max-w-md font-sans text-base lg:text-lg leading-snug opacity-75">Ajoissa shows each county where people are lost, and what to do next.</p>
             </div>
 
             <div className="mt-8 lg:mt-[4svh] flex flex-wrap gap-3 hero-in" style={{ animationDelay: '.65s' }}>
@@ -164,21 +173,7 @@ export default function Home() {
             </div>
             <div className="absolute inset-0 transition-transform duration-300 ease-out"
               style={{ transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(${1 - scroll * 0.08})`, transformStyle: 'preserve-3d' }}>
-              <FinlandCanvas className="absolute inset-0 w-full h-full cursor-none" onHover={setHover} onTally={setTally} />
-            </div>
-
-            {/* live tally */}
-            <div className="hidden lg:block absolute left-0 bottom-28 z-10 pointer-events-none hero-in" style={{ animationDelay: '1.4s' }}>
-              <Card tone="paper" tilt={-3} className="p-4 pr-6 w-52 border border-ink/10 bg-paper/90 backdrop-blur-sm">
-                <Label>Simulated · {HOSPITALS.length} hospitals</Label>
-                <div className="mt-3 flex items-end justify-between font-serif">
-                  <div><div className="text-3xl leading-none lining-nums tabular-nums">{tally.onTime}</div><div className="label mt-1 !opacity-80 flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-mustard inline-block" />on time</div></div>
-                  <div className="text-right"><div className="text-3xl leading-none lining-nums tabular-nums text-terra">{tally.late}</div><div className="label mt-1 !opacity-80 flex items-center gap-1 justify-end"><i className="w-2 h-2 rounded-full bg-terra inline-block" />late</div></div>
-                </div>
-                <div className="mt-3 h-1.5 rounded-full bg-mustard overflow-hidden flex justify-end">
-                  <div className="h-full bg-terra transition-all duration-500" style={{ width: `${latePct}%` }} />
-                </div>
-              </Card>
+              <FinlandCanvas className="absolute inset-0 w-full h-full cursor-none" onHover={setHover} />
             </div>
 
             {/* lens readout */}
@@ -200,14 +195,11 @@ export default function Home() {
         <a href="#doors" className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
       </section>
 
+      <TooLate />
       <Bridge />
       <Clock />
-      <TooLate />
       <Radar />
-      <Marquee words={['notice', 'track', 'ask', 'escalate', 'find']} reverse />
       <Views />
-      <CheckIns />
-      <Privacy />
       <ThreeDates />
       <Actions />
       <Transparency />
@@ -235,6 +227,10 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* for patients: how the app behaves day to day */}
+      <CheckIns />
+      <Privacy />
     </div>
   )
 }

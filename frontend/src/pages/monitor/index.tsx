@@ -1,7 +1,7 @@
 // Screening Chain Monitor. Bowel cancer screening, every county, every step of the chain:
 // Detection (patient) → Referral (primary care) → Diagnosis (specialist care).
 // Pick a county → see where it leaks → apply proven fixes → see what they do to colonoscopy capacity.
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { Btn, Display, Drawer, KindLegend, Label, Picker, SourceBadge, cx } from '../../components/ui'
@@ -50,6 +50,8 @@ export default function MonitorPage() {
   const [plan, setPlan] = useState<Plan>(EMPTY_PLAN)
   const [sheet, setSheet] = useState(false)
   const [evidence, setEvidence] = useState(false)
+  // a plan is sized for one county's volumes: start fresh when the county changes
+  useEffect(() => { setPlan(EMPTY_PLAN) }, [countyId])
   const openEvidence = (id: string) => {
     setEvidence(true)
     setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)

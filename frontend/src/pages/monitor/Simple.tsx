@@ -36,8 +36,8 @@ function weakestStep(r: ScreeningRow): Step {
 const waitRatio = (r: ScreeningRow) => r.medianMonths / SCREENING_FI.medianMonths
 const waitWords = (r: ScreeningRow) => {
   const x = waitRatio(r)
-  return x >= 1.8 && x <= 2.2 ? `about twice the national ${n1(SCREENING_FI.medianMonths)}`
-    : x > 2.2 ? `more than twice the national ${n1(SCREENING_FI.medianMonths)}`
+  return x >= 1.75 && x <= 2.25 ? `about twice the national ${n1(SCREENING_FI.medianMonths)}`
+    : x > 2.25 ? `more than twice the national ${n1(SCREENING_FI.medianMonths)}`
     : `against ${n1(SCREENING_FI.medianMonths)} nationally`
 }
 
@@ -79,7 +79,8 @@ function Tile({ step, r }: { step: Step; r: ScreeningRow }) {
   const vs = step === 'detection' ? `${n1(fi.participationPct)}%` : step === 'referral' ? `${n1(fi.colonoscopyOfPositivesPct)}%` : `${n1(fi.medianMonths)} months`
   const line = step === 'detection' ? <>{n0(l.detection.lost)} people did not send it back</>
     : step === 'referral' ? <>{n0(r.noColonoscopy)} people not followed up</>
-    : waitRatio(r) >= 1.15 ? <>{waitRatio(r) >= 1.8 ? 'About twice' : `About ${n1(waitRatio(r))} times`} as long as the national wait</>
+    : waitRatio(r) >= 1.15 ? <>{waitRatio(r) >= 1.75 && waitRatio(r) <= 2.25 ? 'About twice' : `About ${n1(waitRatio(r))} times`} as long as the national wait</>
+    : waitRatio(r) <= 0.85 ? <>Shorter than the national wait</>
     : <>Close to the national wait</>
   return (
     <div className={cx('rounded-lg border p-5 sm:p-6 bg-paper min-w-0', behind ? 'border-terra/60' : 'border-black/15')}>
@@ -151,6 +152,8 @@ export function Recommend({ r, plan, setPlan, res, otherOptions }: {
   )
 }
 
+const colon = (v: number) => (about(v) === '1' ? 'colonoscopy' : 'colonoscopies')
+
 /** One sentence, at most two numbers: what colonoscopy capacity the plan and 2031 need. */
 export function WhatItTakes({ r, plan, setPlan, res }: { r: ScreeningRow; plan: Plan; setPlan: (p: Plan) => void; res: Result }) {
   const now = res.queue.extraPerWeek
@@ -160,8 +163,8 @@ export function WhatItTakes({ r, plan, setPlan, res }: { r: ScreeningRow; plan: 
     <div>
       <p className="font-serif text-3xl sm:text-4xl leading-tight max-w-4xl">
         {hasNow
-          ? <>To keep the wait from growing, {r.name} needs about <span className="italic text-terra">{about(now)} more colonoscopies a week</span> now, and about <span className="italic text-terra">{about(y.extraWithFixesWeek)} more</span> by 2031, when screening widens to everyone aged 56–74.</>
-          : <>By 2031, when screening widens to everyone aged 56–74, {r.name} will need about <span className="italic text-terra">{about(y.extraWeek)} more colonoscopies a week</span> than today.</>}
+          ? <>To keep the wait from growing, {r.name} needs about <span className="italic text-terra">{about(now)} more {colon(now)} a week</span> now, and about <span className="italic text-terra">{about(y.extraWithFixesWeek)} more</span> by 2031, when screening widens to everyone aged 56–74.</>
+          : <>By 2031, when screening widens to everyone aged 56–74, {r.name} will need about <span className="italic text-terra">{about(y.extraWeek)} more {colon(y.extraWeek)} a week</span> than today.</>}
       </p>
       <p className="mt-3 font-sans text-[15px] opacity-65 max-w-3xl">
         {hasNow && !plan.addCapacity ? <>Without them, the wait grows to about {about(res.queue.waitIn12m)} months within a year. </> : null}

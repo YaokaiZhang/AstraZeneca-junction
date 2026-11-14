@@ -118,10 +118,10 @@ test('cervical: Varsinais-Suomi (4 of 190 colposcopies on record) is a reporting
   assert.equal(stepsBehind('cervical', 'varsinais-suomi'), 2)
 })
 
-test('cervical: Pohjois-Savo starts with attendance; self-sampling kits estimate about 1,090 more women tested', () => {
+test('cervical: Pohjois-Savo starts with attendance; self-sampling kits reach about 1,090 untested women, against about 960 with a reminder letter', () => {
   const v = cervicalView('pohjois-savo')!
   assert.equal(v.start.kind, 'attendance')
-  assert.match(v.start.result, /about 1,090 more women tested/)
+  assert.match(v.start.result, /About 1,090 of the 3,670 untested women tested a year with a mailed kit, against about 960 with a reminder letter alone/)
 })
 
 test('cervical: Satakunta is on track against our lines but still below the 80% goal; Helsinki starts with the wait', () => {

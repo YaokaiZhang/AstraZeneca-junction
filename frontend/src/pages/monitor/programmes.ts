@@ -253,7 +253,8 @@ export function cervicalView(id: string): ProgrammeView | null {
   const reportingGap = !!tiles[1].missing
   const onTrack = !reportingGap && !tiles.some((t) => t.behind)
   const w = reportingGap ? 1 : onTrack ? 0 : pick(tiles)
-  const kitUrl = CERVICAL_EVIDENCE.find((e) => e.id === 'mailed-self-sampling')?.url
+  // the Espoo trial is where the 29.8% / 26.2% come from, so link that, not the meta-analysis
+  const kitUrl = CERVICAL_EVIDENCE.find((e) => e.id === 'finland-second-contact')?.url
   let start: ProgrammeView['start']
   let verdict: string
   let list: ListWording | undefined
@@ -283,7 +284,8 @@ export function cervicalView(id: string): ProgrammeView | null {
       kind: 'attendance',
       title: 'Mail a self-test kit to women who didn’t come',
       text: 'Post an HPV self-sampling kit to every invited woman who hasn’t been tested a few months after the invitation.',
-      result: `Up to about ${about(kits)} more women tested a year.`,
+      // the trial compared a kit with a reminder letter, so say both rather than call all of it extra
+      result: `About ${about(kits)} of the ${n0(non)} untested women tested a year with a mailed kit, against about ${about(non * KIT.reminderPct / 100)} with a reminder letter alone.`,
       estimate: true,
       basis: `In a Finnish trial (Espoo), ${KIT.pct}% of women who had not come took part after a mailed kit (${KIT.reminderPct}% after a reminder letter). Applied to ${r.name}'s ${n0(non)} untested women, ${CERVICAL_YEAR}. Less if the county already sends reminders.`,
       basisUrl: kitUrl,

@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Label, SourceBadge, TextRing, cx } from '../../components/ui'
 import { COUNTIES } from '../../data/counties'
-import { earlierFinds, fmt, pct, projection, screeningGain } from '../county/model'
+import { BOWEL_SURV, bowelLives, earlierFinds, fmt, pct, projection, screeningGain } from '../county/model'
 import { useCount, useInView, useScrollProgress } from './reveal'
 
 /* ───────────── the story's chapters ───────────── */
@@ -125,29 +125,49 @@ const SCREEN_HOW = `Each county below the strategy target of 80% turnout is brou
 const PROJ_HOW = `Lung, bowel, pancreas and liver. Cases today = Cancer Registry mean 2020–24, ${fmt(Math.round(PROJ.now))} a year. 2035 = the same age-specific rates applied to Statistics Finland's 2035 population projection (table 14wx): ${fmt(Math.round(PROJ.then))} a year.`
 
 const DOTS = FINDS.rows.reduce((t, r) => t + Math.round(r.perYear), 0)
+const LIVES = bowelLives()
+const AUTO = 0.8 // where the auto-play stops; the viewer can drag it anywhere
+const SHARE_HOW = `What Ajoissa could add, as an assumption you can change: the share of the gap to the best quarter of counties that the app closes (reminders and a second kit for screening, the symptom self-check, chasing late referrals). It starts at ${pct(AUTO)}; this is a scenario, not a measured effect of the app. 100% = ${fmt(DOTS)} cancers a year, the full gap (see below). People alive: bowel cancer only, the same share × the 5-year survival gap between localized (${pct(BOWEL_SURV.local, 1)}) and spread (${pct(BOWEL_SURV.spreadBest, 1)} to ${pct(BOWEL_SURV.spreadWorst, 1)}) bowel cancer, Finnish patients 2006–15 (BMC Cancer 2022).`
 
-/** One dot per cancer found earlier, grouped by type; fills itself in once on screen. */
-function Waffle({ on }: { on: boolean }) {
-  const [wave, setWave] = useState(false)
-  useEffect(() => { if (!on) return; const id = setTimeout(() => setWave(true), 400 + DOTS * 4 + 600); return () => clearTimeout(id) }, [on])
-  const dots = useMemo(() => FINDS.rows.flatMap((r) => Array.from({ length: Math.round(r.perYear) }, () => r.k)), [])
+/** Share of the gap closed: runs 0 → AUTO once on screen, then follows the slider. */
+function useAutoShare(on: boolean): [number, (v: number) => void] {
+  const [v, setV] = useState(0)
+  const [touched, setTouched] = useState(false)
+  useEffect(() => {
+    if (!on || touched) return
+    let raf = 0
+    const t0 = performance.now() + 350, D = 2600
+    const step = (now: number) => {
+      const x = Math.min(1, Math.max(0, (now - t0) / D))
+      setV(AUTO * (1 - Math.pow(1 - x, 3)))
+      if (x < 1) raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [on, touched])
+  return [v, (x) => { setTouched(true); setV(x) }]
+}
+
+/** One dot per cancer found earlier, one block per type. A dot pops in only once it is counted. */
+function Waffle({ share, done }: { share: number; done: boolean }) {
   return (
-    <div className="grid gap-[3px] sm:gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(8px, 1fr))' }} aria-hidden>
-      {dots.map((c, i) => (
-        <span key={i} className="aspect-square">
-          <span className={cx('block w-full h-full rounded-full transition-[background-color,transform] duration-300', wave && 'dot-wave')}
-            style={{
-              background: on ? COLORS[c] : 'rgba(31,31,31,.08)',
-              transform: on ? undefined : 'scale(.6)',
-              transitionDelay: `${400 + i * 4}ms`,
-              animationDelay: `${(i % 48) * 45}ms`,
-            }} />
-        </span>
-      ))}
+    <div className="space-y-3" aria-hidden>
+      {FINDS.rows.map((r) => {
+        const n = Math.round(r.perYear), lit = Math.round(r.perYear * share)
+        return (
+          <div key={r.k} className="grid gap-[3px] sm:gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(8px, 1fr))' }}>
+            {Array.from({ length: n }, (_, i) => (
+              <span key={i} className="aspect-square">
+                <span className={cx('block w-full h-full rounded-full transition-[transform,opacity] duration-500 ease-[cubic-bezier(.34,1.7,.5,1)]', done && i < lit && 'dot-wave')}
+                  style={{ background: COLORS[r.k], opacity: i < lit ? 1 : 0, transform: i < lit ? undefined : 'scale(0)', animationDelay: `${(i % 48) * 45}ms` }} />
+              </span>
+            ))}
+          </div>
+        )
+      })}
     </div>
   )
 }
-
 
 function Stat({ on, delay, value, unit, line, badge, hot }: { on: boolean; delay: number; value: React.ReactNode; unit?: string; line: string; badge: React.ReactNode; hot?: boolean }) {
   return (
@@ -160,25 +180,39 @@ function Stat({ on, delay, value, unit, line, badge, hot }: { on: boolean; delay
 
 export function Impact() {
   const [ref, on] = useInView<HTMLDivElement>(0.35)
-  const t = useCount(1, on, 2000)
+  const [share, setShare] = useAutoShare(on)
   const t2 = useCount(1, on, 2400)
+  const done = share >= AUTO - 0.001
   return (
     <section className="relative min-h-[100svh] flex flex-col justify-center px-5 lg:px-24 py-16 overflow-hidden" aria-label="Estimated impact">
       <div ref={ref} className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-12 lg:gap-20 items-center">
         <div>
-          <Label>If every county found cancer as early as Finland's best</Label>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Label>If Ajoissa closes</Label>
+            <span className="font-serif text-3xl tabular-nums lining-nums text-terra w-[3.2ch]">{Math.round(share * 100)}%</span>
+            <Label>of the gap to Finland's best</Label>
+          </div>
           <div className="mt-4 flex items-end gap-4 flex-wrap">
-            <span className="font-serif text-8xl lg:text-[9rem] leading-[0.8] tabular-nums lining-nums text-terra">{fmt(Math.round(DOTS * t))}</span>
+            <span className="font-serif text-8xl lg:text-[9rem] leading-[0.8] tabular-nums lining-nums text-terra w-[3.1ch]">{fmt(FINDS.rows.reduce((t, r) => t + Math.round(r.perYear * share), 0))}</span>
             <span className="pb-1 font-serif text-2xl lg:text-3xl leading-tight">more cancers a year<br /><span className="italic">found before they spread</span>
-              <SourceBadge id="ourModel" kind="estimate" demo={false} className="ml-2 align-middle" how={FINDS_HOW} />
+              <SourceBadge id="ourModel" kind="estimate" demo={false} className="ml-2 align-middle" how={SHARE_HOW} />
             </span>
           </div>
-          <div className="mt-8"><Waffle on={on} /></div>
+          <p className="mt-4 font-sans text-base">
+            <span className="font-serif text-2xl tabular-nums">{fmt(Math.round(LIVES.lo * share))}–{fmt(Math.round(LIVES.hi * share))}</span> more people alive every year, bowel cancer alone
+          </p>
+          <div className="mt-6 min-h-[118px]"><Waffle share={share} done={done} /></div>
+          <div className="mt-5 flex items-center gap-4">
+            <input type="range" min={0} max={1} step={0.05} value={share} onChange={(e) => setShare(+e.target.value)}
+              aria-label="Share of the gap Ajoissa closes" className="w-full max-w-md accent-[#C65D3B]" />
+            <span className="font-type text-xs uppercase tracking-widest opacity-60 whitespace-nowrap flex items-center gap-2">100% = {fmt(DOTS)} a year
+              <SourceBadge id="ourModel" kind="estimate" demo={false} how={FINDS_HOW} /></span>
+          </div>
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 font-sans text-[15px]">
             {FINDS.rows.map((r) => (
               <span key={r.k} className="flex items-center gap-2">
                 <i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: COLORS[r.k] }} />
-                {r.label} <span className="tabular-nums opacity-60">{fmt(Math.round(r.perYear))}</span>
+                {r.label} <span className="tabular-nums opacity-60">{fmt(Math.round(r.perYear * share))}</span>
               </span>
             ))}
             <span className="opacity-60">· one dot = one patient</span>
@@ -195,7 +229,7 @@ export function Impact() {
         </div>
       </div>
       <p className={cx('rv rv-up mt-12 font-type text-xs uppercase tracking-widest opacity-60', on && 'in')} style={{ transitionDelay: '1600ms' }}>
-        Estimates from open data · counts only cases with a known stage · hover a badge for the method
+        A scenario, not a measured result · drag to change it · hover a badge for the method
       </p>
       <Ecg className="opacity-40" />
     </section>

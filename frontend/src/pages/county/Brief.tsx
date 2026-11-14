@@ -150,7 +150,7 @@ export function buildBrief(c: County, k: RadarCancerId): BriefData {
 
 export function Brief({ brief, county, print, page }: { brief: BriefData; county: County; print?: boolean; page?: boolean }) {
   const hot = new Set(brief.gap.stages)
-  if (page) return <BriefPage brief={brief} county={county} />
+  if (page) return <BriefPage brief={brief} />
   return (
     <div className={cx('p-6 sm:p-10', print ? 'text-ink' : 'pt-16')} style={print ? { printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } : undefined}>
       <Display a={county.name} b="in brief" className="!text-4xl sm:!text-5xl break-words" />
@@ -197,13 +197,11 @@ export function Brief({ brief, county, print, page }: { brief: BriefData; county
 }
 
 /** The brief as a full page: the gap and where it sits on the pathway, three actions side by side, then the numbers. */
-function BriefPage({ brief, county }: { brief: BriefData; county: County }) {
+function BriefPage({ brief }: { brief: BriefData }) {
   const hot = new Set(brief.gap.stages)
   return (
-    <div className="pt-10 lg:pt-14">
-      <Display a={county.name} b="in brief" className="break-words" />
-
-      <div className="mt-10 grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-8 lg:gap-14 items-center">
+    <div className="pt-2 lg:pt-4">
+      <div className="grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-8 lg:gap-14 items-center">
         <div className="rounded-xl p-6 lg:p-8 bg-terra text-paper shadow-xl -rotate-1">
           <Label className="!opacity-80">{cancerLabel(brief.gap.cancer)} · the biggest gap</Label>
           <p className="mt-2 font-serif text-5xl lg:text-6xl leading-[1.02]">{brief.stamp}</p>

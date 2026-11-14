@@ -1,7 +1,7 @@
 // Page 2: Hospital — off-track list, automatic escalation, shared records, delay hot-spots.
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Card, Chip, Display, Drawer, EdgeText, Label, SourceBadge, Stamp, Stat, Tabs, Toggle, toast, cx } from '../../components/ui'
+import { Card, Chip, Display, Drawer, EdgeText, Label, Picker, SourceBadge, Stamp, Stat, Tabs, Toggle, toast, cx } from '../../components/ui'
 import { COUNTIES } from '../../data/counties'
 import { BARRIERS, PATHWAY, type BarrierId, type StepId } from '../../data/pathway'
 import { useStore, type HospitalAction } from '../../lib/store'
@@ -122,14 +122,12 @@ export default function HospitalPage() {
           )}
         </div>
         <div className="flex flex-col items-start md:items-end gap-2">
-          <label className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <span className="label">County</span>
-            <select value={countyId} aria-label="County"
-              onChange={(e) => { setParams((p) => { p.set('county', e.target.value); return p }, { replace: true }); setOpenId(null) }}
-              className="font-serif text-2xl italic border-b border-black/30 pr-2 py-0.5 outline-none focus:border-terra cursor-pointer">
-              {COUNTIES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </label>
+            <Picker label="County" align="right" value={countyId} options={COUNTIES}
+              onChange={(v) => { setParams((p) => { p.set('county', v); return p }, { replace: true }); setOpenId(null) }}
+              className="font-serif text-2xl italic py-0.5" />
+          </div>
           <span className="flex items-center gap-2 font-type text-xs uppercase tracking-widest opacity-70">
             Synthetic caseload <SourceBadge id="demoPatients" kind="estimate" demo={false}
               how={`${patients.length - (you ? 1 : 0)} made-up patients, volume scaled from ${county.name}'s yearly lung, bowel, pancreas and liver cases.`} />

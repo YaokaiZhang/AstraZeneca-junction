@@ -246,3 +246,42 @@ export function Toaster() {
     </div>
   )
 }
+
+/** Styled dropdown (native <select> popups on macOS inherit the big display font size). */
+export function Picker<T extends string>({ value, options, onChange, label, className, align = 'left' }: {
+  value: T; options: { id: T; name: string }[]; onChange: (v: T) => void; label: string; className?: string; align?: 'left' | 'right'
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const down = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', down); document.addEventListener('keydown', key)
+    return () => { document.removeEventListener('mousedown', down); document.removeEventListener('keydown', key) }
+  }, [open])
+  const cur = options.find((o) => o.id === value)
+  return (
+    <div ref={ref} className="relative min-w-0">
+      <button type="button" aria-label={label} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((o) => !o)}
+        className={cx('flex items-center gap-2 max-w-full border-b border-black/30 hover:border-terra focus:border-terra outline-none cursor-pointer text-left', className)}>
+        <span className="truncate">{cur?.name}</span>
+        <span className={cx('font-type not-italic text-sm transition-transform', open && 'rotate-180')}>▾</span>
+      </button>
+      {open && (
+        <ul role="listbox" aria-label={label}
+          className={cx('absolute top-full mt-2 z-50 w-64', align === 'right' ? 'left-0 md:left-auto md:right-0' : 'left-0', ' max-h-80 overflow-y-auto rounded-lg border border-stone bg-paper shadow-[0_18px_40px_-18px_rgba(0,0,0,.35)] py-2')}>
+          {options.map((o) => (
+            <li key={o.id} role="option" aria-selected={o.id === value}>
+              <button type="button" onClick={() => { onChange(o.id); setOpen(false) }}
+                className={cx('w-full text-left px-4 py-1.5 font-type text-[13px] flex items-center gap-2 hover:bg-stone/40 hover:text-terra',
+                  o.id === value && 'text-terra')}>
+                <span className={cx('w-1.5 h-1.5 rounded-full', o.id === value ? 'bg-terra' : 'bg-transparent')} />{o.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}

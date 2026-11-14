@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
-import { Card, Drawer, EdgeText, Label, RoundBtn, SourceBadge, Stamp, Tabs, cx } from '../../components/ui'
+import { Card, Drawer, EdgeText, Label, Picker, RoundBtn, SourceBadge, Stamp, Tabs, cx } from '../../components/ui'
 import { COUNTIES, countyById, type CancerId, type RadarCancerId } from '../../data/counties'
 import { CountyStyles, Spark, Tear } from './bits'
 import { NAT, RADAR_CANCERS, cancerLabel, fmt, isCoreCancer, queueRising, radarFor, stepInfo } from './model'
@@ -72,13 +72,8 @@ export default function CountyPage() {
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
           <div className="flex items-center gap-3 min-w-0">
             <Label className="hidden sm:block shrink-0">03 · County</Label>
-            <div className="relative min-w-0">
-              <select aria-label="County" value={countyId} onChange={(e) => tp.select(e.target.value)}
-                className="appearance-none font-serif text-2xl sm:text-3xl italic pr-8 py-0.5 border-b border-black/30 focus:border-terra outline-none cursor-pointer max-w-[78vw] sm:max-w-none truncate">
-                {COUNTIES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <span className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-sm">▾</span>
-            </div>
+            <Picker label="County" value={countyId} onChange={(v) => tp.select(v)} options={COUNTIES}
+              className="font-serif text-2xl sm:text-3xl italic py-0.5 max-w-[78vw] sm:max-w-none" />
           </div>
           <button onClick={() => setBriefOpen(true)}
             className="font-type text-[13px] uppercase tracking-widest flex items-center gap-2 rounded-full bg-ink text-paper pl-4 pr-1.5 py-1.5 hover:bg-terra transition-colors">

@@ -2,13 +2,10 @@ import { useMemo, type ReactNode } from 'react'
 import { Card, EdgeText, Label, SourceBadge, cx } from '../../components/ui'
 import { useScrollProgress } from './reveal'
 import { tr } from '../patient/i18n'
-import { FINLAND } from '../../data/counties'
-import { REAL_RANGE, fmt, rangeTowns, topExcess } from '../county/model'
 
 /* ───────────── detection radar (sticky, scroll-driven) ─────────────
    01 a person answers a few questions → 02 the sweep picks out high risk →
-   03 they get a clear next step → 04 zoom out to the county funnel →
-   05 real 2024 screening turnout spread across towns. */
+   03 they get a clear next step → 04 zoom out to the county funnel. */
 
 const PHASES: { a: string; b: string; lede: ReactNode }[] = [
   {
@@ -26,10 +23,6 @@ const PHASES: { a: string; b: string; lede: ReactNode }[] = [
   {
     a: 'Then zoom out', b: 'to the county.',
     lede: <>The same engine follows each county from people at risk, to screening, to stage at diagnosis, to survival, and marks the step where it loses the most people.</>,
-  },
-  {
-    a: 'Same test,', b: 'very uneven turnout.',
-    lede: <>In 2024, the share of invited people who took part varied widely from town to town. For cervical screening it ranged from under half to nine in ten.</>,
   },
 ]
 
@@ -72,27 +65,11 @@ const FUNNEL = [
   { k: 'Survival', v: 31, drop: '−7 deaths' },
 ]
 
-const TURNOUT = (['bowel', 'breast', 'cervical'] as const).map((p) => ({
-  k: p[0].toUpperCase() + p.slice(1), lo: REAL_RANGE[p][0], hi: REAL_RANGE[p][1], towns: rangeTowns(p), n: p === 'bowel' ? '292 towns' : undefined,
-}))
-const AX = (v: number) => ((v - 40) / 60) * 100 // axis 40–100 %
-const f1 = (v: number) => fmt(v, 1)
-
-/* second real finding: the county with the most cervical cancers above expected */
-const CERV = topExcess('cervical')
-const cervLine = CERV && (() => {
-  const t = CERV.c.cervicalTurnout, n = FINLAND.cervicalTurnout
-  return {
-    text: `${CERV.c.name}: ${fmt(CERV.v, 1)}× the expected cervical cancers`,
-    sub: t >= n ? 'even though its turnout is above average' : 'and its turnout is below average',
-    how: `Cancer Registry cases 2020–24 pooled ÷ cases expected at national age rates: ${fmt(CERV.v, 2)} (95% range ${fmt(CERV.lo, 2)}–${fmt(CERV.hi, 2)}, ${fmt(CERV.n)} cases). Cervical screening turnout 2024 ${f1(t)}% vs Finland ${f1(n)}% (Sotkanet 3620). Turnout alone does not explain it; follow-up of abnormal results and HPV are not in the open data.`,
-  }
-})()
 
 export function Radar() {
   const [ref, p] = useScrollProgress<HTMLElement>()
   const { dots, you } = useMemo(buildDots, [])
-  const seg = Math.min(4.999, p * 5)
+  const seg = Math.min(3.999, p * 4)
   const phase = Math.floor(seg)
   const t = seg - phase
   const sweep = phase < 1 ? 0 : phase === 1 ? Math.min(360, t * 1.15 * 360) : 360
@@ -103,20 +80,20 @@ export function Radar() {
   const lit = dots.filter((d) => d.hi && d.a <= sweep).length
 
   return (
-    <section ref={ref} className="relative h-[460vh]" aria-label="Detection radar">
+    <section ref={ref} className="relative h-[370vh]" aria-label="Detection radar">
       <div className="sticky top-0 h-[100svh] overflow-hidden px-5 lg:px-24 flex flex-col justify-center gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-16 pt-6 pb-14 lg:py-0">
         {/* copy */}
         <div className="relative min-w-0">
           <div className="flex items-center gap-4">
             <Label>The detection radar</Label>
             <span className="h-px w-10 bg-ink/40" />
-            <span className="font-type text-[13px] tracking-widest tabular-nums">{String(phase + 1).padStart(2, '0')} / 05</span>
+            <span className="font-type text-[13px] tracking-widest tabular-nums">{String(phase + 1).padStart(2, '0')} / 04</span>
           </div>
           <div className="mt-4 grid text-[10.5vw] sm:text-6xl xl:text-7xl font-serif font-light leading-[0.95]">
             {PHASES.map((ph, i) => (
               <h2 key={i} aria-hidden={i !== phase}
                 className={cx('[grid-area:1/1] transition-all duration-700', i === phase ? 'opacity-100 translate-y-0' : i < phase ? 'opacity-0 -translate-y-8 blur-sm' : 'opacity-0 translate-y-8 blur-sm')}>
-                {ph.a}<br /><span className={cx('italic pl-[0.6em]', i === 2 || i === 4 ? 'text-terra' : undefined)}>{ph.b}</span>
+                {ph.a}<br /><span className={cx('italic pl-[0.6em]', i === 2 ? 'text-terra' : undefined)}>{ph.b}</span>
               </h2>
             ))}
           </div>
@@ -209,7 +186,7 @@ export function Radar() {
           </div>
 
           {/* county funnel */}
-          <div className={cx('absolute inset-0 flex items-center transition-all duration-700', phase === 3 ? 'opacity-100 scale-100' : phase < 3 ? 'opacity-0 scale-[1.6] pointer-events-none' : 'opacity-0 scale-90 pointer-events-none')}>
+          <div className={cx('absolute inset-0 flex items-center transition-all duration-700', phase === 3 ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.6] pointer-events-none')}>
             <Card tone="paper" tilt={1.5} className="w-full p-5 pl-10 lg:p-7 lg:pl-12 border border-ink/10">
               <EdgeText>County</EdgeText>
               <div className="flex items-center justify-between gap-2">
@@ -244,51 +221,6 @@ export function Radar() {
             </Card>
           </div>
 
-          {/* real turnout spread */}
-          <div className={cx('absolute inset-0 flex items-center transition-all duration-700', phase === 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none')}>
-            <div className="w-full">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-type text-xs uppercase tracking-widest opacity-70">2024 turnout · lowest → highest town</span>
-                <SourceBadge id="sotkanetScreening" kind="estimate" demo={false} how={`Lowest and highest town in 2024, ${TURNOUT.map((r) => `${r.k.toLowerCase()} ${r.towns.lo.name} ${f1(r.lo)}% – ${r.towns.hi.name} ${f1(r.hi)}%`).join('; ')}. The extremes are small towns. Gap = highest − lowest.`} />
-              </div>
-              <div className="mt-4 lg:mt-6 space-y-4 lg:space-y-9">
-                {TURNOUT.map((r, i) => {
-                  const wide = r.hi - r.lo > 40
-                  return (
-                    <div key={r.k}>
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className={cx('font-serif text-2xl lg:text-3xl leading-none', wide && 'italic text-terra')}>{r.k}</span>
-                        <span className="font-type text-[13px] tabular-nums">{f1(r.lo)}–{f1(r.hi)}%</span>
-                      </div>
-                      <div className="relative mt-2 lg:mt-3 h-6">
-                        <div className="absolute inset-x-0 top-1/2 h-px bg-ink/20" />
-                        <div className={cx('absolute top-1/2 -translate-y-1/2 h-2 rounded-full origin-left transition-transform duration-1000 ease-out', wide ? 'bg-terra' : 'bg-ink/80')}
-                          style={{ left: `${AX(r.lo)}%`, width: `${AX(r.hi) - AX(r.lo)}%`, transform: `scaleX(${phase === 4 ? 1 : 0})`, transitionDelay: `${200 + i * 200}ms` }} />
-                        {[r.lo, r.hi].map((v, j) => (
-                          <span key={j} className={cx('absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 border-ink transition-all duration-500', j ? 'bg-mustard' : 'bg-paper', phase === 4 ? 'opacity-100 scale-100' : 'opacity-0 scale-50')}
-                            style={{ left: `${AX(v)}%`, transitionDelay: `${(j ? 900 : 200) + i * 200}ms` }} />
-                        ))}
-                      </div>
-                      <div className={cx('mt-1 font-type text-[11px] uppercase tracking-widest transition-opacity duration-500', wide ? 'text-terra' : 'opacity-50', phase === 4 ? '' : 'opacity-0')} style={{ transitionDelay: wide ? '1400ms' : '0ms' }}>
-                        {wide ? `${f1(r.hi - r.lo)} points apart` : r.n ?? '\u00a0'}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="relative mt-3 lg:mt-6 h-4 font-type text-[11px] opacity-50">
-                {[40, 60, 80, 100].map((v) => (
-                  <span key={v} className="absolute -translate-x-1/2" style={{ left: `${AX(v)}%` }}>{v}%</span>
-                ))}
-              </div>
-              {cervLine && (
-                <div className={cx('mt-6 lg:mt-10 border-t border-ink/15 pt-3 transition-opacity duration-700', phase === 4 ? 'opacity-100' : 'opacity-0')} style={{ transitionDelay: phase === 4 ? '1600ms' : '0ms' }}>
-                  <p className="font-serif text-xl lg:text-2xl leading-tight flex flex-wrap items-center gap-2">{cervLine.text} <SourceBadge id="cancerRegistry" kind="estimate" demo={false} how={cervLine.how} /></p>
-                  <p className="mt-1 font-type text-xs uppercase tracking-widest opacity-60">{cervLine.sub}</p>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* progress */}

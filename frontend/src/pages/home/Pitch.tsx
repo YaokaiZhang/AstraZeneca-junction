@@ -453,52 +453,6 @@ export function Views() {
 }
 
 /* ───────────── 4 · privacy ───────────── */
-export function Privacy() {
-  const [ref, on] = useInView<HTMLDivElement>(0.4)
-  const [manual, setManual] = useState<boolean | null>(null)
-  const shared = manual ?? on
-  return (
-    <section className="relative bg-ink text-paper overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.07] pointer-events-none privacy-grid" />
-      <div ref={ref} className={PAGE + ' lg:!grid lg:grid-cols-[1.2fr_1fr] gap-16 items-center'}>
-        <div>
-          <Label className="!opacity-50">Privacy by design</Label>
-          <h2 className={'mt-6 ' + H2}>
-            <WordsUp text="Nothing moves" /><br /><WordsUp text="until you say so." className="italic text-mustard" delay={200} />
-          </h2>
-          <Lede className="mt-6 lg:mt-[3svh]">
-            Your health data stays with you. A hospital sees your timeline only after you choose to share it, and the county only ever sees anonymous totals. Tap the switch to try it.
-          </Lede>
-          <div className="mt-12 grid sm:grid-cols-3 gap-6 max-w-2xl">
-            {[['Hospital', 'only if you share'], ['County', 'counts, never names'], ['You', 'withdraw any time']].map(([a, b], i) => (
-              <Reveal key={a} delay={400 + i * 120} className="border-t border-paper/20 pt-4">
-                <div className="font-serif text-3xl italic">{a}</div>
-                <div className="font-type text-[13px] uppercase tracking-widest opacity-60 mt-1">{b}</div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-        <div className="relative flex justify-center">
-          <button onClick={() => setManual(!shared)} aria-pressed={shared} aria-label="Share with hospital"
-            className="relative w-[300px] h-[150px] lg:w-[360px] lg:h-[180px] rounded-full border-2 border-paper/30 transition-colors duration-700"
-            style={{ background: shared ? '#FFC233' : 'transparent' }}>
-            <span className="absolute top-1/2 -translate-y-1/2 w-[120px] h-[120px] lg:w-[150px] lg:h-[150px] rounded-full bg-paper shadow-2xl flex items-center justify-center transition-all duration-700"
-              style={{ left: shared ? 'calc(100% - 15px - var(--k))' : '15px', ['--k' as string]: 'clamp(120px, 10vw, 150px)', transitionTimingFunction: 'cubic-bezier(.5,1.6,.4,1)' }}>
-              <svg viewBox="0 0 24 24" className="w-12 h-12 text-ink" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="5" y="11" width="14" height="9" rx="1.5" />
-                <path d={shared ? 'M8 11V8a4 4 0 0 1 7.5-2' : 'M8 11V8a4 4 0 0 1 8 0v3'} style={{ transition: 'd .5s' }} />
-              </svg>
-            </span>
-          </button>
-          <div className={cx('absolute -top-10 -right-2 lg:right-4 rv rv-stamp', shared && 'in')} style={{ transitionDelay: shared ? '500ms' : '0ms' }}>
-            <span className="inline-block border-2 border-mustard text-mustard font-type uppercase tracking-widest text-sm px-4 py-2 rounded-sm">Shared by you</span>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 /* ───────────── 5 · three dates ───────────── */
 export function ThreeDates() {
   const [ref, on] = useInView<HTMLDivElement>(0.35)
@@ -752,7 +706,7 @@ const PLAYBOOK: { step: string; icon: Icon; finding: string; action: string; who
   {
     step: 'Capacity', icon: 'calendar', finding: 'More cases by 2035', action: 'Book scan and specialist time early',
     who: 'County', effort: 3, goal: '↓', target: 'Fewer waiting over 6 months',
-    badge: <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how="THL Sotkanet 3336: waited over 6 months for specialist care, per 10 000 residents. Planned in the yearly budget and service plan, using the 2035 projection on the Overload tab." />,
+    badge: <SourceBadge id="sotkanetQueue" kind="direct" demo={false} how="THL Sotkanet 3336: waited over 6 months for specialist care, per 10 000 residents. Planned in the yearly budget and service plan." />,
   },
 ]
 const EFFORT = ['', 'Low effort', 'Medium effort', 'High effort']
@@ -845,13 +799,6 @@ function Playbook() {
   )
 }
 
-const EASY: [string, string, React.ReactNode][] = [
-  ['Open data', 'Cancer Registry, Statistics Finland, THL', <SourceBadge key="r" id="cancerRegistry" kind="direct" demo={false} />],
-  ['No record linking', 'The radar uses public totals only', null],
-  ['A browser', 'Nothing to install', null],
-  ['A yearly refresh', 'Scripts and open data feeds', null],
-  ['Diary first', 'Works without records; AI optional', null],
-]
 
 export function Actions() {
   return (
@@ -909,20 +856,40 @@ export function TryActions() {
           </Card>
         </Reveal>
 
-        {/* what it takes to start */}
-        <div>
-          <Label>What it takes to start</Label>
-          <div className="mt-6 space-y-5">
-            {EASY.map(([a, b, badge], i) => (
-              <Reveal key={a} delay={200 + i * 100} className="border-t border-ink/20 pt-3">
-                <div className="font-serif text-3xl italic flex items-center gap-2">{a}{badge}</div>
-                <div className="font-sans text-base opacity-70 mt-1">{b}</div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
+        {/* the first month, for the top action */}
+        <FirstMonth county={county.name} top={brief.top} />
       </div>
     </section>
+  )
+}
+
+/** Who does what in the first month, for the county's top action. Plain steps; no new numbers. */
+const START: Record<string, { who: string; week: string; month: string; measure: string }> = {
+  lung: { who: 'Lung clinic lead, with two pilot health centres', week: 'Name a pilot lead and pick two health centres with many smokers.', month: 'Offer the lung self-check to smokers aged 50–74 at any visit; send the high-risk ones for a low-dose CT.', measure: 'CT scans done, and the share of lung cancers found at stage I–II.' },
+  remind: { who: 'Screening coordinator', week: 'Pull the list of people who have not sent the kit back, starting in the towns named on the left.', month: 'Send a second letter or text message with a new kit about six weeks after the invitation.', measure: 'Kit return each round, against the 80% national goal.' },
+  risk: { who: 'Health centre nurses', week: 'Add the self-check link to screening invitations and health checks.', month: 'Book a doctor visit for everyone the self-check flags as higher risk.', measure: 'Visits booked, and cancers found at an early stage.' },
+  diag: { who: 'Head of the hospital diagnostic unit', week: 'Count scan and specialist slots: how many are asked for and how many are done each week.', month: 'Add evening or weekend lists, or buy slots from a private provider, until the queue stops growing.', measure: 'Share of patients waiting longer than the target time.' },
+  fast: { who: 'Chief physician of primary care, with radiology', week: 'Agree the triggers with radiology: weight loss with new diabetes, or jaundice.', month: 'Let health centre doctors order a CT scan directly for those triggers.', measure: 'Days from first visit to CT scan.' },
+  dates: { who: 'Hospital information management', week: 'Check that the patient record holds the referral-received, diagnosis and treatment-start dates.', month: 'Run one nightly report of patients past six weeks without treatment.', measure: 'Share of patients treated within the target time.' },
+}
+
+function FirstMonth({ county, top }: { county: string; top: ReturnType<typeof buildBrief>['top'] }) {
+  const s = START[top.id]
+  if (!s) return null
+  const rows: [string, string][] = [['Who', s.who], ['This week', s.week], ['This month', s.month], ['How you know it works', s.measure]]
+  return (
+    <div key={county + top.id} className="rise">
+      <Label>Start on Monday · {county}</Label>
+      <p className="mt-3 font-serif text-3xl leading-tight">{top.title}</p>
+      <div className="mt-5 space-y-4">
+        {rows.map(([k, v]) => (
+          <div key={k} className="border-t border-ink/20 pt-3">
+            <div className="font-type text-xs uppercase tracking-widest opacity-60">{k}</div>
+            <div className="font-sans text-base leading-snug mt-1">{v}</div>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 

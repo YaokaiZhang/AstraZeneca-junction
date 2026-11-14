@@ -1,5 +1,5 @@
 // Page 3: County — where people are lost. Tabs share the selected county + cancer through the URL query.
-// Brief (the landing tab) · Radar · Screening · Overload · Data gaps.
+// Brief (the landing tab) · Radar.
 import { useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Navigate, useLocation, useSearchParams } from 'react-router-dom'
@@ -8,18 +8,12 @@ import { COUNTIES, countyById, type CancerId, type RadarCancerId } from '../../d
 import { CountyStyles, Seg } from './bits'
 import { RADAR_CANCERS, isCoreCancer } from './model'
 import { Radar } from './Radar'
-import { Screening } from './Screening'
-import { Overload } from './Overload'
-import { DataGaps } from './DataGaps'
 import { Brief, buildBrief } from './Brief'
 
-type Tab = 'brief' | 'radar' | 'screening' | 'overload' | 'gaps'
+type Tab = 'brief' | 'radar'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'brief', label: 'Brief' },
   { id: 'radar', label: 'Radar' },
-  { id: 'screening', label: 'Screening' },
-  { id: 'overload', label: 'Overload' },
-  { id: 'gaps', label: 'Data gaps' },
 ]
 const CANCER_IDS: CancerId[] = ['lung', 'bowel', 'pancreas', 'liver']
 
@@ -94,9 +88,6 @@ export default function CountyPage() {
         <div className="rise" key={tab === 'brief' ? countyId + radarCancer : tab}>
           {tab === 'brief' && <Brief brief={brief} county={county} page />}
           {tab === 'radar' && <Radar {...tp} />}
-          {tab === 'screening' && <Screening {...tp} />}
-          {tab === 'overload' && <Overload {...tp} />}
-          {tab === 'gaps' && <DataGaps {...tp} />}
         </div>
       </div>
 

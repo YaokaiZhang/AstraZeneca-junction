@@ -1,8 +1,8 @@
-import { PlugsIn, RiskInPractice, StageGap } from './home/Practical'
+import { RiskInPractice } from './home/Practical'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, EdgeText, Label, TextRing } from '../components/ui'
-import { Actions, CheckIns, Clock, CostOfLate, Privacy, ThreeDates, TooLate, Transparency, TryActions, Views, H2 } from './home/Pitch'
+import { Actions, CheckIns, Clock, CostOfLate, ThreeDates, TooLate, Transparency, TryActions, Views, H2 } from './home/Pitch'
 import { Tilt, WordsUp } from './home/reveal'
 import { ChapterRail, Ecg, Impact, Transition } from './home/Story'
 import { Radar } from './home/Radar'
@@ -129,21 +129,18 @@ export default function Home() {
       {/* 02 · what we built (execution): one record, three views */}
       <Transition chapter="ch-built" text="So we built one tool that follows a person from first symptom to first treatment." hot={6} />
       <Radar />
-      <StageGap />
       <Views />
       <CheckIns />
       <RiskInPractice />
-      <Privacy />
 
       {/* 03 · what to do (actionability) */}
       <Transition chapter="ch-do" text="Every gap it finds comes with a step to take on Monday." hot={4} />
       <ThreeDates />
       <Actions />
       <TryActions />
-      <PlugsIn />
 
       {/* 04 · the impact */}
-      <Transition chapter="ch-impact" text="What happens if every county catches up with the best?" hot={5} />
+      <Transition chapter="ch-impact" text="With Ajoissa, more cancers are found before they spread." hot={4} />
       <Impact />
 
       {/* 05 · how we know (data quality and transparency) */}

@@ -151,14 +151,10 @@ export default function MonitorPage() {
               <About />
             </div>
           </Section>}
-          <SourcesFooter />
         </div>}
       </details>
 
-      <p className="mt-10 font-sans text-[14px] opacity-60">
-        Sources: Finnish Cancer Registry, Statistics Finland, two meta-analyses.{' '}
-        <button onClick={() => openEvidence('evidence')} className="underline underline-offset-2 hover:text-terra">See the evidence</button> for details.
-      </p>
+      <SourcesFooter />
 
       <Drawer open={sheet} onClose={() => setSheet(false)} label="County action sheet">
         <div className="p-6 pt-16">
@@ -177,29 +173,43 @@ export default function MonitorPage() {
   )
 }
 
-const FOOTER_SOURCES: [string, string][] = [
-  ['Finnish Cancer Registry, bowel cancer screening statistics, 2024 round (published 20 May 2026), and the 2022 and 2023 rounds', 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html'],
-  ['Finnish Cancer Registry, bowel cancer screening programme: everyone aged 56–74 from 2031', 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/'],
-  ['Statistics Finland, population by age and language, 2025 (vaerak/11rz), municipalities rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/'],
-  ['Statistics Finland, education by age, 2025 (vkour/12bq), municipalities rolled up to counties', 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vkour/statfin_vkour_pxt_12bq.px/'],
-  ['Interventions to raise colonoscopy after a positive stool test, meta-analysis. JAMA Intern Med 2026. PMID 42832233', 'https://pubmed.ncbi.nlm.nih.gov/42832233/'],
-  ['Dougherty et al. Interventions to raise colorectal screening uptake. JAMA Intern Med 2018. PMID 30326005', 'https://pubmed.ncbi.nlm.nih.gov/30326005/'],
+const WHERE: { what: string; used: string; year: string; who: string; url: string }[] = [
+  { who: 'Finnish Cancer Registry', what: 'Bowel cancer screening statistics: how many people were invited, sent the kit back, tested positive and had a colonoscopy, by county', used: 'The three steps, the waits and the trend', year: '2022, 2023 and 2024 rounds (2024 published May 2026)', url: 'https://stats.cancerregistry.fi/joukkistilastot/suolisto.html' },
+  { who: 'Finnish Cancer Registry', what: 'The screening programme page', used: 'Who will be invited from 2031 (everyone aged 56–74)', year: 'Rules in force 2026', url: 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/' },
+  { who: 'Statistics Finland', what: 'Population by age and mother tongue, and by education, per municipality (added up to counties)', used: 'How many people will be invited in 2031, and what kit return the county’s population would predict', year: '2025', url: 'https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__vaerak/statfin_vaerak_pxt_11rz.px/' },
+  { who: 'JAMA Internal Medicine (2026)', what: 'A review of studies on getting people with a positive test to their colonoscopy', used: 'What the follow-up fixes achieve', year: '2026', url: 'https://pubmed.ncbi.nlm.nih.gov/42832233/' },
+  { who: 'JAMA Internal Medicine (2018)', what: 'A review of studies on getting more people to take part in bowel screening', used: 'What the reminders achieve', year: '2018', url: 'https://pubmed.ncbi.nlm.nih.gov/30326005/' },
 ]
 
-/** Small sources footer, shown instead of section 05 while the full story is switched off. */
+const OURS: [string, string][] = [
+  ['The wait over the next year', 'From colonoscopies a week and today’s wait: if more people need a colonoscopy than are done, the queue and the wait grow.'],
+  ['The 2031 estimate', 'Everyone aged 56–74 is invited every two years, so invites and colonoscopies grow in proportion, at today’s rates.'],
+  ['What a fix does here', 'The effect measured in other programmes, applied to this county’s 2024 numbers.'],
+  ['Expected vs actual kit return', 'What the county would reach if each language and education group sent kits back at the national rate.'],
+]
+
+/** Where the numbers come from, in plain words, plus what we calculated ourselves. Always visible at the bottom. */
 function SourcesFooter() {
   return (
-    <footer className="mt-16 pt-5 border-t border-black/15 font-sans text-[13px] leading-snug opacity-75">
-      <Label className="mb-2">Sources</Label>
-      <ul className="space-y-1">
-        {FOOTER_SOURCES.map(([t, u]) => (
-          <li key={u + t}>{t}. <a className="underline underline-offset-2 break-all hover:text-terra" href={u} target="_blank" rel="noreferrer">{u.replace(/^https:\/\//, '')}</a></li>
+    <footer className="mt-16 pt-8 border-t border-black/15 max-w-5xl">
+      <p className="font-serif text-3xl">Where the numbers come from</p>
+      <ul className="mt-4 divide-y divide-black/10">
+        {WHERE.map((x) => (
+          <li key={x.url} className="py-3 grid sm:grid-cols-[13rem_minmax(0,1fr)] gap-x-6 gap-y-1">
+            <p className="font-serif text-lg leading-tight">{x.who}<span className="block font-sans text-[13px] opacity-60 mt-0.5">{x.year}</span></p>
+            <div className="font-sans text-[15px] leading-snug">
+              <p>{x.what}.</p>
+              <p className="opacity-70">Used for: {x.used}. <a className="underline underline-offset-2 hover:text-terra" href={x.url} target="_blank" rel="noreferrer">Open source</a></p>
+            </div>
+          </li>
         ))}
       </ul>
-      <p className="mt-3">
-        <b>Caveats.</b> Waits read from a chart (± 0.1 month). Group figures are national only. &quot;No colonoscopy&quot; may include private colonoscopies not reported to the register.
-        Effects come from mostly US studies. The queue model and the 2031 estimate are our calculations (badge E); 2031 ignores ageing and lower positivity in younger people.
-        No number here is written by a language model.
+      <p className="mt-8 font-serif text-2xl">What we calculated ourselves</p>
+      <ul className="mt-3 space-y-2 font-sans text-[15px] leading-snug">
+        {OURS.map(([t, d]) => <li key={t}><b className="font-medium">{t}.</b> <span className="opacity-80">{d}</span></li>)}
+      </ul>
+      <p className="mt-6 font-sans text-[13px] opacity-60 max-w-3xl">
+        Caveats: the waits were read from a published chart (to about 0.1 month). Group figures are for all of Finland. &quot;No colonoscopy&quot; may include private colonoscopies that were never reported. The studies are mostly from the United States.
       </p>
     </footer>
   )

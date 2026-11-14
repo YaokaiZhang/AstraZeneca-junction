@@ -107,6 +107,7 @@ export function MixGap({ r }: { r: ScreeningRow }) {
           {' '}{n1(f)}% of residents aged 56–74 have another mother tongue (Finland {n1(DEMOGRAPHICS_FI.foreignLangPct)}%).
           {' '}A gap counts as unexplained when actual is more than {MARGIN} points below both.
         </p>
+        <p className="mt-2 font-sans text-[13px] opacity-55">Source: Statistics Finland, population 2025; Finnish Cancer Registry, screening 2024.</p>
       </Card>
     </div>
   )

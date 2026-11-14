@@ -12,6 +12,7 @@ import { FollowUpList } from './FollowUpList'
 import { GOAL_ATTENDANCE, programmeView, templateFor, stepsBehind, type ProgrammeId, type ProgrammeView, type StepTile } from './programmes'
 import { ProgrammeTabs } from './ProgrammeTabs'
 import { PlanPanel } from './PlanWriting'
+import { Bars, Measures, StepsStrip } from './PlanGlance'
 import type { usePlanWriter } from './planWriter'
 
 const n0 = (x: number) => Math.round(x).toLocaleString('en-GB')
@@ -20,13 +21,13 @@ const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./,
 const STEP_WORD = ['attendance', 'follow-up', 'wait']
 
 function Tile({ t }: { t: StepTile }) {
-  const flag = t.missing ? 'No data' : t.behind ? 'Falling behind' : 'On track'
+  const flag = t.missing ? 'No data' : t.check ? 'Check data' : t.behind ? 'Falling behind' : 'On track'
   return (
     <div className={cx('rounded-lg border p-5 sm:p-6 bg-paper min-w-0', t.behind || t.missing ? 'border-terra/60' : 'border-black/15')}>
       <div className="flex items-center justify-between gap-3">
         <p className="font-serif text-2xl leading-tight">{t.title}</p>
         <span className={cx('font-type text-[13px] uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0',
-          t.behind ? 'bg-terra text-paper' : t.missing ? 'border border-terra text-terra' : 'bg-[#E2EDE6] text-[#2F5A44]')}>{flag}</span>
+          t.behind ? 'bg-terra text-paper' : t.missing ? 'border border-terra text-terra' : t.check ? 'border border-black/30 opacity-80' : 'bg-[#E2EDE6] text-[#2F5A44]')}>{flag}</span>
       </div>
       <p className={cx('mt-5 font-serif text-5xl sm:text-6xl leading-none', t.behind && 'text-terra')}>{t.big}{t.unit && t.big !== '–' ? <span className="text-3xl"> {t.unit}</span> : null}</p>
       <p className="mt-2 font-sans text-[15px] opacity-65">vs {t.finland} in Finland</p>
@@ -73,6 +74,36 @@ function NumbersTable({ p, id }: { p: ProgrammeId; id: string }) {
   )
 }
 
+function PlanBlock({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0 border-t border-black/20 pt-2">
+      <p className="font-type uppercase tracking-widest text-[10.5px] opacity-60">{label}</p>
+      <div className="mt-1 text-[13px] leading-snug">{children}</div>
+    </div>
+  )
+}
+
+/** Only what programmes.ts actually does, per programme (bowel has its own list on the bowel tab). */
+const OURS: Record<'breast' | 'cervical', [string, string][]> = {
+  breast: [
+    ['What a fix does here', 'For attendance: the London text-reminder trial raised attendance by 5.3 points; we apply that to the county’s invited women, and count cancers at the county’s own 2024 rate. Shown only where a study gives an effect size.'],
+    ['The wait target', 'The national median wait from a positive mammogram to further tests, read from the Cancer Registry’s chart, in days.'],
+    ['Reporting gaps', 'When 20% or more of referred women have no result on record, we call it most likely a reporting gap; more than 3 points above the national rate but under 20%, possibly one.'],
+    ['What it takes', 'The county’s 2024 counts divided by 52 weeks: extra mammograms a week, or called-back women a week needing a slot.'],
+    ['Our warning lines', 'Attendance 2 points below Finland, results on record 3 points below, or a wait 1.4 times the national one. Only the 80% attendance goal is official.'],
+    ['The briefing on the one-page plan', 'Written by AI from these calculated numbers and a few cited passages from reviewed sources (the Cancer Registry’s breast screening statistics, the cancer strategy and roadmap, the text-reminder trial and a review of ways to raise attendance); it adds no numbers of its own. Every number and citation is checked, and if one doesn’t match, a fixed template is used instead.'],
+  ],
+  cervical: [
+    ['What a fix does here', 'For attendance: in the Espoo trial, 29.8% of women who had not come were tested after a mailed self-test kit, against 26.2% after a reminder letter; we apply both to the county’s untested women.'],
+    ['Colposcopies to reach the national rate', 'The county’s referrals times the national share with a colposcopy on record, minus the colposcopies done. A target, not a study result.'],
+    ['What it takes', 'Extra HPV tests a week (mailed kits divided by 52) and colposcopies from the county’s own referral rate; or referred women a week needing a slot.'],
+    ['Reporting gaps', 'When colposcopies on record are under a quarter of the national rate, we call it most likely a reporting gap; when 20% or more of referred women have no follow-up information at all, possibly in part.'],
+    ['Waits', 'Read from the Cancer Registry’s chart, to about 0.1 month. Where the Registry warns a short wait may reflect how dates are recorded, we mark it “check data” rather than a strength.'],
+    ['Our warning lines', 'Attendance 2 points below Finland, colposcopy on record 3 points below, or a wait 1.4 times the national one. Only the 80% attendance goal is official.'],
+    ['The briefing on the one-page plan', 'Written by AI from these calculated numbers and a few cited passages from reviewed sources (the Cancer Registry’s cervical screening statistics, the cancer strategy and roadmap, the Espoo self-sampling trial and a review of ways to raise attendance); it adds no numbers of its own. Every number and citation is checked, and if one doesn’t match, a fixed template is used instead.'],
+  ],
+}
+
 /** One-page plan for breast and cervical, the same shape as bowel's. */
 export function ProgrammeSheet({ v, county, briefing, applied, onShowList }: { v: ProgrammeView; county: string; briefing: Briefing; applied: boolean; onShowList?: () => void }) {
   const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -86,43 +117,44 @@ export function ProgrammeSheet({ v, county, briefing, applied, onShowList }: { v
         </div>
         <p className="font-type text-[12px] uppercase tracking-wider opacity-70 text-right shrink-0">{date}<br />2024 screening round</p>
       </header>
-      <p className="mt-3 font-serif text-[22px] leading-snug">{v.verdict}</p>
+      <p className="mt-3 font-serif text-[19px] leading-snug">{v.verdict}</p>
+      <section className="mt-3 py-2.5 border-y border-black/15"><StepsStrip steps={v.glance.steps} county={county} /></section>
       <section className="mt-3 border-l-4 border-terra pl-3">
         <p className="font-type uppercase tracking-widest text-[11px] opacity-60">Briefing</p>
-        <p className="mt-1 text-[14px] leading-snug">
+        <p className="mt-1 text-[13.5px] leading-snug">
           {grounded ? briefing.lines!.map((l, i) => (
             <span key={l.label}>{i > 0 && ' '}{l.text}{l.cites.length > 0 && <sup className="font-type text-[10px] opacity-60 ml-0.5">{l.cites.join(',')}</sup>}</span>
           )) : briefing.text}
         </p>
-        <p className="text-[11px] opacity-60 mt-1 italic">
+        <p className="text-[10.5px] opacity-60 mt-1 italic">
           {briefing.source === 'ai'
             ? `Written by AI from our calculated numbers${grounded ? ' and the numbered sources at the bottom' : ''}. Numbers come from the Cancer Registry and our calculations, not the AI.`
             : `Template briefing, built from the numbers on this page.${briefing.note ? ` ${briefing.note}` : ''}`}
         </p>
       </section>
-      <section className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3">
-        {[
-          [`Do this (${applied ? 'chosen plan' : v.onTrack ? 'to do even better' : 'recommended first step'})`, <>
-            <p>{v.start.text}</p>
-            <p className="mt-1 opacity-80"><b className="font-medium">Who:</b> {v.start.who}</p>
-            {v.list && onShowList && <button onClick={onShowList} className="print:hidden mt-1 text-[12px] underline underline-offset-2 hover:text-terra">See what the nurse&apos;s list looks like</button>}
-          </>],
-          [v.start.estimate ? 'What it achieves (estimate)' : 'What it achieves', <>
-            <p>{v.start.result}</p>
-            <p className="mt-1 text-[12px] opacity-70">{v.start.estimate ? 'Effect measured in a study, applied to this county’s 2024 numbers. A scenario, not a promise.' : 'From the Cancer Registry’s 2024 figures.'}</p>
-          </>],
-          ['What it takes', <p>{v.start.takes}</p>],
-          ['How you’ll know it works', <p>{v.start.measure}</p>],
-        ].map(([label, body]) => (
-          <div key={label as string} className="min-w-0 border-t border-black/20 pt-2">
-            <p className="font-type uppercase tracking-widest text-[11px] opacity-60">{label}</p>
-            <div className="mt-1 text-[14px] leading-snug">{body}</div>
-          </div>
-        ))}
+      <section className="mt-3 grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-x-5 gap-y-3">
+        <PlanBlock label={`Do this (${applied ? 'chosen plan' : v.onTrack ? 'to do even better' : 'recommended first step'})`}>
+          <p>{v.start.text}</p>
+          <p className="mt-1 text-[12px] opacity-80"><b className="font-medium">Who:</b> {v.start.who}</p>
+          {v.list && onShowList && <button onClick={onShowList} className="print:hidden mt-1 text-[12px] underline underline-offset-2 hover:text-terra">See what the nurse&apos;s list looks like</button>}
+        </PlanBlock>
+        <PlanBlock label={v.glance.change?.kind === 'estimate' ? 'What it achieves (estimate)' : 'What it achieves (target)'}>
+          {v.glance.change ? <>
+            <p className="text-[11px] opacity-70 mb-1">{v.glance.change.title}</p>
+            <Bars bars={v.glance.change.bars} unit={v.glance.change.unit} label={v.glance.change.title} />
+            <p className="mt-1 text-[11px] opacity-65">{v.glance.change.kind === 'estimate' ? 'Effect from a study, applied to 2024 numbers: a scenario, not a promise.' : 'The national figure as the target; no effect size is claimed.'}</p>
+          </> : <p>{v.start.result}</p>}
+        </PlanBlock>
+        <PlanBlock label="What it takes">
+          {v.glance.takes ? <>
+            <p className="text-[11px] opacity-70 mb-1">{v.glance.takes.title}</p>
+            <Bars bars={v.glance.takes.bars} unit={v.glance.takes.unit} label={v.glance.takes.title} />
+          </> : <p>{v.start.takes}</p>}
+        </PlanBlock>
+        <PlanBlock label="How you’ll know it works"><Measures items={v.glance.measures} /></PlanBlock>
       </section>
       <footer className="mt-5 pt-2 border-t border-black/30 text-[10.5px] leading-snug opacity-85">
         <p className="font-type uppercase tracking-widest text-[10px] opacity-70">Sources and caveats</p>
-        <p className="mt-1"><b className="font-medium">{county} in 2024:</b> {v.tiles.map((t) => `${t.title.toLowerCase()} ${t.big}${t.unit && t.big !== '–' ? ` ${t.unit}` : ''} (Finland ${t.finland})`).join(' · ')}. The official target is {GOAL_ATTENDANCE}% attendance (National Cancer Strategy, Goal 2).</p>
         {grounded && (
           <ol className="mt-1.5 space-y-0.5">
             {briefing.evidence!.map((e) => (
@@ -136,7 +168,7 @@ export function ProgrammeSheet({ v, county, briefing, applied, onShowList }: { v
         <p className="mt-1.5">Sources: Finnish Cancer Registry, {v.label.toLowerCase()} statistics 2024 (<a href={v.sourceUrl} target="_blank" rel="noreferrer" className="underline decoration-black/30">{host(v.sourceUrl)}</a>){v.start.basisUrl ? <> · the study behind the estimate (<a href={v.start.basisUrl} target="_blank" rel="noreferrer" className="underline decoration-black/30">{host(v.start.basisUrl)}</a>)</> : null} · National Cancer Strategy 2026–2035.</p>
         <ul className="mt-1.5 list-disc pl-4 space-y-0.5">
           <li>{v.start.basis}</li>
-          <li>&quot;Falling behind&quot; is our own warning line ({v.warningLines}); waits were read from a published chart.</li>
+          <li>&quot;Behind&quot; is our own warning line ({v.warningLines}); the only official target is {GOAL_ATTENDANCE}% attendance (National Cancer Strategy, Goal 2). Waits were read from a published chart.</li>
           {v.caveat && <li>{v.caveat}</li>}
           {grounded && (briefing.limitations ?? []).slice(0, 2).map((l) => {
             const cites = [...l.matchAll(/\[(\d{1,2})\]/g)].map((m) => m[1])
@@ -263,6 +295,10 @@ export function ProgrammeMonitor({ p, countyId, select, setProgramme, writer }: 
           <li className="py-3"><b className="font-medium">Finnish Cancer Registry, {v.label.toLowerCase()} statistics</b> (2024 round, published {published}). Used for the three steps and the counts. <a className="underline underline-offset-2 hover:text-terra" href={v.sourceUrl} target="_blank" rel="noreferrer">Open source</a></li>
           <li className="py-3"><b className="font-medium">Published studies</b> for the effects of each option, listed under &quot;See the evidence&quot;. Used for: what an action achieves, only where a study gives an effect size.</li>
           <li className="py-3"><b className="font-medium">National Cancer Strategy 2026–2035</b>. Used for the {GOAL_ATTENDANCE}% attendance goal. <a className="underline underline-offset-2 hover:text-terra" href="https://files.hackjunction.app/resources/Kansallinen_syopastrategia_2026_2035_FINAL.pdf" target="_blank" rel="noreferrer">Open source</a></li>
+        </ul>
+        <p className="mt-8 font-serif text-2xl">What we calculated ourselves</p>
+        <ul className="mt-3 space-y-2">
+          {OURS[p].map(([t, d]) => <li key={t}><b className="font-medium">{t}.</b> <span className="opacity-80">{d}</span></li>)}
         </ul>
         <p className="mt-4 text-[13px] opacity-60">Caveats: waits were read from a published chart. A follow-up figure far below the national one usually means results are not reaching the register, not that women were not seen. Studies come from other programmes and countries.</p>
       </footer>

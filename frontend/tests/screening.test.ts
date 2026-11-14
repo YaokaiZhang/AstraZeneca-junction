@@ -153,3 +153,23 @@ test('briefing facts carry the reporting-gap flag whenever the start card says i
   assert.equal(cervicalView('pohjois-savo')!.facts.reporting_gap, undefined)
   assert.equal(breastView('helsinki')!.facts.reporting_gap, undefined)
 })
+
+test('a short cervical wait that the Registry says may reflect how dates are recorded is "check data", not a strength', () => {
+  for (const id of ['etela-savo', 'pohjois-savo']) {
+    const w = cervicalView(id)!.tiles[2]
+    assert.equal(w.check, true, id)
+    assert.equal(w.behind, false, id)
+    assert.match(w.line, /how dates are recorded/)
+    assert.equal(cervicalView(id)!.glance.steps[2].status, 'check')
+  }
+  assert.notEqual(cervicalView('helsinki')!.tiles[2].check, true)
+})
+
+test('plan charts reuse the start-card numbers (cervical kit vs letter, breast reminders, bowel follow-up)', () => {
+  const c = cervicalView('pohjois-savo')!.glance.change!
+  assert.equal(c.kind, 'estimate')
+  assert.deepEqual(c.bars.map((b) => Math.round(b.value)), [3670, 3670 - Math.round(3670 * 0.262), 3670 - Math.round(3670 * 0.298)])
+  const b = breastView('helsinki')!.glance
+  assert.equal(b.steps[0].goal, 80)
+  assert.ok(b.takes!.bars[0].value > 30 && b.takes!.bars[0].value < 50)
+})

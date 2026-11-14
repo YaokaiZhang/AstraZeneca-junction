@@ -3,6 +3,7 @@
 // first written for the county view on main. No number is invented: tiles are published figures; an expected result
 // is shown only where a named study gives an effect size, applied to the county's own counts. Elsewhere: no number.
 import type { Briefing } from './ActionSheet'
+import type { Glance, GlanceStep } from './PlanGlance'
 import { BREAST, BREAST_FI, BREAST_EVIDENCE, BREAST_AGES, BREAST_YEAR, BREAST_SOURCE_URL, type BreastRow } from './breastData'
 import { CERVICAL, CERVICAL_FI, CERVICAL_EVIDENCE, CERVICAL_AGES, CERVICAL_YEAR, CERVICAL_CAVEATS, CERVICAL_SOURCE_URL, type CervicalRow } from './cervicalData'
 
@@ -27,6 +28,8 @@ export interface StepTile {
   behind: boolean
   /** no usable figure for this county (reporting gap) */
   missing?: boolean
+  /** a figure exists but should not be compared (the Registry's caveat says how it was recorded) */
+  check?: boolean
   line: string
   /** relative gap to Finland, positive = worse; used to pick where to start */
   gap: number
@@ -68,6 +71,8 @@ export interface ProgrammeView {
   /** our warning lines, said plainly */
   warningLines: string
   caveat?: string
+  /** the one-page plan's charts: the three steps, before → after, what it takes, measures with targets */
+  glance: Glance
   /** facts for the briefing (same shape idea as bowel's buildFacts) */
   facts: Record<string, number | string>
 }
@@ -199,7 +204,7 @@ export function breastView(id: string): ProgrammeView | null {
   }
   return {
     programme: 'breast', label: 'Breast cancer screening', scope: `${BREAST_YEAR} · women ${BREAST_AGES}`, sourceUrl: BREAST_SOURCE_URL,
-    tiles, startStep: w, verdict, onTrack, start,
+    tiles, startStep: w, verdict, onTrack, start, glance: breastGlance(r, w, tiles),
     evidence: BREAST_EVIDENCE.map(({ id, action, effect, citation, url }) => ({ id, action, effect, citation, url })),
     warningLines: BREAST_LINES,
     facts: {
@@ -225,6 +230,8 @@ export function cervicalTiles(r: CervicalRow): StepTile[] {
   const fiWait = fi.medianMonthsToColposcopyApprox!
   const wait = gapColpo ? null : r.medianMonthsToColposcopyApprox
   const ratio = wait != null ? wait / fiWait : 1
+  // the Registry warns some short waits may reflect how dates are recorded: don't call those a strength
+  const check = wait != null && /how dates are recorded/.test(CERVICAL_CAVEATS[r.id] ?? '')
   return [
     {
       title: 'Come for the test', big: `${n1(r.participationPct)}%`, finland: `${n1(fi.participationPct)}%`,
@@ -240,8 +247,8 @@ export function cervicalTiles(r: CervicalRow): StepTile[] {
     },
     {
       title: 'Wait for colposcopy', big: wait != null ? n1(wait) : '–', unit: 'months', finland: `${n1(fiWait)} months`,
-      behind: ratio >= 1.4, missing: wait == null, gap: (ratio - 1) * WAIT_WEIGHT,
-      line: wait == null ? 'Not available' : ratio >= 1.4 ? `About ${n1(ratio)} times the national wait` : ratio <= 0.7 ? 'Shorter than the national wait' : 'Close to the national wait',
+      behind: !check && ratio >= 1.4, missing: wait == null, check, gap: check ? 0 : (ratio - 1) * WAIT_WEIGHT,
+      line: wait == null ? 'Not available' : check ? 'May reflect how dates are recorded: check before comparing' : ratio >= 1.4 ? `About ${n1(ratio)} times the national wait` : ratio <= 0.7 ? 'Shorter than the national wait' : 'Close to the national wait',
     },
   ]
 }
@@ -340,7 +347,7 @@ export function cervicalView(id: string): ProgrammeView | null {
   }
   return {
     programme: 'cervical', label: 'Cervical cancer screening', scope: `${CERVICAL_YEAR} · women ${CERVICAL_AGES}`, sourceUrl: CERVICAL_SOURCE_URL,
-    tiles, startStep: w, verdict, onTrack, start, list,
+    tiles, startStep: w, verdict, onTrack, start, list, glance: cervicalGlance(r, w, reportingGap, tiles),
     evidence: CERVICAL_EVIDENCE.map(({ id, action, effect, citation, url }) => ({ id, action, effect, citation, url })),
     warningLines: CERVICAL_LINES,
     caveat: CERVICAL_CAVEATS[r.id],
@@ -354,6 +361,83 @@ export function cervicalView(id: string): ProgrammeView | null {
       result: start.result, takes: start.takes,
       ...(reportingGapNote ? { reporting_gap: reportingGapNote } : {}),
     },
+  }
+}
+
+// ---------- one-page plan charts (same formulas and inputs as the start cards above) ----------
+
+const stepStatus = (t: StepTile): GlanceStep['status'] => (t.missing ? 'missing' : t.check ? 'check' : t.behind ? 'behind' : 'ok')
+
+function breastGlance(r: BreastRow, w: number, tiles: StepTile[]): Glance {
+  const fi = BREAST_FI
+  const steps: GlanceStep[] = [
+    { label: 'Came for the mammogram', value: r.attendedPct, finland: fi.attendedPct, unit: '%', status: stepStatus(tiles[0]), goal: GOAL_ATTENDANCE },
+    { label: 'Result on record', value: 100 - r.noHistologyPct, finland: 100 - fi.noHistologyPct, unit: '%', status: stepStatus(tiles[1]) },
+    { label: 'Wait for further tests', value: r.medianMonthsToExam != null ? days(r.medianMonthsToExam) : null, finland: days(fi.medianMonthsToExam!), unit: 'days', status: stepStatus(tiles[2]) },
+  ]
+  if (w === 0) {
+    const extra = r.invited * (SMS.absolutePp! / 100)
+    return {
+      steps,
+      change: { title: 'Invited women not screened, a year', unit: '', kind: 'estimate', bars: [{ label: 'Today', value: r.invited - r.attended, tone: 'now' }, { label: 'With text reminders', value: r.invited - r.attended - extra, tone: 'fix' }] },
+      takes: { title: 'Extra mammograms a week', unit: 'a week', bars: [{ label: 'With reminders', value: extra / 52 }] },
+      measures: [{ text: 'Share of invited women who come', target: `${n1((r.attended + extra) / r.invited * 100)}%` }, { text: 'Did-not-attend rate per screening site' }],
+    }
+  }
+  if (w === 1) {
+    return {
+      steps,
+      change: { title: 'Referred women with no result on record', unit: '', kind: 'target', bars: [{ label: 'Today', value: r.noHistology, tone: 'now' }, { label: 'At the national rate', value: r.referred * fi.noHistologyPct / 100, tone: 'target' }] },
+      measures: [{ text: 'Referred women with a result on record', target: `${n1(100 - fi.noHistologyPct)}%` }, { text: 'Months from referral to the result reaching the register' }],
+    }
+  }
+  return {
+    steps,
+    change: { title: 'Days to further tests', unit: 'days', kind: 'target', bars: [{ label: 'Today', value: days(r.medianMonthsToExam!), tone: 'now' }, { label: 'National', value: days(fi.medianMonthsToExam!), tone: 'target' }] },
+    takes: { title: 'Called-back women a week needing a slot', unit: 'a week', bars: [{ label: 'Slots', value: r.recalled / 52 }] },
+    measures: [{ text: 'Days from recall to further tests', target: `${days(fi.medianMonthsToExam!)} days` }, { text: 'Share seen within two weeks' }],
+  }
+}
+
+function cervicalGlance(r: CervicalRow, w: number, reportingGap: boolean, tiles: StepTile[]): Glance {
+  const fi = CERVICAL_FI
+  const steps: GlanceStep[] = [
+    { label: 'Came for the test', value: r.participationPct, finland: fi.participationPct, unit: '%', status: stepStatus(tiles[0]), goal: GOAL_ATTENDANCE },
+    { label: 'Colposcopy on record', value: tiles[1].missing ? null : r.colposcopyOfReferredPct, finland: fi.colposcopyOfReferredPct, unit: '%', status: stepStatus(tiles[1]) },
+    { label: 'Wait for colposcopy', value: tiles[2].missing ? null : r.medianMonthsToColposcopyApprox, finland: fi.medianMonthsToColposcopyApprox!, unit: 'months', status: stepStatus(tiles[2]), note: tiles[2].check ? 'dates may differ' : undefined },
+  ]
+  const atNational = r.referredColposcopy * fi.colposcopyOfReferredPct / 100
+  if (reportingGap) {
+    return {
+      steps,
+      change: { title: 'Colposcopies on record', unit: '', kind: 'target', bars: [{ label: 'Today', value: r.colposcopyDone, tone: 'now' }, { label: 'At the national rate', value: atNational, tone: 'target' }] },
+      measures: [{ text: 'Referred women with a colposcopy on record', target: `${n1(fi.colposcopyOfReferredPct)}%` }, { text: 'Months from referral to the result reaching the register' }],
+    }
+  }
+  if (w === 0) {
+    const non = r.invited - r.participated
+    const kits = non * KIT.pct / 100
+    return {
+      steps,
+      change: { title: 'Invited women not tested, a year', unit: '', kind: 'estimate', bars: [{ label: 'Today', value: non, tone: 'now' }, { label: 'Reminder letter', value: non - non * KIT.reminderPct / 100, tone: 'alt' }, { label: 'Mailed kit', value: non - kits, tone: 'fix' }] },
+      takes: { title: 'Extra HPV tests a week', unit: 'a week', bars: [{ label: 'Mailed kits', value: kits / 52 }] },
+      measures: [{ text: 'Share of invited women tested', target: `${n1((r.participated + kits) / r.invited * 100)}%` }, { text: 'Kits returned out of kits sent' }],
+    }
+  }
+  if (w === 1) {
+    const toNational = Math.max(0, atNational - r.colposcopyDone)
+    return {
+      steps,
+      change: { title: 'Referred women with no colposcopy on record', unit: '', kind: 'target', bars: [{ label: 'Today', value: r.referredColposcopy - r.colposcopyDone, tone: 'now' }, { label: 'At the national rate', value: r.referredColposcopy - atNational, tone: 'target' }] },
+      takes: { title: 'Extra colposcopies a year', unit: 'a year', bars: [{ label: 'To national rate', value: toNational }] },
+      measures: [{ text: 'Referred women with a colposcopy on record', target: `${n1(fi.colposcopyOfReferredPct)}%` }, { text: 'Days from referral to booking' }],
+    }
+  }
+  return {
+    steps,
+    change: { title: 'Months to colposcopy', unit: 'months', kind: 'target', bars: [{ label: 'Today', value: r.medianMonthsToColposcopyApprox!, tone: 'now' }, { label: 'National', value: fi.medianMonthsToColposcopyApprox!, tone: 'target' }] },
+    takes: { title: 'Referred women a week needing a slot', unit: 'a week', bars: [{ label: 'Slots', value: r.referredColposcopy / 52 }] },
+    measures: [{ text: 'Median wait from referral to colposcopy', target: `${n1(fi.medianMonthsToColposcopyApprox!)} months` }],
   }
 }
 

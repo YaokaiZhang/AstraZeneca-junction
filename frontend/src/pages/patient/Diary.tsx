@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Btn, Card, Chip, Display, Label, RoundBtn, Stamp, Tabs, cx, toast } from '../../components/ui'
 import { PATHWAY, daysBetween, pathwayStatus, today } from '../../data/pathway'
 import { useStore } from '../../lib/store'
-import { msgText, send, useChat, type Msg } from './chat'
+import { aiActive, checkAi, msgText, send, useAi, useChat, type Msg } from './chat'
 import { assess, firstSeen, nextSteps, packYears, parseKg } from './logic'
 import { split2, useT, type Key } from './i18n'
 import { ArrowIcon, Tag, copyText } from './bits'
@@ -44,9 +44,13 @@ function ChatView() {
   const [txt, setTxt] = useState('')
   const [date, setDate] = useState(today())
   const box = useRef<HTMLDivElement>(null)
-  useEffect(() => { box.current?.scrollTo({ top: box.current.scrollHeight, behavior: 'smooth' }) }, [msgs.length])
+  const server = useAi((s) => s.server)
+  const busy = useAi((s) => s.busy)
+  const aiOn = aiActive(server, useStore((s) => s.aiChat))
+  useEffect(() => { void checkAi() }, [])
+  useEffect(() => { box.current?.scrollTo({ top: box.current.scrollHeight, behavior: 'smooth' }) }, [msgs.length, busy])
   const last = msgs[msgs.length - 1]
-  const submit = () => { const v = txt.trim(); if (!v) return; send(v); setTxt('') }
+  const submit = () => { const v = txt.trim(); if (!v || busy) return; send(v); setTxt('') }
 
   return (
     <Card tone="paper" className="flex flex-col h-[560px] sm:h-[600px]">
@@ -56,11 +60,20 @@ function ChatView() {
             <div className={cx('max-w-[85%] rise',
               m.from === 'me' ? 'bg-ink text-paper rounded-2xl rounded-br-sm px-4 py-2.5 font-sans text-[15px]' : 'font-serif text-xl leading-snug pr-4')}>
               {m.from === 'bot' && m.key === 'bot.checkin' && <span className="label block !opacity-80 text-terra mb-1">{t('d.checkin')}</span>}
+              {m.ai && <span className="label block !opacity-60 mb-0.5">✦ {t('ai.label')}</span>}
               {text(m)}
             </div>
           </div>
         ))}
-        {last?.from === 'bot' && (last.chips?.length || last.datePicker) && (
+        {busy && (
+          <div className="flex justify-start" role="status">
+            <div className="font-serif italic text-xl leading-snug opacity-60 animate-pulse">
+              <span className="label block !opacity-80 not-italic mb-0.5">✦ {t('ai.label')}</span>
+              {t('ai.typing')}
+            </div>
+          </div>
+        )}
+        {!busy && last?.from === 'bot' && (last.chips?.length || last.datePicker) && (
           <div className="flex flex-wrap gap-2 pt-1">
             {last.chips?.map((c) => <Chip key={c.value} onClick={() => send(t(c.key as Key), c.value)}>{t(c.key as Key)}</Chip>)}
             {last.datePicker && (
@@ -73,13 +86,14 @@ function ChatView() {
           </div>
         )}
       </div>
+      {aiOn && <p className="px-4 sm:px-6 pt-2 font-type text-sm leading-snug opacity-70">✦ {t('ai.note')}</p>}
       <form className="tear flex items-end gap-3 p-3 sm:p-4" onSubmit={(e) => { e.preventDefault(); submit() }}>
         <label htmlFor="chat-input" className="sr-only">{t('d.placeholder')}</label>
         <textarea id="chat-input" rows={1} value={txt} onChange={(e) => setTxt(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
           placeholder={t('d.placeholder')}
           className="flex-1 min-w-0 resize-none border-b border-black/20 py-2 font-serif text-xl outline-none focus:border-terra placeholder:text-black/30 placeholder:italic" />
-        <RoundBtn type="submit" title={t('d.send')} className="!w-12 !h-12 shrink-0"><ArrowIcon /></RoundBtn>
+        <RoundBtn type="submit" title={t('d.send')} disabled={busy} className="!w-12 !h-12 shrink-0 disabled:opacity-40"><ArrowIcon /></RoundBtn>
       </form>
     </Card>
   )

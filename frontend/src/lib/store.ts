@@ -94,6 +94,8 @@ export interface State {
   barriers: BarrierReport[]
   checkins: Checkins
   sharing: { hospital: boolean; stats: boolean; at?: string; /** last one-tap "send summary to health centre" */ summaryAt?: string }
+  /** AI-written diary chat replies (diary chat text is sent to an AI service). undefined = on; false = scripted bot only. */
+  aiChat?: boolean
 
   // hospital
   escalateAfterDays: number

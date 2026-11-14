@@ -1,3 +1,31 @@
+# Ajoissa frontend
+
+```bash
+npm install
+npm run dev                         # http://localhost:5173
+npm run build && npm run preview    # production build
+```
+
+## AI replies in the patient diary chat (optional)
+
+The symptom-diary chat (`/#/patient/diary`) can use Claude Haiku 5.5 (`claude-haiku-5-5`) to write short replies
+and pull out symptom tags, the start date, weight lost and smoking info from free text. The call happens on the
+server: `server/llm.ts` is a Vite plugin that adds `POST /api/chat` and `GET /api/health` to both `vite` (dev) and
+`vite preview`. The Anthropic API key is read from `LLM_KEY` in the server's environment and is never bundled
+into the browser code (do **not** use a `VITE_` variable for it).
+
+```bash
+LLM_KEY=sk-ant-... npm run dev
+# or
+npm run build && LLM_KEY=sk-ant-... npx vite preview
+```
+
+Without `LLM_KEY` (or on a static host with no `/api`), or if a call fails, the chat silently falls back to the
+original scripted bot. Urgency (the two-week flag) always comes from `src/pages/patient/logic.ts`, never from the
+model. People can switch AI replies off under Privacy; only the recent chat text is sent, never profile data.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

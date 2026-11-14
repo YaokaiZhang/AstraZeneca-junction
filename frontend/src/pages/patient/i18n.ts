@@ -48,6 +48,12 @@ const D = {
   'bot.checkin': ['Hi, {ago} you mentioned {sym}. Is it still there? Has anything changed?', 'Hei, {ago} mainitsit: {sym}. Onko se vielä? Onko jokin muuttunut?', 'Hej, {ago} nämnde du {sym}. Finns det kvar? Har något ändrats?'],
   'bot.checkinGeneric': ['Hi, just checking in. How are you feeling?', 'Hei, mitä kuuluu? Miten voit?', 'Hej, hur mår du idag?'],
   'bot.thanks': ['Thank you. Saved to your diary.', 'Kiitos. Tallennettu päiväkirjaan.', 'Tack. Sparat i din dagbok.'],
+  'bot.flag': ['From what you have noted, please have this checked by a doctor within two weeks.', 'Kirjaamiesi oireiden perusteella ne kannattaa näyttää lääkärille kahden viikon sisällä.', 'Utifrån det du har antecknat bör en läkare titta på det inom två veckor.'],
+  'bot.emergency': ['If this is happening now and feels serious, call 112.', 'Jos tämä tapahtuu nyt ja tuntuu vakavalta, soita 112.', 'Om det här händer nu och känns allvarligt, ring 112.'],
+  // AI replies
+  'ai.label': ['AI-written', 'Tekoälyn kirjoittama', 'Skrivet av AI'],
+  'ai.typing': ['Writing a reply…', 'Kirjoittaa vastausta…', 'Skriver ett svar…'],
+  'ai.note': ['Replies are written by AI. What you type here is sent to an AI service. You can turn this off under Privacy.', 'Vastaukset kirjoittaa tekoäly. Tähän kirjoittamasi teksti lähetetään tekoälypalveluun. Voit kytkeä sen pois Yksityisyys-kohdasta.', 'Svaren skrivs av AI. Det du skriver här skickas till en AI-tjänst. Du kan stänga av det under Integritet.'],
   'ago.days': ['{n} days ago', '{n} päivää sitten', 'för {n} dagar sedan'],
   'ago.today': ['today', 'tänään', 'idag'],
   // chips
@@ -258,6 +264,10 @@ const D = {
   'pr.off': ['Off', 'Pois', 'Av'],
   'pr.gdpr': ['Designed around GDPR principles', 'Suunniteltu GDPR:n periaatteiden mukaan', 'Utformad efter GDPR:s principer'],
   'pr.local': ['Stored on this device', 'Tallennettu tälle laitteelle', 'Sparas på den här enheten'],
+  'pr.localAi': ['Except the diary chat: while AI replies are on, what you type there is sent to an AI service to write the replies.', 'Paitsi päiväkirjan keskustelu: kun tekoälyvastaukset ovat päällä, sinne kirjoittamasi teksti lähetetään tekoälypalveluun vastausten kirjoittamista varten.', 'Utom dagbokschatten: när AI-svar är på skickas det du skriver där till en AI-tjänst som skriver svaren.'],
+  'pr.ai': ['AI replies in the diary chat', 'Tekoälyvastaukset päiväkirjassa', 'AI-svar i dagboken'],
+  'pr.aiWhat': ['When on, your diary chat messages (the recent conversation, nothing else: not your age, county or screening answers) are sent to an AI service (Anthropic Claude) to write replies and pick out symptoms and dates. When off, a simple scripted helper answers and nothing leaves this device.', 'Kun päällä, päiväkirjan keskusteluviestit (viimeisimmät viestit, ei muuta: ei ikää, maakuntaa eikä seulontavastauksia) lähetetään tekoälypalveluun (Anthropic Claude), joka kirjoittaa vastaukset ja poimii oireet ja päivämäärät. Kun pois, yksinkertainen valmiiksi kirjoitettu avustaja vastaa eikä mitään lähetetä laitteelta.', 'När det är på skickas dina meddelanden i dagbokschatten (den senaste konversationen, inget annat: inte ålder, landskap eller screeningsvar) till en AI-tjänst (Anthropic Claude) som skriver svaren och plockar ut symtom och datum. När det är av svarar en enkel förskriven hjälpare och inget lämnar enheten.'],
+  'pr.aiNA': ['AI replies are not available right now, so the scripted helper answers and nothing is sent.', 'Tekoälyvastaukset eivät ole nyt käytettävissä, joten valmiiksi kirjoitettu avustaja vastaa eikä mitään lähetetä.', 'AI-svar är inte tillgängliga just nu, så den förskrivna hjälparen svarar och inget skickas.'],
   'pr.erase': ['Erase my data', 'Poista tietoni', 'Radera mina uppgifter'],
   'pr.eraseConfirm': ['Erase everything on this page?', 'Poistetaanko kaikki?', 'Radera allt?'],
   'pr.erased': ['Erased', 'Poistettu', 'Raderat'],

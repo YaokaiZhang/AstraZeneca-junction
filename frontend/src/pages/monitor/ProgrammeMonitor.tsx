@@ -13,6 +13,7 @@ import { GOAL_ATTENDANCE, programmeView, templateFor, stepsBehind, type Programm
 import { ProgrammeTabs } from './ProgrammeTabs'
 import { PlanPanel } from './PlanWriting'
 import { Bars, Measures, StepsStrip } from './PlanGlance'
+import { SAME, VsFinland, type Cmp } from './VsFinland'
 import type { usePlanWriter } from './planWriter'
 
 const n0 = (x: number) => Math.round(x).toLocaleString('en-GB')
@@ -46,30 +47,42 @@ function Block({ a, b, children, id }: { a: ReactNode; b?: ReactNode; children: 
 }
 const SourceLine = ({ children }: { children: ReactNode }) => <p className="mt-3 font-sans text-[13px] opacity-55">{children}</p>
 
-/** The numbers behind the three tiles, for the evidence section. */
-function NumbersTable({ p, id }: { p: ProgrammeId; id: string }) {
-  const rows: [string, string, string][] = []
+/** The numbers behind the three tiles, for the evidence section, each with better / worse than Finland where the
+ *  direction is clear (see VsFinland). Rows with a data caveat say "check data". */
+function NumbersTable({ p, id, v }: { p: ProgrammeId; id: string; v: ProgrammeView }) {
+  const rows: [string, string, string, Cmp?][] = []
+  const gap = !!v.facts.reporting_gap
   if (p === 'breast') {
     const r = BREAST.find((x) => x.id === id) as BreastRow, f = BREAST_FI
-    rows.push(['Invited women', n0(r.invited), n0(f.invited)], ['Came for the mammogram', `${n0(r.attended)} (${n1(r.attendedPct)}%)`, `${n1(f.attendedPct)}%`],
+    rows.push(['Invited women', n0(r.invited), n0(f.invited)],
+      ['Came for the mammogram', `${n0(r.attended)} (${n1(r.attendedPct)}%)`, `${n1(f.attendedPct)}%`, { county: r.attendedPct, finland: f.attendedPct, better: 'higher', unit: 'pts' }],
       ['Called back for further tests', `${n0(r.recalled)} (${n1(r.recalledPct)}%)`, `${n1(f.recalledPct)}%`],
       ['Referred to specialist care', n0(r.referred), n0(f.referred)], ['Cancers found by screening', n0(r.cancers), n0(f.cancers)],
-      ['Referred, no result on record', `${n0(r.noHistology)} (${n1(r.noHistologyPct)}%)`, `${n1(f.noHistologyPct)}%`],
-      ['Median wait for further tests', r.medianMonthsToExam != null ? `${n1(r.medianMonthsToExam)} months` : '–', `${n1(f.medianMonthsToExam!)} months`])
+      ['Referred, no result on record', `${n0(r.noHistology)} (${n1(r.noHistologyPct)}%)`, `${n1(f.noHistologyPct)}%`, { county: r.noHistologyPct, finland: f.noHistologyPct, better: 'lower', unit: 'pts', check: gap }],
+      ['Median wait for further tests', r.medianMonthsToExam != null ? `${n1(r.medianMonthsToExam)} months` : '–', `${n1(f.medianMonthsToExam!)} months`, { county: r.medianMonthsToExam, finland: f.medianMonthsToExam!, better: 'lower', unit: 'months' }])
   } else {
     const r = CERVICAL.find((x) => x.id === id) as CervicalRow, f = CERVICAL_FI
-    rows.push(['Invited women', n0(r.invited), n0(f.invited)], ['Tested', `${n0(r.participated)} (${n1(r.participationPct)}%)`, `${n1(f.participationPct)}%`],
+    rows.push(['Invited women', n0(r.invited), n0(f.invited)],
+      ['Tested', `${n0(r.participated)} (${n1(r.participationPct)}%)`, `${n1(f.participationPct)}%`, { county: r.participationPct, finland: f.participationPct, better: 'higher', unit: 'pts' }],
       ['Referred to colposcopy', `${n0(r.referredColposcopy)} (${n1(r.referredColposcopyPct)}%)`, `${n1(f.referredColposcopyPct)}%`],
-      ['Colposcopy on record', `${n0(r.colposcopyDone)} (${n1(r.colposcopyOfReferredPct)}%)`, `${n1(f.colposcopyOfReferredPct)}%`],
+      ['Colposcopy on record', `${n0(r.colposcopyDone)} (${n1(r.colposcopyOfReferredPct)}%)`, `${n1(f.colposcopyOfReferredPct)}%`, { county: r.colposcopyOfReferredPct, finland: f.colposcopyOfReferredPct, better: 'higher', unit: 'pts', check: gap }],
       ['Serious precancer or cancer found (HSIL+)', n0(r.hsilPlus), n0(f.hsilPlus)],
-      ['Median wait for colposcopy', r.medianMonthsToColposcopyApprox != null ? `${n1(r.medianMonthsToColposcopyApprox)} months` : '–', `${n1(f.medianMonthsToColposcopyApprox!)} months`])
+      ['Median wait for colposcopy', r.medianMonthsToColposcopyApprox != null ? `${n1(r.medianMonthsToColposcopyApprox)} months` : '–', `${n1(f.medianMonthsToColposcopyApprox!)} months`, { county: r.medianMonthsToColposcopyApprox, finland: f.medianMonthsToColposcopyApprox!, better: 'lower', unit: 'months', check: !!v.tiles[2]?.check }])
   }
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[420px] font-sans text-[15px] border-collapse">
-        <thead><tr className="text-left text-[13px] opacity-60"><th className="font-normal py-2 pr-4">2024</th><th className="font-normal pr-4">This county</th><th className="font-normal">Finland</th></tr></thead>
-        <tbody>{rows.map(([a, b, c]) => <tr key={a} className="border-t border-black/10"><td className="py-2.5 pr-4">{a}</td><td className="font-serif text-lg pr-4">{b}</td><td className="opacity-70">{c}</td></tr>)}</tbody>
+    <div>
+      <table className="w-full font-sans text-[15px] border-collapse">
+        <thead><tr className="text-left text-[13px] opacity-60"><th className="font-normal py-2 pr-4">2024</th><th className="font-normal pr-4">This county</th><th className="font-normal pr-4">Finland</th><th className="font-normal hidden sm:table-cell">Against Finland</th></tr></thead>
+        <tbody>{rows.map(([a, b, c, cmp]) => (
+          <tr key={a} className="border-t border-black/10 align-top sm:align-middle">
+            <td className="py-2.5 pr-4">{a}</td>
+            <td className="py-2.5 pr-4"><span className="font-serif text-lg">{b}</span>{cmp && <span className="block mt-1 sm:hidden"><VsFinland cmp={cmp} /></span>}</td>
+            <td className="py-2.5 opacity-70 pr-4">{c}</td>
+            <td className="hidden sm:table-cell"><VsFinland cmp={cmp} /></td>
+          </tr>
+        ))}</tbody>
       </table>
+      <p className="mt-3 font-sans text-[13px] opacity-60 max-w-4xl">Better or worse only where the direction is clear; within {SAME.pts} points or {SAME.months} months counts as about the same. Counts and call-back or referral rates are shown for context. &ldquo;Check data&rdquo; means the figure may reflect how results or dates reach the register.</p>
     </div>
   )
 }
@@ -272,35 +285,35 @@ export function ProgrammeMonitor({ p, countyId, select, setProgramme, writer }: 
           <span className="font-serif text-3xl sm:text-4xl">See the evidence</span>
           <span className="font-type text-sm uppercase tracking-widest opacity-70 flex items-center gap-2">{evidence ? 'Hide' : 'Numbers, options, sources'} <span className={cx('inline-block transition-transform', evidence && 'rotate-180')}>↓</span></span>
         </summary>
-        {evidence && <div className="pb-6 max-w-4xl">
-          <Block a="The numbers," b="2024"><NumbersTable p={p} id={countyId} /></Block>
+        {evidence && <div className="pb-6">
+          <Block a="The numbers," b="2024"><NumbersTable p={p} id={countyId} v={v} /></Block>
           <Block a="Other proven" b="options" id="p-evidence-options">
             <ul className="divide-y divide-black/10">
               {v.evidence.map((e) => (
                 <li key={e.id} className="py-4">
-                  <p className="font-serif text-xl leading-tight">{e.action}</p>
-                  <p className="font-sans text-[15px] opacity-80 mt-1">{e.effect}</p>
-                  <p className="font-sans text-[13px] opacity-60 mt-1">{e.citation} <a className="underline underline-offset-2 hover:text-terra" href={e.url} target="_blank" rel="noreferrer">{host(e.url)}</a></p>
+                  <p className="font-serif text-xl leading-tight max-w-4xl">{e.action}</p>
+                  <p className="font-sans text-[15px] opacity-80 mt-1 max-w-4xl">{e.effect}</p>
+                  <p className="font-sans text-[13px] opacity-60 mt-1 max-w-4xl">{e.citation} <a className="underline underline-offset-2 hover:text-terra" href={e.url} target="_blank" rel="noreferrer">{host(e.url)}</a></p>
                 </li>
               ))}
             </ul>
           </Block>
-          {v.caveat && <Block a="About this" b="county’s data"><p className="font-sans text-[16px] leading-relaxed">{v.caveat}</p></Block>}
+          {v.caveat && <Block a="About this" b="county’s data"><p className="font-sans text-[16px] leading-relaxed max-w-4xl">{v.caveat}</p></Block>}
         </div>}
       </details>
 
-      <footer className="mt-16 pt-8 border-t border-black/15 max-w-5xl font-sans text-[15px] leading-snug">
+      <footer className="mt-16 pt-8 border-t border-black/15 font-sans text-[15px] leading-snug">
         <p className="font-serif text-3xl">Where the numbers come from</p>
-        <ul className="mt-4 divide-y divide-black/10">
+        <ul className="mt-4 divide-y divide-black/10 [&>li]:pr-[max(0px,calc(100%-64rem))]">
           <li className="py-3"><b className="font-medium">Finnish Cancer Registry, {v.label.toLowerCase()} statistics</b> (2024 round, published {published}). Used for the three steps and the counts. <a className="underline underline-offset-2 hover:text-terra" href={v.sourceUrl} target="_blank" rel="noreferrer">Open source</a></li>
           <li className="py-3"><b className="font-medium">Published studies</b> for the effects of each option, listed under &quot;See the evidence&quot;. Used for: what an action achieves, only where a study gives an effect size.</li>
           <li className="py-3"><b className="font-medium">National Cancer Strategy 2026–2035</b>. Used for the {GOAL_ATTENDANCE}% attendance goal. <a className="underline underline-offset-2 hover:text-terra" href="https://files.hackjunction.app/resources/Kansallinen_syopastrategia_2026_2035_FINAL.pdf" target="_blank" rel="noreferrer">Open source</a></li>
         </ul>
         <p className="mt-8 font-serif text-2xl">What we calculated ourselves</p>
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 space-y-2 max-w-5xl">
           {OURS[p].map(([t, d]) => <li key={t}><b className="font-medium">{t}.</b> <span className="opacity-80">{d}</span></li>)}
         </ul>
-        <p className="mt-4 text-[13px] opacity-60">Caveats: waits were read from a published chart. A follow-up figure far below the national one usually means results are not reaching the register, not that women were not seen. Studies come from other programmes and countries.</p>
+        <p className="mt-4 text-[13px] opacity-60 max-w-5xl">Caveats: waits were read from a published chart. A follow-up figure far below the national one usually means results are not reaching the register, not that women were not seen. Studies come from other programmes and countries.</p>
       </footer>
 
       {v.list && (

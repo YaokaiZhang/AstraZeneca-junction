@@ -2,6 +2,7 @@
 import type { ReactNode } from 'react'
 import { Card, Label, SourceBadge, cx } from '../../components/ui'
 import { SCREENING, SCREENING_FI, rankIn, trend, type ScreeningRow } from './data'
+import { VsFinland, type Cmp } from './VsFinland'
 import { STEP_META, THRESHOLDS, flags, losses, n0, n1, type Step } from './model'
 
 const SRC = <SourceBadge id="bowelScreening2024" kind="direct" demo={false} />
@@ -152,27 +153,28 @@ export function HowItChanged({ r }: { r: ScreeningRow }) {
   const rank = (k: 'participationPct' | 'colonoscopyOfPositivesPct') => rankIn(2024, r.id, k)
   const waitSorted = [...SCREENING].sort((a, b) => a.medianMonths - b.medianMonths)
   const waitRank = waitSorted.findIndex((x) => x.id === r.id) + 1
-  const rows: { label: string; vals: (string | null)[]; fi: string; rank: string }[] = [
-    { label: 'Sent the kit back', vals: t.map((p) => `${n1(p.participationPct)}%`), fi: `${n1(SCREENING_FI.participationPct)}%`, rank: `${ord(rank('participationPct').rank)} of ${rank('participationPct').of}` },
-    { label: 'Had the follow-up colonoscopy', vals: t.map((p) => `${n1(p.colonoscopyOfPositivesPct)}%`), fi: `${n1(SCREENING_FI.colonoscopyOfPositivesPct)}%`, rank: `${ord(rank('colonoscopyOfPositivesPct').rank)} of ${rank('colonoscopyOfPositivesPct').of}` },
-    { label: 'Wait for the colonoscopy', vals: [null, null, `${n1(r.medianMonths)} months`], fi: `${n1(SCREENING_FI.medianMonths)} months`, rank: `${ord(waitRank)} of ${waitSorted.length}` },
+  const rows: { label: string; vals: (string | null)[]; fi: string; rank: string; cmp: Cmp }[] = [
+    { label: 'Sent the kit back', vals: t.map((p) => `${n1(p.participationPct)}%`), fi: `${n1(SCREENING_FI.participationPct)}%`, rank: `${ord(rank('participationPct').rank)} of ${rank('participationPct').of}`, cmp: { county: r.participationPct, finland: SCREENING_FI.participationPct, better: 'higher', unit: 'pts' } },
+    { label: 'Had the follow-up colonoscopy', vals: t.map((p) => `${n1(p.colonoscopyOfPositivesPct)}%`), fi: `${n1(SCREENING_FI.colonoscopyOfPositivesPct)}%`, rank: `${ord(rank('colonoscopyOfPositivesPct').rank)} of ${rank('colonoscopyOfPositivesPct').of}`, cmp: { county: r.colonoscopyOfPositivesPct, finland: SCREENING_FI.colonoscopyOfPositivesPct, better: 'higher', unit: 'pts' } },
+    { label: 'Wait for the colonoscopy', vals: [null, null, `${n1(r.medianMonths)} months`], fi: `${n1(SCREENING_FI.medianMonths)} months`, rank: `${ord(waitRank)} of ${waitSorted.length}`, cmp: { county: r.medianMonths, finland: SCREENING_FI.medianMonths, better: 'lower', unit: 'months' } },
   ]
   return (
     <div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[520px] font-sans text-[15px] border-collapse">
+        <table className="w-full min-w-[520px] sm:min-w-[680px] font-sans text-[15px] border-collapse">
           <thead>
             <tr className="text-left text-[13px] opacity-60">
               <th className="font-normal py-2 pr-4">{r.name}</th><th className="font-normal">2022</th><th className="font-normal">2023</th><th className="font-normal">2024</th>
-              <th className="font-normal">Finland 2024</th><th className="font-normal">Rank 2024</th>
+              <th className="font-normal">Finland 2024</th><th className="font-normal hidden sm:table-cell">2024 against Finland</th><th className="font-normal">Rank 2024</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((x) => (
               <tr key={x.label} className="border-t border-black/10">
                 <td className="py-3 pr-4">{x.label}</td>
-                {x.vals.map((v, i) => <td key={i} className={cx('font-serif text-xl', i === 2 && 'text-terra')}>{v ?? <span className="opacity-30">·</span>}</td>)}
-                <td className="opacity-70">{x.fi}</td>
+                {x.vals.map((v, i) => <td key={i} className={cx('font-serif text-xl', i === 2 && 'text-terra')}>{v ?? <span className="opacity-30">·</span>}{i === 2 && <span className="block font-sans text-base mt-1 sm:hidden"><VsFinland cmp={x.cmp} /></span>}</td>)}
+                <td className="opacity-70 pr-4">{x.fi}</td>
+                <td className="pr-4 hidden sm:table-cell"><VsFinland cmp={x.cmp} /></td>
                 <td className="opacity-70">{x.rank}</td>
               </tr>
             ))}

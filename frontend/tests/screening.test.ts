@@ -8,6 +8,7 @@ import { weakestStep } from '../src/pages/monitor/plain'
 import { BREAST, BREAST_FI } from '../src/pages/monitor/breastData'
 import { CERVICAL, CERVICAL_FI } from '../src/pages/monitor/cervicalData'
 import { breastView, cervicalView, stepsBehind } from '../src/pages/monitor/programmes'
+import { vsFinland } from '../src/pages/monitor/VsFinland'
 
 const close = (a: number, b: number, tol: number, what: string) => assert.ok(Math.abs(a - b) <= tol, `${what}: ${a} not within ${tol} of ${b}`)
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0)
@@ -172,4 +173,13 @@ test('plan charts reuse the start-card numbers (cervical kit vs letter, breast r
   const b = breastView('helsinki')!.glance
   assert.equal(b.steps[0].goal, 80)
   assert.ok(b.takes!.bars[0].value > 30 && b.takes!.bars[0].value < 50)
+})
+
+test('better / worse than Finland: direction, tolerance and check data', () => {
+  assert.equal(vsFinland({ county: 83.8, finland: 81.6, better: 'higher', unit: 'pts' }).text, '▲ better · 2.2 pts higher')
+  assert.equal(vsFinland({ county: 5.1, finland: 5.0, better: 'lower', unit: 'pts' }).kind, 'same')
+  assert.equal(vsFinland({ county: 4.4, finland: 3.8, better: 'lower', unit: 'months' }).text, '▼ worse · 0.6 mo longer')
+  assert.equal(vsFinland({ county: 0.6, finland: 0.6, better: 'lower', unit: 'months' }).kind, 'same')
+  assert.equal(vsFinland({ county: 0.6, finland: 3.8, better: 'lower', unit: 'months', check: true }).kind, 'check')
+  assert.equal(vsFinland({ county: null, finland: 3.8, better: 'lower', unit: 'months' }).kind, 'none')
 })

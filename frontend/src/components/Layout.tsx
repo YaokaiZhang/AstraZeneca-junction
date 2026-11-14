@@ -42,15 +42,15 @@ export default function Layout() {
               </NavLink>
             )
           })}
-          <button onClick={() => { if (confirm('Clear all demo data?')) { reset(); location.reload() } }}
-            className="hidden lg:block font-type uppercase text-sm tracking-widest opacity-60 hover:opacity-100 hover:text-terra mt-6">Reset demo</button>
+          {SHOW_FULL_STORY && <button onClick={() => { if (confirm('Clear all demo data?')) { reset(); location.reload() } }}
+            className="hidden lg:block font-type uppercase text-sm tracking-widest opacity-60 hover:opacity-100 hover:text-terra mt-6">Reset demo</button>}
         </nav>
       </aside>
 
       <main className="flex-1 min-w-0 relative overflow-x-clip">
-        <div className="absolute top-0 right-0 p-10 opacity-[0.07] pointer-events-none hidden xl:block">
+        {SHOW_FULL_STORY && <div className="absolute top-0 right-0 p-10 opacity-[0.07] pointer-events-none hidden xl:block">
           <TextRing size={340} text="ajoissa • cancer on time • finland • strategy 2026–2035 • " />
-        </div>
+        </div>}
         <div className="relative">
           <Outlet />
         </div>

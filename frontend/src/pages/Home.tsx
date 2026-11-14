@@ -21,14 +21,11 @@ function ShortIntro() {
     { big: `${Math.round(GROUP_FACTS.skipped.pct)}%`, unit: '', text: <>of people who skip one screening round come back the next time.</> },
   ]
   return (
-    <section id="intro" className="relative px-5 lg:px-12 py-20 lg:py-28 max-w-6xl mx-auto">
+    <section id="intro" className="relative px-5 lg:px-12 pt-20 lg:pt-28 pb-16 lg:pb-20 max-w-6xl mx-auto">
       <Label>Bowel cancer screening · every wellbeing county</Label>
       <h2 className={'mt-5 ' + H2}>
         <WordsUp text="A positive test" /><br /><WordsUp text="is not a diagnosis yet." className="italic" delay={150} />
       </h2>
-      <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed opacity-75">
-        Ajoissa follows each county&apos;s screening chain, from kit returned to positive test to colonoscopy, shows where people drop out, and which proven fix closes the gap.
-      </p>
       <div className="mt-12 grid md:grid-cols-3 gap-6">
         {facts.map((f, i) => (
           <Card key={i} tone={i === 0 ? 'terra' : 'paper'} tilt={[-1.5, 1, -0.5][i]} className="p-6 sm:p-7">
@@ -117,7 +114,7 @@ export default function Home() {
                 Start
                 <span className="w-9 h-9 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-x-1 transition-transform">→</span>
               </Link>
-              <a href={SHOW_FULL_STORY ? '#ch-gap' : '#intro'} onClick={SHOW_FULL_STORY ? undefined : (e) => { e.preventDefault(); document.getElementById('intro')?.scrollIntoView({ behavior: 'smooth' }) }} className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-2 font-type uppercase text-xs tracking-widest hover:border-ink transition">Explore</a>
+              {SHOW_FULL_STORY && <a href="#ch-gap" className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-2 font-type uppercase text-xs tracking-widest hover:border-ink transition">Explore</a>}
             </div>
           </div>
 
@@ -130,16 +127,16 @@ export default function Home() {
               setTilt({ x: ((e.clientY - r.top) / r.height - 0.5) * -8, y: ((e.clientX - r.left) / r.width - 0.5) * 10 })
             }}
             onPointerLeave={() => setTilt({ x: 0, y: 0 })}>
-            <div className="absolute -right-24 top-1/2 -translate-y-1/2 opacity-[0.08] pointer-events-none hidden lg:block">
+            {SHOW_FULL_STORY && <div className="absolute -right-24 top-1/2 -translate-y-1/2 opacity-[0.08] pointer-events-none hidden lg:block">
               <TextRing size={720} text="ajoissa • on time • i tid • " />
-            </div>
+            </div>}
             <div className="absolute inset-0 transition-transform duration-300 ease-out"
               style={{ transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(${1 - scroll * 0.08})`, transformStyle: 'preserve-3d' }}>
               <FinlandCanvas className="absolute inset-0 w-full h-full cursor-none" onHover={setHover} />
             </div>
 
             {/* lens readout */}
-            <div className={`hidden lg:block absolute right-10 top-24 lg:top-28 z-10 pointer-events-none transition-all duration-300 ${hover ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+            {SHOW_FULL_STORY && <div className={`hidden lg:block absolute right-10 top-24 lg:top-28 z-10 pointer-events-none transition-all duration-300 ${hover ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
               <Card tone="mustard" tilt={2} className="p-4 pl-9 w-56">
                 <EdgeText>Lens</EdgeText>
                 <div className="font-type text-[13px] tracking-wider">{hover ? `${hover.lat.toFixed(2)}°N  ${hover.lon.toFixed(2)}°E` : '—'}</div>
@@ -149,11 +146,11 @@ export default function Home() {
                   <span className="font-serif text-2xl tabular-nums">{hover?.km ?? 0}<span className="text-sm"> km</span></span>
                 </div>
               </Card>
-            </div>
+            </div>}
           </div>
         </div>
 
-        <Ecg />
+        {SHOW_FULL_STORY && <Ecg />}
         <a href={SHOW_FULL_STORY ? '#ch-gap' : '#intro'} onClick={SHOW_FULL_STORY ? undefined : (e) => { e.preventDefault(); document.getElementById('intro')?.scrollIntoView({ behavior: 'smooth' }) }} className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10 label hover:!opacity-100 bob" aria-label="Scroll">↓</a>
       </section>
 

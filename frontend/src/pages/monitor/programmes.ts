@@ -106,7 +106,7 @@ const about = (v: number) => {
   const a = Math.abs(v)
   return (a < 20 ? Math.max(1, Math.round(a)) : a < 100 ? Math.round(a / 5) * 5 : Math.round(a / 10) * 10).toLocaleString('en-GB')
 }
-const days = (months: number) => Math.max(1, Math.round(months * 30.44))
+export const days = (months: number) => Math.max(1, Math.round(months * 30.44))
 const pick = (tiles: StepTile[]) => {
   const behind = tiles.map((t, i) => [t, i] as const).filter(([t]) => t.behind && !t.missing)
   const pool = behind.length ? behind : tiles.map((t, i) => [t, i] as const).filter(([t]) => !t.missing)
@@ -232,6 +232,8 @@ export function cervicalTiles(r: CervicalRow): StepTile[] {
   const ratio = wait != null ? wait / fiWait : 1
   // the Registry warns some short waits may reflect how dates are recorded: don't call those a strength
   const check = wait != null && /how dates are recorded/.test(CERVICAL_CAVEATS[r.id] ?? '')
+  // under a reporting gap the published wait rests on a handful of recorded colposcopies: show it, flagged, never compared
+  const gapWait = gapColpo && r.medianMonthsToColposcopyApprox != null
   return [
     {
       title: 'Come for the test', big: `${n1(r.participationPct)}%`, finland: `${n1(fi.participationPct)}%`,
@@ -239,16 +241,16 @@ export function cervicalTiles(r: CervicalRow): StepTile[] {
       line: `${n0(r.invited - r.participated)} invited women were not tested`,
     },
     {
-      title: 'Colposcopy on record', big: gapColpo ? '–' : `${n1(r.colposcopyOfReferredPct)}%`, finland: `${n1(fi.colposcopyOfReferredPct)}%`,
-      behind: !gapColpo && r.colposcopyOfReferredPct < fi.colposcopyOfReferredPct - 3, missing: gapColpo,
+      title: 'Colposcopy on record', big: `${n1(r.colposcopyOfReferredPct)}%`, finland: `${n1(fi.colposcopyOfReferredPct)}%`,
+      behind: !gapColpo && r.colposcopyOfReferredPct < fi.colposcopyOfReferredPct - 3, missing: gapColpo, check: gapColpo,
       gap: (fi.colposcopyOfReferredPct - r.colposcopyOfReferredPct) / fi.colposcopyOfReferredPct,
       line: gapColpo ? `Only ${r.colposcopyDone} of ${n0(r.referredColposcopy)} on record: a reporting gap`
         : `${n0(r.referredColposcopy - r.colposcopyDone)} of ${n0(r.referredColposcopy)} referred women have no colposcopy on record`,
     },
     {
-      title: 'Wait for colposcopy', big: wait != null ? n1(wait) : '–', unit: 'months', finland: `${n1(fiWait)} months`,
-      behind: !check && ratio >= 1.4, missing: wait == null, check, gap: check ? 0 : (ratio - 1) * WAIT_WEIGHT,
-      line: wait == null ? 'Not available' : check ? 'May reflect how dates are recorded: check before comparing' : ratio >= 1.4 ? `About ${n1(ratio)} times the national wait` : ratio <= 0.7 ? 'Shorter than the national wait' : 'Close to the national wait',
+      title: 'Wait for colposcopy', big: wait != null ? n1(wait) : gapWait ? n1(r.medianMonthsToColposcopyApprox!) : '–', unit: 'months', finland: `${n1(fiWait)} months`,
+      behind: !check && ratio >= 1.4, missing: wait == null, check: check || gapWait, gap: check ? 0 : (ratio - 1) * WAIT_WEIGHT,
+      line: gapWait ? `Based on only ${r.colposcopyDone} recorded colposcopies: check before comparing` : wait == null ? 'Not available' : check ? 'May reflect how dates are recorded: check before comparing' : ratio >= 1.4 ? `About ${n1(ratio)} times the national wait` : ratio <= 0.7 ? 'Shorter than the national wait' : 'Close to the national wait',
     },
   ]
 }
@@ -366,7 +368,7 @@ export function cervicalView(id: string): ProgrammeView | null {
 
 // ---------- one-page plan charts (same formulas and inputs as the start cards above) ----------
 
-const stepStatus = (t: StepTile): GlanceStep['status'] => (t.missing ? 'missing' : t.check ? 'check' : t.behind ? 'behind' : 'ok')
+const stepStatus = (t: StepTile): GlanceStep['status'] => (t.check ? 'check' : t.missing ? 'missing' : t.behind ? 'behind' : 'ok')
 
 function breastGlance(r: BreastRow, w: number, tiles: StepTile[]): Glance {
   const fi = BREAST_FI
@@ -403,8 +405,8 @@ function cervicalGlance(r: CervicalRow, w: number, reportingGap: boolean, tiles:
   const fi = CERVICAL_FI
   const steps: GlanceStep[] = [
     { label: 'Came for the test', value: r.participationPct, finland: fi.participationPct, unit: '%', status: stepStatus(tiles[0]), goal: GOAL_ATTENDANCE },
-    { label: 'Colposcopy on record', value: tiles[1].missing ? null : r.colposcopyOfReferredPct, finland: fi.colposcopyOfReferredPct, unit: '%', status: stepStatus(tiles[1]) },
-    { label: 'Wait for colposcopy', value: tiles[2].missing ? null : r.medianMonthsToColposcopyApprox, finland: fi.medianMonthsToColposcopyApprox!, unit: 'months', status: stepStatus(tiles[2]), note: tiles[2].check ? 'dates may differ' : undefined },
+    { label: 'Colposcopy on record', value: tiles[1].missing && !tiles[1].check ? null : r.colposcopyOfReferredPct, finland: fi.colposcopyOfReferredPct, unit: '%', status: stepStatus(tiles[1]) },
+    { label: 'Wait for colposcopy', value: tiles[2].missing && !tiles[2].check ? null : r.medianMonthsToColposcopyApprox, finland: fi.medianMonthsToColposcopyApprox!, unit: 'months', status: stepStatus(tiles[2]), note: tiles[2].check ? (tiles[2].missing ? 'too few on record' : 'dates may differ') : undefined },
   ]
   const atNational = r.referredColposcopy * fi.colposcopyOfReferredPct / 100
   if (reportingGap) {

@@ -8,13 +8,13 @@ export interface Cmp {
   finland: number
   /** which direction is good */
   better: 'higher' | 'lower'
-  unit: 'pts' | 'months'
+  unit: 'pts' | 'months' | 'days'
   /** a data caveat: do not call it better or worse */
   check?: boolean
 }
 
 /** Within this distance of Finland counts as "about the same". */
-export const SAME = { pts: 0.5, months: 0.1 } as const
+export const SAME = { pts: 0.5, months: 0.1, days: 3 } as const
 
 /** text: the short marker shown; label: the full sentence for screen readers and hover. */
 export function vsFinland(c: Cmp): { kind: 'better' | 'worse' | 'same' | 'check' | 'none'; text: string; label: string } {
@@ -23,9 +23,9 @@ export function vsFinland(c: Cmp): { kind: 'better' | 'worse' | 'same' | 'check'
   const d = Math.round((c.county - c.finland) * 10) / 10
   if (Math.abs(d) <= SAME[c.unit]) return { kind: 'same', text: '≈', label: 'about the same as Finland' }
   const good = c.better === 'higher' ? d > 0 : d < 0
-  const size = c.unit === 'pts' ? `${Math.abs(d).toFixed(1)} pts` : `${Math.abs(d).toFixed(1)} mo`
+  const size = c.unit === 'pts' ? `${Math.abs(d).toFixed(1)} pts` : c.unit === 'days' ? `${Math.abs(d)} d` : `${Math.abs(d).toFixed(1)} mo`
   const dir = c.unit === 'pts' ? (d > 0 ? 'higher' : 'lower') : (d > 0 ? 'longer' : 'shorter')
-  return { kind: good ? 'better' : 'worse', text: `${good ? '▲' : '▼'} ${size}`, label: `${good ? 'better' : 'worse'} than Finland, ${size.replace('pts', 'points').replace('mo', 'months')} ${dir}` }
+  return { kind: good ? 'better' : 'worse', text: `${good ? '▲' : '▼'} ${size}`, label: `${good ? 'better' : 'worse'} than Finland, ${size.replace(' pts', ' points').replace(' mo', ' months').replace(/ d$/, ' days')} ${dir}` }
 }
 
 export function VsFinland({ cmp }: { cmp?: Cmp }) {

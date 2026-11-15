@@ -9,7 +9,7 @@ import { BREAST, BREAST_FI, BREAST_PUBLISHED, type BreastRow } from './breastDat
 import { CERVICAL, CERVICAL_FI, CERVICAL_PUBLISHED, type CervicalRow } from './cervicalData'
 import { LeakMap } from './Compare'
 import { FollowUpList } from './FollowUpList'
-import { GOAL_ATTENDANCE, programmeView, templateFor, stepsBehind, type ProgrammeId, type ProgrammeView, type StepTile } from './programmes'
+import { GOAL_ATTENDANCE, days, programmeView, templateFor, stepsBehind, type ProgrammeId, type ProgrammeView, type StepTile } from './programmes'
 import { ProgrammeTabs } from './ProgrammeTabs'
 import { PlanPanel } from './PlanWriting'
 import { Bars, Measures, StepsStrip } from './PlanGlance'
@@ -22,13 +22,13 @@ const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./,
 const STEP_WORD = ['attendance', 'follow-up', 'wait']
 
 function Tile({ t }: { t: StepTile }) {
-  const flag = t.missing ? 'No data' : t.check ? 'Check data' : t.behind ? 'Falling behind' : 'On track'
+  const flag = t.check ? 'Check data' : t.missing ? 'No data' : t.behind ? 'Falling behind' : 'On track'
   return (
-    <div className={cx('rounded-lg border p-5 sm:p-6 bg-paper min-w-0', t.behind || t.missing ? 'border-terra/60' : 'border-black/15')}>
+    <div className={cx('rounded-lg border p-5 sm:p-6 bg-paper min-w-0', t.behind || (t.missing && !t.check) ? 'border-terra/60' : 'border-black/15')}>
       <div className="flex items-center justify-between gap-3">
         <p className="font-serif text-2xl leading-tight">{t.title}</p>
         <span className={cx('font-type text-[13px] uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0',
-          t.behind ? 'bg-terra text-paper' : t.missing ? 'border border-terra text-terra' : t.check ? 'border border-black/30 opacity-80' : 'bg-[#E2EDE6] text-[#2F5A44]')}>{flag}</span>
+          t.behind ? 'bg-terra text-paper' : t.check ? 'border border-black/30 opacity-80' : t.missing ? 'border border-terra text-terra' : 'bg-[#E2EDE6] text-[#2F5A44]')}>{flag}</span>
       </div>
       <p className={cx('mt-5 font-serif text-5xl sm:text-6xl leading-none', t.behind && 'text-terra')}>{t.big}{t.unit && t.big !== '–' ? <span className="text-3xl"> {t.unit}</span> : null}</p>
       <p className="mt-2 font-sans text-[15px] opacity-65">vs {t.finland} in Finland</p>
@@ -59,7 +59,7 @@ function NumbersTable({ p, id, v }: { p: ProgrammeId; id: string; v: ProgrammeVi
       ['Called back for further tests', `${n0(r.recalled)} (${n1(r.recalledPct)}%)`, `${n1(f.recalledPct)}%`],
       ['Referred to specialist care', n0(r.referred), n0(f.referred)], ['Cancers found by screening', n0(r.cancers), n0(f.cancers)],
       ['Referred, no result on record', `${n0(r.noHistology)} (${n1(r.noHistologyPct)}%)`, `${n1(f.noHistologyPct)}%`, { county: r.noHistologyPct, finland: f.noHistologyPct, better: 'lower', unit: 'pts', check: gap }],
-      ['Median wait for further tests', r.medianMonthsToExam != null ? `${n1(r.medianMonthsToExam)} months` : '–', `${n1(f.medianMonthsToExam!)} months`, { county: r.medianMonthsToExam, finland: f.medianMonthsToExam!, better: 'lower', unit: 'months' }])
+      ['Median wait for further tests', r.medianMonthsToExam != null ? `${days(r.medianMonthsToExam)} days` : '–', `${days(f.medianMonthsToExam!)} days`, { county: r.medianMonthsToExam != null ? days(r.medianMonthsToExam) : null, finland: days(f.medianMonthsToExam!), better: 'lower', unit: 'days' }])
   } else {
     const r = CERVICAL.find((x) => x.id === id) as CervicalRow, f = CERVICAL_FI
     rows.push(['Invited women', n0(r.invited), n0(f.invited)],

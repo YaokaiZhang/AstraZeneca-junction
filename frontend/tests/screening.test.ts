@@ -184,3 +184,18 @@ test('better / worse than Finland: direction, tolerance and check data', () => {
   assert.equal(vsFinland({ county: 0.6, finland: 3.8, better: 'lower', unit: 'months', check: true }).kind, 'check')
   assert.equal(vsFinland({ county: null, finland: 3.8, better: 'lower', unit: 'months' }).kind, 'none')
 })
+
+test('reporting gap: Varsinais-Suomi cervical shows its figures flagged "check data", never compared', () => {
+  const v = cervicalView('varsinais-suomi')!
+  assert.equal(v.tiles[1].big, '2.1%')
+  assert.ok(v.tiles[1].check && v.tiles[1].missing)
+  assert.ok(v.tiles[2].check && v.tiles[2].missing && !v.tiles[2].behind)
+  assert.equal(v.tiles[2].big, '3.0')
+  assert.deepEqual(v.glance.steps.map((s) => s.status), ['ok', 'check', 'check'])
+  assert.equal(stepsBehind('cervical', 'varsinais-suomi'), 2)
+})
+
+test('breast wait compared in days, the same figures as the tile', () => {
+  assert.equal(vsFinland({ county: 37, finland: 17, better: 'lower', unit: 'days' }).label, 'worse than Finland, 20 days longer')
+  assert.equal(vsFinland({ county: 19, finland: 17, better: 'lower', unit: 'days' }).kind, 'same')
+})

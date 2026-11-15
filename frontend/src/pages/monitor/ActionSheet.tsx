@@ -9,6 +9,7 @@ import { sourceBadge, type EvidenceLevel, type EvidenceRef } from './evidence'
 import { n0, type Plan, type Result } from './model'
 import { Verdict } from './Simple'
 import { Bars, Measures, StepsStrip } from './PlanGlance'
+import { goal3Short } from './strategy'
 import { bowelGlance } from './bowelGlance'
 
 export interface Briefing {
@@ -135,7 +136,7 @@ export function ActionSheet({ r, plan, res, briefing, onShowList }: { r: Screeni
       <footer className="mt-5 pt-2 border-t border-black/30 text-[10.5px] leading-snug opacity-85">
         <p className="font-type uppercase tracking-widest text-[10px] opacity-70">Sources and caveats</p>
 
-        <p className="mt-1">&quot;Behind&quot; is our own warning line (kit return below 72%, follow-up below 70%, wait over 2.5 months); the only official target is 80% kit return (National Cancer Strategy, Goal 2). {r.name} has {n0(r.noColonoscopy)} positive tests with no recorded colonoscopy (2024).</p>
+        <p className="mt-1">&quot;Behind&quot; is our own warning line (kit return below 72%, follow-up below 70%, wait over 2.5 months); the only official target is 80% kit return (National Cancer Strategy, Goal 2). {r.name} has {n0(r.noColonoscopy)} positive tests with no recorded colonoscopy (2024). {goal3Short('bowel')}</p>
 
         {grounded && (
           <ol className="mt-1.5 space-y-0.5">

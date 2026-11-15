@@ -14,6 +14,7 @@ import { ProgrammeTabs } from './ProgrammeTabs'
 import { PlanPanel } from './PlanWriting'
 import { Bars, Measures, StepsStrip } from './PlanGlance'
 import { VsFinland, type Cmp } from './VsFinland'
+import { STRATEGY_URL, goal3Line, goal3Short } from './strategy'
 import type { usePlanWriter } from './planWriter'
 
 const n0 = (x: number) => Math.round(x).toLocaleString('en-GB')
@@ -179,7 +180,7 @@ export function ProgrammeSheet({ v, county, briefing, applied, onShowList }: { v
         <p className="mt-1.5">Sources: Finnish Cancer Registry, {v.label.toLowerCase()} statistics 2024 (<a href={v.sourceUrl} target="_blank" rel="noreferrer" className="underline decoration-black/30">{host(v.sourceUrl)}</a>){v.start.basisUrl ? <> · the study behind the estimate (<a href={v.start.basisUrl} target="_blank" rel="noreferrer" className="underline decoration-black/30">{host(v.start.basisUrl)}</a>)</> : null} · National Cancer Strategy 2026–2035.</p>
         <ul className="mt-1.5 list-disc pl-4 space-y-0.5">
           <li>{v.start.basis}</li>
-          <li>&quot;Behind&quot; is our own warning line ({v.warningLines}); the only official target is {GOAL_ATTENDANCE}% attendance (National Cancer Strategy, Goal 2). Waits were read from a published chart.</li>
+          <li>&quot;Behind&quot; is our own warning line ({v.warningLines}); the only official target is {GOAL_ATTENDANCE}% attendance (National Cancer Strategy, Goal 2). Waits were read from a published chart. {goal3Short(v.programme)}</li>
           {v.caveat && <li>{v.caveat}</li>}
           {grounded && (briefing.limitations ?? []).slice(0, 2).map((l) => {
             const cites = [...l.matchAll(/\[(\d{1,2})\]/g)].map((m) => m[1])
@@ -239,6 +240,7 @@ export function ProgrammeMonitor({ p, countyId, select, setProgramme, writer }: 
           <p key={countyId + p} className="rise font-serif text-3xl sm:text-[2.6rem] leading-[1.12] max-w-4xl">{v.verdict}</p>
           <div className="mt-8 grid md:grid-cols-3 gap-4 lg:gap-5">{v.tiles.map((t) => <Tile key={t.title} t={t} />)}</div>
           <SourceLine>Source: Finnish Cancer Registry, {v.label.toLowerCase()} statistics, 2024 round (published {published}). &quot;Falling behind&quot; means past our own warning line ({v.warningLines}). The only official target is {GOAL_ATTENDANCE}% attendance in every county (National Cancer Strategy, Goal 2).</SourceLine>
+          <SourceLine>{goal3Line(p)} <a className="underline underline-offset-2 hover:text-terra" href={STRATEGY_URL} target="_blank" rel="noreferrer">Open the strategy</a></SourceLine>
         </div>
       </section>
 

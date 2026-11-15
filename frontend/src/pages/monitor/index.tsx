@@ -22,6 +22,8 @@ import { buildFacts, templateBriefing } from './briefing'
 import { usePlanWriter } from './planWriter'
 import { PlanPanel } from './PlanWriting'
 import { LeakMap, Ranking } from './Compare'
+import { STRATEGY_URL, goal3Line } from './strategy'
+import { usePrintFit } from './printFit'
 import { SHOW_FULL_STORY } from '../../config'
 
 const DEFAULT_COUNTY = 'pohjois-savo'
@@ -137,6 +139,7 @@ function BowelMonitor({ tabs }: { tabs: ReactNode }) {
           <p key={countyId} className="rise font-serif text-3xl sm:text-[2.6rem] leading-[1.12] max-w-4xl"><Verdict r={r} /></p>
           <div className="mt-8"><SimpleChain r={r} /></div>
           <SourceLine>Source: Finnish Cancer Registry, bowel cancer screening statistics, 2024 round. &quot;Falling behind&quot; means past our own warning line (kit return below {THRESHOLDS.detection}%, follow-up below {THRESHOLDS.referral}%, wait over {THRESHOLDS.capacity} months). The only official target is {GOAL_PARTICIPATION}% kit return in every county (National Cancer Strategy, Goal 2).</SourceLine>
+          <SourceLine>{goal3Line('bowel')} <a className="underline underline-offset-2 hover:text-terra" href={STRATEGY_URL} target="_blank" rel="noreferrer">Open the strategy</a></SourceLine>
         </div>
       </section>
 
@@ -291,6 +294,7 @@ function About() {
 }
 
 function MonitorStyles() {
+  usePrintFit()
   return (
     <style>{`
       .county-range { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 9999px; outline-offset: 6px; }

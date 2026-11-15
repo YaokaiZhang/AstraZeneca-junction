@@ -6,4 +6,9 @@ import { llmApi } from './server/llm'
 // llmApi() adds POST /api/chat + GET /api/health (server-side; reads LLM_KEY from the environment).
 export default defineConfig({
   plugins: [react(), llmApi()],
+  // Hosted demo: `vite preview` only answers requests for known host names.
+  // Render sites end in .onrender.com; set ALLOWED_HOST for any other domain.
+  preview: {
+    allowedHosts: ['.onrender.com', ...(process.env.ALLOWED_HOST ? [process.env.ALLOWED_HOST] : [])],
+  },
 })

@@ -25,6 +25,7 @@ export function briefingErrorNote(status: number, error: unknown): string {
   if (e === 'key_format') return 'The server’s LLM_KEY is not an Anthropic API key (it should start with sk-ant-), so the plan uses the template briefing.'
   if (e.includes('401')) return 'The server’s LLM_KEY was not accepted by Anthropic, so the plan uses the template briefing.'
   if (e === 'insufficient_evidence') return 'Not enough approved evidence for this case, so the plan uses the template briefing.'
+  if (e === 'busy') return 'Many plans are being written right now, so this one uses the template briefing. Try again in a minute.'
   if (e === 'invalid_output') return 'The AI text did not pass our checks, so the plan uses the template briefing.'
   return `The AI could not be reached (${e || status}), so the plan uses the template briefing.`
 }

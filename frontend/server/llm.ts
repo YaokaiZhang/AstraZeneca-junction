@@ -281,6 +281,48 @@ export async function briefing(facts: Record<string, number | string>): Promise<
   }
 }
 
+// ----- public demo guard -----
+// When the app is hosted, anyone with the link can press "Write the plan", and each press costs API credit.
+// Two cheap guards: the same facts reuse the last checked answer, and calls per visitor and per hour are capped.
+// Over the cap, the plan falls back to the template briefing, exactly as it does without a key.
+const PER_VISITOR_PER_MIN = 4
+const ALL_PER_HOUR = 60
+const answers = new Map<string, BriefingResponse>()
+const visits = new Map<string, number[]>()
+let hourly: number[] = []
+
+function visitorOf(req: IncomingMessage) {
+  const fwd = req.headers['x-forwarded-for']
+  const first = (Array.isArray(fwd) ? fwd[0] : fwd)?.split(',')[0]?.trim()
+  return first || req.socket.remoteAddress || 'unknown'
+}
+
+/** True if this visitor may make one more paid call now (and counts it). */
+function allowCall(req: IncomingMessage) {
+  const now = Date.now()
+  hourly = hourly.filter((t) => now - t < 3_600_000)
+  const who = visitorOf(req)
+  const mine = (visits.get(who) ?? []).filter((t) => now - t < 60_000)
+  if (mine.length >= PER_VISITOR_PER_MIN || hourly.length >= ALL_PER_HOUR) return false
+  mine.push(now); hourly.push(now); visits.set(who, mine)
+  if (visits.size > 5000) visits.clear()
+  return true
+}
+
+async function guardedBriefing(req: IncomingMessage, facts: Record<string, number | string>): Promise<BriefingResponse> {
+  const key = JSON.stringify(facts)
+  const seen = answers.get(key)
+  if (seen) return seen
+  if (llmKey() && !allowCall(req)) return fallback('busy', { method: 'keyword', queryVersion: QUERY_VERSION, corpusVersion: 'none' })
+  const out = await briefing(facts)
+  // keep only answers that passed every check; a fallback may succeed next time
+  if (out.status !== 'template_fallback') {
+    if (answers.size > 500) answers.clear()
+    answers.set(key, out)
+  }
+  return out
+}
+
 function readBody(req: IncomingMessage, limit = 64_000): Promise<string> {
   return new Promise((resolve, reject) => {
     let data = ''
@@ -306,7 +348,7 @@ const middleware: Connect.NextHandleFunction = (req, res, next) => {
         let facts: Record<string, number | string> | null = null
         try { facts = parseFacts(JSON.parse(body)) } catch { /* fall through */ }
         if (!facts) return json(res, 400, { error: 'bad_request' })
-        json(res, 200, await briefing(facts))
+        json(res, 200, await guardedBriefing(req, facts))
       })
       .catch(() => json(res, 413, { error: 'too_large' }))
     return
@@ -318,6 +360,7 @@ const middleware: Connect.NextHandleFunction = (req, res, next) => {
       let q: ChatRequest | null = null
       try { q = parseRequest(JSON.parse(body)) } catch { /* fall through */ }
       if (!q) return json(res, 400, { error: 'bad_request' })
+      if (llmKey() && !allowCall(req)) return json(res, 429, { error: 'busy' })
       const out = await chat(q)
       if (out.ok) json(res, 200, out.result)
       else json(res, out.status, { error: out.error })

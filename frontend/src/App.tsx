@@ -6,6 +6,7 @@ import PatientPage from './pages/patient'
 import HospitalPage from './pages/hospital'
 import CountyPage from './pages/county'
 import MonitorPage from './pages/monitor'
+import ResidentsPage from './pages/residents'
 import { SHOW_FULL_STORY } from './config'
 
 /** Start each page at the top (county switches only change the query, so they keep their place). */
@@ -27,6 +28,7 @@ export default function App() {
         {SHOW_FULL_STORY && <Route path="hospital/*" element={<HospitalPage />} />}
         {SHOW_FULL_STORY && <Route path="county/*" element={<CountyPage />} />}
         <Route path="monitor" element={<MonitorPage />} />
+        <Route path="residents" element={<ResidentsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

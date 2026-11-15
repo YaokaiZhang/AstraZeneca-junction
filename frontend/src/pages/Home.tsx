@@ -47,6 +47,9 @@ function ShortIntro() {
           Open the screening monitor
           <span className="w-9 h-9 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-x-1 transition-transform">→</span>
         </Link>
+        <Link to="/residents" className="ml-3 inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-3 font-type uppercase text-xs tracking-widest hover:border-ink transition">
+          For residents
+        </Link>
       </div>
     </section>
   )

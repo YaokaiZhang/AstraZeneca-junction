@@ -8,8 +8,9 @@ const ALL_NAV = [
   { to: '/hospital', label: 'Hospital', sub: 'Who is falling behind' },
   { to: '/county', label: 'County', sub: 'Where people are lost' },
   { to: '/monitor', label: 'Screening', sub: 'Chain · fixes · capacity' },
+  { to: '/residents', label: 'Residents', sub: 'Plain words · where to ask' },
 ]
-const NAV = SHOW_FULL_STORY ? ALL_NAV : ALL_NAV.filter((n) => n.to === '/monitor')
+const NAV = SHOW_FULL_STORY ? ALL_NAV : ALL_NAV.filter((n) => n.to === '/monitor' || n.to === '/residents')
 
 export default function Layout() {
   const { pathname } = useLocation()

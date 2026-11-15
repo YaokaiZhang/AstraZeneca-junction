@@ -35,7 +35,7 @@ const SOURCES: [string, string][] = [
 ]
 
 const REFERRAL_IDS = ['navigation', 'patient-reminder', 'clinician-reminder', 'auto-referral']
-const DETECTION_IDS = ['reminder', 'multilingual', 'clinician']
+const DETECTION_IDS = ['reminder', 'clinician']
 
 /** Who does it and how you'll know, for the actions in the plan. */
 function ownership(ids: string[]) {

@@ -33,7 +33,6 @@ const REFERRAL_WORDS: Record<string, string> = {
 }
 const DETECTION_WORDS: Record<string, string> = {
   reminder: 'send a second reminder to everyone who has not sent the kit back',
-  multilingual: 'send the reminder in the language each person reads best',
   clinician: 'have doctors and nurses bring up screening whenever the person visits',
 }
 

@@ -1,6 +1,6 @@
 // Screening Chain Monitor: every number on the page comes from these functions.
 // Inputs: data.ts (Cancer Registry, 2024 round). Effects: evidence.ts. No number is written by a model.
-import { DEMOGRAPHICS_FI, GROUPS, SCREENING_FI, demographicsById, type ScreeningRow } from './data'
+import { GROUPS, SCREENING_FI, demographicsById, type ScreeningRow } from './data'
 
 export const WEEKS_PER_MONTH = 4.345
 /** National Cancer Strategy Goal 2: 80% screening participation. */
@@ -127,17 +127,6 @@ export const REFERRAL_FIXES: Fix[] = [
 
 // ----- detection -----
 
-/** National 2024 group row: invited people with a mother tongue other than Finnish/Swedish/Sami (or missing). */
-const OTHER_TONGUE = GROUPS.find((g) => g.dimension === 'mother_tongue' && g.group === 'Other or missing')!
-
-/**
- * Share of a county's screening-age residents (56–74) with a mother tongue other than Finnish, Swedish or Sami.
- * Statistics Finland 2025 (vaerak/11rz), municipalities rolled up to counties. Used as the share of invited people.
- */
-export function otherTongueShare(countyId: string) {
-  return (demographicsById(countyId)?.foreignLangPct ?? DEMOGRAPHICS_FI.foreignLangPct) / 100
-}
-
 export const DETECTION_RR = 1.2
 
 export interface DetectionFix extends Fix { pts: (r: ScreeningRow) => number; how: (r: ScreeningRow) => string }
@@ -149,12 +138,6 @@ export const DETECTION_FIXES: DetectionFix[] = [
     id: 'reminder', step: 'detection', name: 'Patient reminders', what: 'A second letter or SMS to everyone who has not returned the kit.',
     effect: 'RR 1.20 · about +3 pts', source: 'dougherty', caveat: 'Mostly US studies; cautious +3 points used',
     pts: (r) => Math.min(3, headroom(r)), how: () => 'Cautious default: +3 percentage points.',
-  },
-  {
-    id: 'multilingual', step: 'detection', name: 'Multilingual reminder', what: `The reminder in the person’s own language, aimed at other mother tongues (${OTHER_TONGUE.participationPct}% return the kit vs ${GROUPS.find((g) => g.group === 'Finnish/Swedish/Sami')!.participationPct}%). The cancer strategy roadmap plans multilingual screening outreach (measure 1.3.1, estimated €400,000).`,
-    effect: 'RR 1.20 on the group', source: 'dougherty', caveat: 'Language share: residents aged 56–74, Statistics Finland 2025',
-    pts: (r) => Math.min(otherTongueShare(r.id) * OTHER_TONGUE.participationPct * (DETECTION_RR - 1), headroom(r)),
-    how: (r) => `${(otherTongueShare(r.id) * 100).toFixed(1)}% of people aged 56–74 × ${OTHER_TONGUE.participationPct}% × 0.20`,
   },
   {
     id: 'clinician', step: 'detection', name: 'Clinician reminders', what: 'The GP or nurse is prompted to raise screening at any visit.',

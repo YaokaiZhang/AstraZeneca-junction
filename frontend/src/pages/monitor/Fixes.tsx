@@ -22,7 +22,6 @@ const PLAIN: Record<string, string> = {
   'clinician-reminder': 'The GP gets an alert when a positive test has no colonoscopy booked.',
   'auto-referral': 'The colonoscopy is booked automatically as soon as the test is positive.',
   reminder: 'A second letter or text to everyone who hasn’t sent the kit back.',
-  multilingual: 'The reminder in the person’s own language, for people whose mother tongue isn’t Finnish or Swedish.',
   clinician: 'Doctors and nurses bring up screening whenever the person visits for anything else.',
 }
 
@@ -93,9 +92,8 @@ export function Fixes({ r, plan, setPlan, res }: { r: ScreeningRow; plan: Plan; 
             <Row key={fx.id} name={fx.name} what={PLAIN[fx.id]} on={on} disabled={room <= 0}
               onChange={(v) => setPlan(v ? { ...plan, detectionFix: fx.id, detectionPts: pts } : { ...plan, detectionFix: null, detectionPts: 0 })}
               result={<>About {about(kits)} more kits sent back a year</>}
-              label={fx.id === 'multilingual' ? 'Proven in other programmes; group size is our estimate' : 'Proven in other programmes'}
+              label="Proven in other programmes"
               how={<>{fx.id === 'reminder' && <>In studies, reminders raised the number of kits sent back (risk ratio 1.20). We use a cautious 3 percentage points.</>}
-                {fx.id === 'multilingual' && <>Reminders raise kit return by a fifth (risk ratio 1.20). Applied to people with another mother tongue: {fx.how(r)}. Language share from Statistics Finland 2025.<br />Planned nationally: <a className="underline" href={SOURCES.roadmap.url} target="_blank" rel="noreferrer">cancer strategy roadmap</a> measure 1.3.1, multilingual screening outreach, estimated €400,000 (p. 33).</>}
                 {fx.id === 'clinician' && <>US studies found about 13 percentage points more; capped so {r.name} doesn&apos;t pass the {GOAL_PARTICIPATION}% national goal.</>}
                 <br />For {r.name}: {n0(r.invited)} invited × {n1(pts)} points = about {n0(kits)} more kits. {fx.caveat}.<br />{src(fx)}</>} />
           )

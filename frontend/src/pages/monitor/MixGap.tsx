@@ -36,7 +36,7 @@ function takeaway(r: ScreeningRow): { kind: 'service' | 'language' | 'education'
   }
   const gap = fi - actual
   const explains = (exp: number) => gap > 0.3 && fi - exp >= gap / 2 && Math.abs(actual - exp) <= MARGIN
-  if (explains(lang)) return { kind: 'language', text: 'Language explains most of this gap.', detail: 'A multilingual reminder fits here: the shortfall sits where the population mix says it should.' }
+  if (explains(lang)) return { kind: 'language', text: 'Language explains most of this gap.', detail: 'The shortfall sits where the population mix says it should. Check locally how invitations reach these groups.' }
   if (explains(edu)) return { kind: 'education', text: 'Education explains most of this gap.', detail: 'Reminders aimed at people with basic education fit here.' }
   if (actual >= Math.max(lang, edu) - 0.5) return { kind: 'above', text: 'Kit return is at or above what the population mix predicts.' }
   return { kind: 'part', text: 'The population mix explains part of this gap.', detail: 'Actual kit return is below what the mix predicts, but within 1.5 points of at least one expectation.' }

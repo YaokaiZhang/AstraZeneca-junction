@@ -1,5 +1,7 @@
 # AstraZeneca challenge: our final ideas
 
+> **Earlier draft.** This was the plan before we narrowed the build to the screening monitor (bowel, breast and cervical). The current app is described in the [README](../README.md).
+
 ## The idea in one paragraph
 
 In Finland, how early a cancer is found and how fast treatment starts depends on where you live and on how hard you push. We build one product with three pages. The **patient page** helps a person notice risk early and see whether their care is on schedule. The **hospital page** shows staff which patients are falling behind and why. The **county page** shows decision-makers where the county loses people and what to do about it. Dates that patients choose to share fill a real hole: Finland publishes no figures on how long cancer patients wait from referral to treatment.

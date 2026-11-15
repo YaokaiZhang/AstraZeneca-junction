@@ -1,6 +1,7 @@
 # Ajoissa frontend
 
 See the [main README](../README.md) for what the app does and where its data comes from.
+Pages: `#/` landing, `#/monitor` the county screening monitor, `#/residents` the same figures in plain words for residents.
 
 ```bash
 npm install

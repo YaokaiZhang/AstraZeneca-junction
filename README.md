@@ -16,7 +16,7 @@ LLM_KEY=sk-ant-... npm run dev      # http://localhost:5173
 `/api/briefing` and `/api/health`) and is never sent to the browser. Without it, everything still works: the plan
 uses a fixed template briefing and says so.
 
-Open `#/` for the landing page and `#/monitor` for the monitor. A county and programme can be linked directly, for
+Open `#/` for the landing page, `#/monitor` for the monitor and `#/residents` for the residents page. A county and programme can be linked directly, for
 example `#/monitor?c=helsinki&p=breast` (`p` is `bowel`, `breast` or `cervical`).
 
 ## What it does
@@ -32,6 +32,9 @@ example `#/monitor?c=helsinki&p=breast` (`p` is `bowel`, `breast` or `cervical`)
 - **One-page plan**: printable A4 with small charts. The AI writes a four-line briefing from our calculated figures
   and a few cited passages from approved sources (`frontend/knowledge/`). Every number and citation it writes is
   checked; if one doesn't match, the template briefing is used instead.
+- **For residents** (`#/residents`): the same 2024 figures in plain words for people in each county (pick it on the
+  map), who each programme is for (checked against the Cancer Registry's programme pages), what you can do, and
+  national places to ask. No AI, no personal data, no medical advice.
 - **The evidence**: the numbers table with better or worse than Finland, the proven options, what we calculated
   ourselves, and every source with a link.
 

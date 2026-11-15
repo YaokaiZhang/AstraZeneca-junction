@@ -1,0 +1,16 @@
+{
+  "title": "Ajoissa pitch video",
+  "voice": "British female (fish-speech, OpenAudio S1-mini)",
+  "note": "Numbers are written as words so the voice reads them correctly. Keep the wording exactly as written.",
+  "scenes": [
+    {"id": "01", "text": "In the AstraZeneca session, Hanne Kuitunen asked a plain question. Does every Finn have an equal chance to have their cancer found, and treated, in time? The public numbers say no."},
+    {"id": "02", "text": "Finland runs three national screening programmes: bowel, breast and cervical. The Cancer Registry publishes every step, county by county. But the gaps sit at different steps, in different places."},
+    {"id": "03", "text": "In Pohjois-Savo, two hundred and twenty-six people with a positive bowel test have no recorded follow-up colonoscopy, and they wait about three point seven months, against one point nine nationally. In Helsinki, seventy-four point three percent of invited women came for a mammogram, against eighty-one point six percent across Finland."},
+    {"id": "04", "text": "So we built Ajoissa. Equal cancer care, county by county: from screening gaps to action plans."},
+    {"id": "05", "text": "Pick a county, and a programme. Ajoissa follows the screening chain in three steps, each against Finland: who takes part, who is followed up after a positive result, and how long they wait for the diagnostic test. Each step is on track, falling behind, or check data. Where a figure is almost entirely missing from the register, we say so, and we don't call it missed care."},
+    {"id": "06", "text": "For the weakest step, Ajoissa gives one proven action. In Pohjois-Savo, it's a daily list for the screening nurse: everyone with a positive test and no colonoscopy booked, and a call to each. Using a published study's effect, we estimate about one hundred and twenty more colonoscopies a year, and about five more cancers found. It takes about two extra colonoscopies a week."},
+    {"id": "07", "text": "Press write the one-page plan, and the AI drafts a short briefing for the county. It only writes words. Every number must match our calculations, and every citation must point to one of fourteen approved sources. If a check fails, a fixed template takes over, and the plan says why."},
+    {"id": "08", "text": "Residents get the same figures in plain words, with where to ask. No AI, and no personal data. Our ask is a three-month pilot with Pohjois-Savo: one screening nurse, the follow-up list, and one measure. The share of positive tests with a colonoscopy on record."},
+    {"id": "09", "text": "Your postcode shouldn't decide your cancer care. This is Ajoissa."}
+  ]
+}

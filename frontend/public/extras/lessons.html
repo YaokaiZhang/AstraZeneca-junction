@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ajoissa · Lessons learned</title>
+<style>:root{--ink:#1F1F1F;--paper:#F4F1EA;--terra:#C65D3B}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:44rem;margin:0 auto;padding:40px 16px 64px}h1{font-family:Georgia,serif;font-weight:400;font-size:2.3rem;line-height:1.1}h2{font-family:Georgia,serif;font-weight:400;font-size:1.45rem;margin-top:2.2rem;border-top:1px solid rgba(0,0,0,.15);padding-top:1rem}p b:first-child{color:var(--terra)}li{margin:.3rem 0}</style></head><body><main>
+<h1>Ajoissa: lessons learned</h1>
+<p>What we learned building Ajoissa for the AstraZeneca challenge "Equal Care Across Finland" at Junction 2026.</p>
+<h2>1. Narrow the scope until one person can act on it</h2>
+<p>We started with three tools: a patient page (a symptom diary and risk check), a hospital page and a county page. They covered every step from first symptom to treatment, but no single user could act on all of it, and the patient page would have handled personal health data. The brief asks for public, aggregate data.</p>
+<p>We cut to one question a county screening lead can act on: <em>where does my county lose people in screening, and what do we do first?</em> The earlier pages are still in the code, hidden behind one setting, and their addresses go to the landing page.</p>
+<p><b>Lesson:</b> a tool that answers one question for one person beats three tools that each answer part of one.</p>
+<h2>2. A missing number is not a missing patient</h2>
+<p>In the Cancer Registry's 2024 cervical figures, Varsinais-Suomi has 4 colposcopies on record for 190 referred women. Read at face value, that would be the worst follow-up in Finland. It is far more likely that results are not reaching the register.</p>
+<p>We added a rule: under a quarter of the national rate, or 20% or more of referred women with no result on record, is flagged as a likely reporting gap. Those figures say "Check data" instead of being compared. We did the same where the Registry itself warns that a short wait may reflect how dates are recorded (cervical waits in Etelä-Savo and Pohjois-Savo).</p>
+<p><b>Lesson:</b> read the registry's own caveats before ranking anyone; a data fix is often the first fix.</p>
+<h2>3. Let the AI write words, never numbers</h2>
+<p>The first AI briefings were fluent, and that was exactly the risk. Our rule became: the model only writes words. Every number it may use is in a facts object already calculated by the app. Every number in its answer must match one of those figures, and every citation must point to a passage we gave it from 14 reviewed sources. Overclaims such as "lives saved" are rejected. If any check fails, a fixed template is used and the plan says why in one line.</p>
+<p>Two bugs taught us to test the checker as carefully as the model:</p>
+<ul><li>"2,050" was read as two numbers (2 and 050) and failed a correct briefing. Thousands separators are now handled on both server and browser.</li><li>A briefing could leave out a reporting-gap warning that the facts flagged. That is now a rule of its own.</li></ul>
+<p><b>Lesson:</b> the checks are the product. Show them to the user: the plan lists how many numbers and citations were checked.</p>
+<h2>4. Fallbacks make demos safe</h2>
+<p>Our first live run failed with an authentication error. The server's key setting held the key's <em>name</em>, not the key. We added a key-format check and a health endpoint that report the problem without ever printing the key. Because the template fallback already existed, the page never broke, it just said why.</p>
+<p><b>Lesson:</b> design the failure path first. On stage, "the AI is unavailable, so this uses the template" is fine; a blank page is not.</p>
+<h2>5. Estimates must say they are estimates</h2>
+<p>Every action's effect comes from a published study, mostly from other countries. Bowel follow-up evidence is mostly from the United States; the cervical self-sampling trial is Finnish (Espoo). We apply the effect to the county's 2024 numbers and label it "an estimate, not a promise". Our warning lines are labelled as ours: only the 80% participation goal is official. Each tab lists "What we calculated ourselves".</p>
+<p><b>Lesson:</b> decision-makers trust a tool more when it says plainly which numbers are the registry's and which are ours.</p>
+<h2>6. Say what the data cannot show</h2>
+<p>The strategy's Goal 3 indicator is treatment within target times, but time to treatment is not published by county. We say so in the app. The follow-up and wait steps are the closest public figures, and for bowel we show the Registry's count of treatment starts.</p>
+<p><b>Lesson:</b> naming the data gap is part of the answer, not a weakness to hide.</p>
+<h2>7. Plain words for each audience</h2>
+<p>County staff read "invited" as the Registry's denominator. Residents read it as an odd, official word. The residents page uses "who it's for", "women offered a mammogram took part" and "take part when your letter arrives", with the same numbers. "Above / below Finland" became "better than / worse than / close to the Finnish average", because "above" is not always good.</p>
+<p>We also decided against anything that targets people by language or writes messages for them. Those risks outweighed the benefit in a hackathon prototype.</p>
+<p><b>Lesson:</b> same facts, different words for different readers, and test every label by asking "better or worse for whom?".</p>
+<h2>8. Less on the screen, more in the plan</h2>
+<p>Early versions had a county ranking, a big map section and several explanation blocks on one page, and it felt cluttered. We kept one verdict, three tiles and one action on screen, and moved the rest into an evidence section opened on demand and a one-page plan. Small charts replaced paragraphs on the plan, with the numbers still written next to every bar.</p>
+<p><b>Lesson:</b> the two-minute test (can a decision-maker get the message and the action in two minutes?) is a design tool, not just a judging criterion.</p>
+<h2>9. Check the limits of the target, not just the code</h2>
+<p>Two late surprises:</p>
+<ul><li>A live AI briefing made the one-page plan 311 mm long, more than an A4 page holds. Plans now scale to fit when printed.</li><li>The submission form's limit was 5,000 <em>characters</em>, not words.</li></ul>
+<p><b>Lesson:</b> test against the real output (paper, form, projector), not the preview.</p>
+<p style="opacity:.6;font-size:14px;margin-top:2.5rem">Also as Markdown: <a href="lessons.md">lessons.md</a> · <a href="concept-card.pdf">Concept card (PDF)</a></p>
+</main></body></html>

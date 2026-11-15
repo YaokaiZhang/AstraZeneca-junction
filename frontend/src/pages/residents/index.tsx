@@ -1,5 +1,5 @@
-// For residents: the same Cancer Registry figures as the monitor, told plainly to the people who are invited.
-// No personal data, no AI, no symptoms or medical advice: only who is invited, how the county is doing,
+// For residents: the same Cancer Registry figures as the monitor, told plainly to the people screening is for.
+// No personal data, no AI, no symptoms or medical advice: only who it is for, how the county is doing,
 // what you can do, and national places to ask. Contact links are national only (county pages are not checked).
 import { useSearchParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
@@ -15,14 +15,14 @@ const DEFAULT = 'pohjois-savo'
 // out of 100, so the sentence reads naturally ("74 of every 100")
 const of100 = (pct: number) => Math.round(pct)
 
-/** A small, plain comparison with Finland; within 1 point counts as about the same. */
+/** A small, plain comparison with Finland (higher is better for every figure shown here); within 1 point counts as close. */
 function Compare({ county, finland }: { county: number; finland: number }) {
   const d = county - finland
   const same = Math.abs(d) < 1
   return (
     <span className={cx('inline-block font-type text-[12px] uppercase tracking-wider px-2 py-0.5 rounded-full align-middle',
       same ? 'bg-black/[.06]' : d > 0 ? 'bg-[#7FA88F]/25 text-[#2f5a40]' : 'bg-terra/15 text-terra')}>
-      {same ? 'About the same as Finland' : d > 0 ? 'Above Finland' : 'Below Finland'}
+      {same ? 'Close to the Finnish average' : d > 0 ? 'Better than the Finnish average' : 'Worse than the Finnish average'}
     </span>
   )
 }
@@ -34,7 +34,7 @@ function Programme({ title, who, how, after, doThis, children }: {
     <section className="rounded-lg border border-black/15 bg-paper p-6 sm:p-8 min-w-0">
       <h2 className="font-serif text-3xl sm:text-4xl leading-tight">{title}</h2>
       <dl className="mt-5 grid gap-4 font-sans text-[17px] leading-relaxed">
-        <div><dt className="font-type text-[12px] uppercase tracking-widest opacity-60">Who is invited</dt><dd className="mt-1">{who}</dd></div>
+        <div><dt className="font-type text-[12px] uppercase tracking-widest opacity-60">Who it&apos;s for</dt><dd className="mt-1">{who}</dd></div>
         <div><dt className="font-type text-[12px] uppercase tracking-widest opacity-60">How your county is doing</dt><dd className="mt-1">{how}</dd></div>
         <div><dt className="font-type text-[12px] uppercase tracking-widest opacity-60">After an abnormal result</dt><dd className="mt-1">{after}</dd></div>
         <div>
@@ -49,9 +49,9 @@ function Programme({ title, who, how, after, doThis, children }: {
 
 const CONTACTS = [
   { name: 'Cancer Society of Finland (Syöpäjärjestöt)', what: 'Advice and support about cancer and screening, for anyone.', url: 'https://www.syopajarjestot.fi/' },
-  { name: 'Finnish Cancer Registry: bowel cancer screening', what: 'Who is invited, how the test works, what happens next.', url: 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/' },
-  { name: 'Finnish Cancer Registry: breast cancer screening', what: 'Who is invited and how often.', url: 'https://syoparekisteri.fi/seulonta/rintasyovanseulonta/' },
-  { name: 'Finnish Cancer Registry: cervical cancer screening', what: 'Who is invited and how often.', url: 'https://syoparekisteri.fi/seulonta/kohdunkaulansyovanseulonta/' },
+  { name: 'Finnish Cancer Registry: bowel cancer screening', what: 'Who it is for, how the test works, what happens next.', url: 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/' },
+  { name: 'Finnish Cancer Registry: breast cancer screening', what: 'Who it is for and how often.', url: 'https://syoparekisteri.fi/seulonta/rintasyovanseulonta/' },
+  { name: 'Finnish Cancer Registry: cervical cancer screening', what: 'Who it is for and how often.', url: 'https://syoparekisteri.fi/seulonta/kohdunkaulansyovanseulonta/' },
 ]
 
 export default function ResidentsPage() {
@@ -70,7 +70,7 @@ export default function ResidentsPage() {
           Screening is for everyone, <span className="italic text-terra">wherever you live.</span>
         </h1>
         <p className="mt-6 font-sans text-lg leading-snug opacity-80 max-w-2xl">
-          The same public figures our county monitor uses, in plain words: who is invited, how your county is doing, and what you can do.
+          The same public figures our county monitor uses, in plain words: who screening is for, how your county is doing, and what you can do.
         </p>
         <div className="mt-6 flex items-baseline gap-3 flex-wrap">
           <span className="font-sans text-lg">Your county:</span>
@@ -82,8 +82,8 @@ export default function ResidentsPage() {
         <Programme
           title="Bowel cancer"
           who={<>Everyone aged 60–72 (widening step by step to 56–74 by 2031), every two years. The test kit comes by post and is done at home.</>}
-          how={<>In {bowel.name}, {of100(bowel.participationPct)} of every 100 invited people sent the kit back in 2024 (Finland {of100(SCREENING_FI.participationPct)}, goal {GOAL_ATTENDANCE}). <Compare county={bowel.participationPct} finland={SCREENING_FI.participationPct} /></>}
-          after={<>A positive test means a follow-up colonoscopy, arranged with your area&apos;s screening nurse. In {bowel.name}, {of100(bowel.colonoscopyOfPositivesPct)} of every 100 people with a positive test had one on record (Finland {of100(SCREENING_FI.colonoscopyOfPositivesPct)}). <Compare county={bowel.colonoscopyOfPositivesPct} finland={SCREENING_FI.colonoscopyOfPositivesPct} /></>}
+          how={<>In {bowel.name}, {of100(bowel.participationPct)} of every 100 people who got the home test sent it back in 2024 (Finnish average {of100(SCREENING_FI.participationPct)}, national goal {GOAL_ATTENDANCE}). <Compare county={bowel.participationPct} finland={SCREENING_FI.participationPct} /></>}
+          after={<>A positive test means a follow-up colonoscopy, arranged with your area&apos;s screening nurse. In {bowel.name}, {of100(bowel.colonoscopyOfPositivesPct)} of every 100 people with a positive test had one on record (Finnish average {of100(SCREENING_FI.colonoscopyOfPositivesPct)}). <Compare county={bowel.colonoscopyOfPositivesPct} finland={SCREENING_FI.colonoscopyOfPositivesPct} /></>}
           doThis={[
             'Do the test and send it back, even if you feel well.',
             'If your test is positive and no one has contacted you within a few weeks, call the screening unit named in your letter or your health centre.',
@@ -92,24 +92,24 @@ export default function ResidentsPage() {
         {breast && (
           <Programme
             title="Breast cancer"
-            who={<>Women aged 50–69, about every two years. You get an invitation letter.</>}
-            how={<>In {breast.name}, {of100(breast.attendedPct)} of every 100 invited women came for the mammogram in 2024 (Finland {of100(BREAST_FI.attendedPct)}, goal {GOAL_ATTENDANCE}). <Compare county={breast.attendedPct} finland={BREAST_FI.attendedPct} /></>}
+            who={<>Women aged 50–69, about every two years. A letter with your appointment comes by post.</>}
+            how={<>In {breast.name}, {of100(breast.attendedPct)} of every 100 women offered a mammogram took part in 2024 (Finnish average {of100(BREAST_FI.attendedPct)}, national goal {GOAL_ATTENDANCE}). <Compare county={breast.attendedPct} finland={BREAST_FI.attendedPct} /></>}
             after={<>Some women are called back for further tests. Being called back usually does not mean cancer.</>}
             doThis={[
-              'Go when invited, even if you feel well.',
-              'If you missed your appointment, ask the screening unit in your letter for a new time.',
+              'Take part when your letter arrives, even if you feel well.',
+              'If you missed your appointment, ask the screening unit named in your letter for a new time.',
             ]}
           />
         )}
         {cervical && (
           <Programme
             title="Cervical cancer"
-            who={<>Women aged 30–65, every five years. Some counties also invite women aged 25.</>}
-            how={<>In {cervical.name}, {of100(cervical.participationPct)} of every 100 invited women were tested in 2024 (Finland {of100(CERVICAL_FI.participationPct)}, goal {GOAL_ATTENDANCE}). <Compare county={cervical.participationPct} finland={CERVICAL_FI.participationPct} /></>}
-            after={<>About 1 in 100 women tested is referred for a closer look (colposcopy). Others are asked to come back for a repeat test before the next invitation.</>}
+            who={<>Women aged 30–65, every five years. Some counties also offer it at 25.</>}
+            how={<>In {cervical.name}, {of100(cervical.participationPct)} of every 100 women offered the test took part in 2024 (Finnish average {of100(CERVICAL_FI.participationPct)}, national goal {GOAL_ATTENDANCE}). <Compare county={cervical.participationPct} finland={CERVICAL_FI.participationPct} /></>}
+            after={<>About 1 in 100 women tested is referred for a closer look (colposcopy). Others are asked to come back for a repeat test before their next turn.</>}
             doThis={[
-              'Book and go when invited, even if you feel well.',
-              'If you missed it, ask the screening unit in your letter for a new time.',
+              'Take part when your letter arrives, even if you feel well.',
+              'If you missed your appointment, ask the screening unit named in your letter for a new time.',
             ]}
           />
         )}
@@ -117,7 +117,7 @@ export default function ResidentsPage() {
 
       <section className="mt-12 border-t border-black/15 pt-8">
         <h2 className="font-serif text-3xl">Where to ask</h2>
-        <p className="mt-2 font-sans text-[16px] opacity-75 max-w-3xl">Your invitation letter names the screening unit for your area. For anything about symptoms, contact your health centre: screening is for people without symptoms.</p>
+        <p className="mt-2 font-sans text-[16px] opacity-75 max-w-3xl">Your screening letter names the screening unit for your area. For anything about symptoms, contact your health centre: screening is for people without symptoms.</p>
         <ul className="mt-5 grid sm:grid-cols-2 gap-4">
           {CONTACTS.map((c) => (
             <li key={c.url} className="rounded-lg border border-black/15 p-5 min-w-0">
@@ -127,7 +127,7 @@ export default function ResidentsPage() {
           ))}
         </ul>
         <p className="mt-6 font-type text-[12px] uppercase tracking-wider opacity-60">
-          Figures: Finnish Cancer Registry screening statistics, 2024 round. Who is invited: Cancer Registry programme pages. General information, not medical advice.
+          Figures: Finnish Cancer Registry screening statistics, 2024 round. Who it is for: Cancer Registry programme pages. General information, not medical advice.
         </p>
       </section>
     </div>

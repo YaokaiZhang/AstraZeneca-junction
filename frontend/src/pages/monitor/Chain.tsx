@@ -153,10 +153,12 @@ export function HowItChanged({ r }: { r: ScreeningRow }) {
   const rank = (k: 'participationPct' | 'colonoscopyOfPositivesPct') => rankIn(2024, r.id, k)
   const waitSorted = [...SCREENING].sort((a, b) => a.medianMonths - b.medianMonths)
   const waitRank = waitSorted.findIndex((x) => x.id === r.id) + 1
-  const rows: { label: string; vals: (string | null)[]; fi: string; rank: string; cmp: Cmp }[] = [
+  const rows: { label: string; vals: (string | null)[]; fi: string; rank: string; cmp?: Cmp }[] = [
     { label: 'Sent the kit back', vals: t.map((p) => `${n1(p.participationPct)}%`), fi: `${n1(SCREENING_FI.participationPct)}%`, rank: `${ord(rank('participationPct').rank)} of ${rank('participationPct').of}`, cmp: { county: r.participationPct, finland: SCREENING_FI.participationPct, better: 'higher', unit: 'pts' } },
     { label: 'Had the follow-up colonoscopy', vals: t.map((p) => `${n1(p.colonoscopyOfPositivesPct)}%`), fi: `${n1(SCREENING_FI.colonoscopyOfPositivesPct)}%`, rank: `${ord(rank('colonoscopyOfPositivesPct').rank)} of ${rank('colonoscopyOfPositivesPct').of}`, cmp: { county: r.colonoscopyOfPositivesPct, finland: SCREENING_FI.colonoscopyOfPositivesPct, better: 'higher', unit: 'pts' } },
     { label: 'Wait for the colonoscopy', vals: [null, null, `${n1(r.medianMonths)} months`], fi: `${n1(SCREENING_FI.medianMonths)} months`, rank: `${ord(waitRank)} of ${waitSorted.length}`, cmp: { county: r.medianMonths, finland: SCREENING_FI.medianMonths, better: 'lower', unit: 'months' } },
+    // the registry's own column: surgical or neoadjuvant (pre-surgery) treatment, of those who had a colonoscopy; a count, so no marker
+    { label: 'Started treatment (surgery or pre-surgery therapy)', vals: [null, null, n0(r.surgery)], fi: n0(SCREENING_FI.surgery), rank: '' },
   ]
   return (
     <div>
@@ -181,9 +183,9 @@ export function HowItChanged({ r }: { r: ScreeningRow }) {
         </table>
       </div>
       <p className="mt-4 font-sans text-[15px] leading-relaxed opacity-80 max-w-4xl">
-        Rank 1 is the best county. In 2024, of {n0(r.invited)} people invited in {r.name}, {n0(r.testPositive)} tested positive, {n0(r.colonoscopyDone)} had the colonoscopy and {n0(r.cancers)} cancers were found.
+        Rank 1 is the best county. In 2024, of {n0(r.invited)} people invited in {r.name}, {n0(r.testPositive)} tested positive, {n0(r.colonoscopyDone)} had the colonoscopy, {n0(r.cancers)} cancers were found and {n0(r.surgery)} people started surgery or pre-surgery (neoadjuvant) treatment, as the registry counts them among those who had a colonoscopy.
         {' '}Nationally, follow-up after a positive test fell from {n1(fi[1]?.colonoscopyOfPositivesPct ?? 0)}% in 2023 to {n1(SCREENING_FI.colonoscopyOfPositivesPct)}% in 2024, so the 2024 figures are probably partly reports that had not come in yet.
-        {' '}Waits were only published for 2024.
+        {' '}Waits were only published for 2024. Treatment starts are shown for 2024; the registry gives a count, not the time to treatment.
       </p>
       <p className="mt-2 font-sans text-[13px] opacity-55 flex items-center gap-2">Source: Finnish Cancer Registry, bowel cancer screening statistics 2022, 2023 and 2024. {SRC_ROUNDS}</p>
     </div>

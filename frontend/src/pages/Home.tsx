@@ -60,18 +60,6 @@ const CARDS = [
 ]
 
 
-const WORDS = ['on time.', 'ajoissa.', 'i tid.']
-
-function RotatingWord() {
-  const [i, setI] = useState(0)
-  useEffect(() => { const id = setInterval(() => setI((x) => (x + 1) % WORDS.length), 2600); return () => clearInterval(id) }, [])
-  return (
-    <span className="relative inline-block align-top py-[0.18em] -my-[0.18em] overflow-hidden whitespace-nowrap">
-      <span key={i} className="block italic text-terra hero-word">{WORDS[i]}</span>
-    </span>
-  )
-}
-
 export default function Home() {
   const [hover, setHover] = useState<Hover>(null)
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
@@ -107,9 +95,9 @@ export default function Home() {
           <div className="relative z-10 flex flex-col justify-center px-5 lg:pl-16 xl:pl-24 pt-20 lg:pt-24 pb-20 lg:pb-20"
             style={{ transform: `translateY(${scroll * -60}px)`, opacity: 1 - scroll * 1.2 }}>
             <h1 className="font-serif font-light leading-[0.9] text-[min(14vw,11svh)] lg:text-[min(6vw,12svh)] tracking-tight">
-              <span className="block hero-in" style={{ animationDelay: '.1s' }}>Every</span>
-              <span className="block hero-in pl-[0.6em]" style={{ animationDelay: '.2s' }}>cancer,</span>
-              <span className="block hero-in" style={{ animationDelay: '.3s' }}>found <RotatingWord /></span>
+              <span className="block hero-in" style={{ animationDelay: '.1s' }}>Equal</span>
+              <span className="block hero-in pl-[0.6em]" style={{ animationDelay: '.2s' }}>cancer care,</span>
+              <span className="block hero-in italic text-terra" style={{ animationDelay: '.3s' }}>in every county.</span>
             </h1>
 
             <p className="mt-8 lg:mt-[5svh] max-w-md font-sans text-lg lg:text-xl leading-snug opacity-75 hero-in" style={{ animationDelay: '.5s' }}>

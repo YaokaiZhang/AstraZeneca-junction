@@ -1,4 +1,4 @@
-# Ajoissa: every cancer, found on time
+# Ajoissa: equal cancer care, in every county
 
 Our entry for the AstraZeneca challenge "Equal Care Across Finland" (Junction 2026). Ajoissa is a screening monitor
 for every wellbeing services county. For bowel, breast and cervical cancer screening, it shows where the county loses

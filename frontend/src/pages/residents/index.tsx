@@ -4,6 +4,7 @@
 import { useSearchParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { Label, Picker, cx } from '../../components/ui'
+import { FinlandMap } from '../../components/FinlandMap'
 import { SCREENING, SCREENING_FI, screeningById } from '../monitor/data'
 import { BREAST, BREAST_FI } from '../monitor/breastData'
 import { CERVICAL, CERVICAL_FI } from '../monitor/cervicalData'
@@ -47,12 +48,16 @@ function Programme({ title, who, how, after, doThis, children }: {
   )
 }
 
-const CONTACTS = [
-  { name: 'Cancer Society of Finland (Syöpäjärjestöt)', what: 'Advice and support about cancer and screening, for anyone.', url: 'https://www.syopajarjestot.fi/' },
-  { name: 'Finnish Cancer Registry: bowel cancer screening', what: 'Who it is for, how the test works, what happens next.', url: 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/' },
-  { name: 'Finnish Cancer Registry: breast cancer screening', what: 'Who it is for and how often.', url: 'https://syoparekisteri.fi/seulonta/rintasyovanseulonta/' },
-  { name: 'Finnish Cancer Registry: cervical cancer screening', what: 'Who it is for and how often.', url: 'https://syoparekisteri.fi/seulonta/kohdunkaulansyovanseulonta/' },
-]
+const SOCIETY = { name: 'Cancer Society of Finland (Syöpäjärjestöt)', what: 'Advice and support about cancer and screening, for anyone.', url: 'https://www.syopajarjestot.fi/' }
+const REGISTRY = {
+  name: 'Finnish Cancer Registry: screening programmes',
+  what: 'Who each programme is for, how often, how the test works and what happens next.',
+  links: [
+    { label: 'Bowel', url: 'https://syoparekisteri.fi/seulonta/suolistosyovan-seulonta/' },
+    { label: 'Breast', url: 'https://syoparekisteri.fi/seulonta/rintasyovanseulonta/' },
+    { label: 'Cervical', url: 'https://syoparekisteri.fi/seulonta/kohdunkaulansyovanseulonta/' },
+  ],
+}
 
 export default function ResidentsPage() {
   const [params, setParams] = useSearchParams()
@@ -64,7 +69,8 @@ export default function ResidentsPage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-10 pb-20 max-w-[2000px] mx-auto overflow-x-clip">
-      <header className="pt-10 sm:pt-14 max-w-4xl">
+      <div className="pt-10 sm:pt-14 grid lg:grid-cols-[minmax(0,1fr)_260px] xl:grid-cols-[minmax(0,1fr)_300px] gap-8 lg:gap-12 items-start">
+      <header className="max-w-4xl">
         <Label>For residents · screening in your county</Label>
         <h1 className="mt-4 font-serif font-light text-5xl sm:text-6xl leading-[0.95]">
           Screening is for everyone, <span className="italic text-terra">wherever you live.</span>
@@ -77,6 +83,12 @@ export default function ResidentsPage() {
           <Picker label="County" value={id} onChange={select} options={OPTIONS} className="font-serif text-2xl italic py-0.5" />
         </div>
       </header>
+        <div className="max-w-[170px] sm:max-w-[240px] mx-auto lg:max-w-none lg:mx-0 w-full">
+          <p className="font-sans text-[14px] opacity-65 mb-2 text-center lg:text-left">Or tap your county on the map</p>
+          <FinlandMap selected={id} onSelect={select} label="Choose your county on the map of Finland"
+            style={(c) => ({ fill: c.id === id ? '#C65D3B' : '#DDD6C8' })} tooltip={(c) => c.name} />
+        </div>
+      </div>
 
       <div className="mt-10 grid lg:grid-cols-3 gap-5">
         <Programme
@@ -119,12 +131,17 @@ export default function ResidentsPage() {
         <h2 className="font-serif text-3xl">Where to ask</h2>
         <p className="mt-2 font-sans text-[16px] opacity-75 max-w-3xl">Your screening letter names the screening unit for your area. For anything about symptoms, contact your health centre: screening is for people without symptoms.</p>
         <ul className="mt-5 grid sm:grid-cols-2 gap-4">
-          {CONTACTS.map((c) => (
-            <li key={c.url} className="rounded-lg border border-black/15 p-5 min-w-0">
-              <a href={c.url} target="_blank" rel="noreferrer" className="font-sans text-[17px] font-medium underline decoration-black/30 hover:text-terra break-words">{c.name}</a>
-              <p className="mt-1 font-sans text-[15px] opacity-75">{c.what}</p>
-            </li>
-          ))}
+          <li className="rounded-lg border border-black/15 p-5 min-w-0">
+            <a href={SOCIETY.url} target="_blank" rel="noreferrer" className="font-sans text-[17px] font-medium underline decoration-black/30 hover:text-terra break-words">{SOCIETY.name}</a>
+            <p className="mt-1 font-sans text-[15px] opacity-75">{SOCIETY.what}</p>
+          </li>
+          <li className="rounded-lg border border-black/15 p-5 min-w-0">
+            <p className="font-sans text-[17px] font-medium">{REGISTRY.name}</p>
+            <p className="mt-1 font-sans text-[15px] opacity-75">{REGISTRY.what}</p>
+            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-sans text-[15px]">
+              {REGISTRY.links.map((l) => <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="underline decoration-black/30 hover:text-terra">{l.label}</a>)}
+            </p>
+          </li>
         </ul>
         <p className="mt-6 font-type text-[12px] uppercase tracking-wider opacity-60">
           Figures: Finnish Cancer Registry screening statistics, 2024 round. Who it is for: Cancer Registry programme pages. General information, not medical advice.

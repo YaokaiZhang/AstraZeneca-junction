@@ -19,6 +19,22 @@ uses a fixed template briefing and says so.
 Open `#/` for the landing page, `#/monitor` for the monitor and `#/residents` for the residents page. A county and programme can be linked directly, for
 example `#/monitor?c=helsinki&p=breast` (`p` is `bowel`, `breast` or `cervical`).
 
+## Host it (Modal)
+
+`modal_app.py` builds the app in a container with Node and serves it with `vite preview` (the page plus the AI
+briefing endpoint). The Anthropic key is a Modal secret, never in the repo or the browser.
+
+```bash
+pip install modal
+modal setup                                   # log in once
+modal secret create ajoissa-llm LLM_KEY=...   # or create it in the Modal dashboard under Secrets
+modal deploy modal_app.py                     # prints the public URL
+```
+
+Paid AI calls are capped (4 per visitor a minute, 60 an hour in total, repeats reuse the last checked answer); over
+the cap the plan uses the template briefing. One container keeps the caps consistent; set `min_containers=0` in
+`modal_app.py` after judging so it stops when idle.
+
 ## What it does
 
 - **Three steps per programme**, county against Finland (2024 round):

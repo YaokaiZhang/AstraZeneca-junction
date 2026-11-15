@@ -7,8 +7,8 @@ import { llmApi } from './server/llm'
 export default defineConfig({
   plugins: [react(), llmApi()],
   // Hosted demo: `vite preview` only answers requests for known host names.
-  // Render sites end in .onrender.com; set ALLOWED_HOST for any other domain.
+  // Modal sites end in .modal.run, Render sites in .onrender.com; set ALLOWED_HOST for any other domain.
   preview: {
-    allowedHosts: ['.onrender.com', ...(process.env.ALLOWED_HOST ? [process.env.ALLOWED_HOST] : [])],
+    allowedHosts: ['.modal.run', '.onrender.com', ...(process.env.ALLOWED_HOST ? [process.env.ALLOWED_HOST] : [])],
   },
 })

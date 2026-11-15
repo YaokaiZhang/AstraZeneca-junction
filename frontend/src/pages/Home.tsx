@@ -30,7 +30,7 @@ function ShortIntro() {
     <section id="intro" className="relative px-5 lg:px-12 pt-20 lg:pt-28 pb-16 lg:pb-20 max-w-6xl mx-auto">
       <Label>Bowel, breast and cervical cancer screening · every wellbeing county</Label>
       <h2 className={'mt-5 ' + H2}>
-        <WordsUp text="A positive test" /><br /><WordsUp text="is not a diagnosis yet." className="italic" delay={150} />
+        <WordsUp text="Where each county" /><br /><WordsUp text="loses people." className="italic" delay={150} />
       </h2>
       <div className="mt-12 grid md:grid-cols-3 gap-6">
         {facts.map((f, i) => (

@@ -89,7 +89,9 @@ export default function Home() {
           <nav className="flex gap-5 lg:gap-10">
             {SHOW_FULL_STORY ? CARDS.map((c) => (
               <Link key={c.to} to={c.to} className="font-type uppercase text-xs lg:text-xs tracking-widest opacity-60 hover:opacity-100 hover:text-terra transition">{c.b}</Link>
-            )) : <Link to="/monitor" className="font-type uppercase text-xs lg:text-xs tracking-widest opacity-60 hover:opacity-100 hover:text-terra transition">Screening</Link>}
+            )) : [['/monitor', 'Screening'], ['/residents', 'Residents']].map(([to, label]) => (
+              <Link key={to} to={to} className="font-type uppercase text-xs lg:text-xs tracking-widest opacity-60 hover:opacity-100 hover:text-terra transition">{label}</Link>
+            ))}
           </nav>
         </header>
 
@@ -112,6 +114,7 @@ export default function Home() {
                 Start
                 <span className="w-9 h-9 rounded-full bg-mustard text-ink flex items-center justify-center group-hover:translate-x-1 transition-transform">→</span>
               </Link>
+              {!SHOW_FULL_STORY && <Link to="/residents" className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 min-h-[52px] font-type uppercase text-xs tracking-widest hover:border-ink transition">For residents</Link>}
               {SHOW_FULL_STORY && <a href="#ch-gap" className="inline-flex items-center gap-2 rounded-full border border-ink/30 px-6 py-2 font-type uppercase text-xs tracking-widest hover:border-ink transition">Explore</a>}
             </div>
           </div>
